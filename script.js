@@ -265,6 +265,7 @@ function resetQR() {
   qrRequest++;
   clearTimeout(qrTimeout);
   if (pendingQR) { pendingQR.onload = null; pendingQR.onerror = null; pendingQR = null; }
+  qrImage.parentElement.classList.add('qr-static');
   qrImage.src = originalQR;
   qrImage.alt = 'QR tài khoản Techcombank của KIEN NGAN TU, chưa có số tiền';
   qrImage.closest('figure').classList.remove('pending');
@@ -330,6 +331,7 @@ donationForm.addEventListener('submit', event => {
   candidate.onload = () => {
     if (request !== qrRequest) return;
     clearTimeout(qrTimeout);
+    qrImage.parentElement.classList.remove('qr-static');
     qrImage.src = url.href;
     qrImage.alt = 'QR ủng hộ ' + moneyFormat.format(amount) + ' đồng cho KIEN NGAN TU tại Techcombank';
     qrOpen.href = url.href;
@@ -451,7 +453,7 @@ stylePanel.insertAdjacentHTML('beforeend', `
     <small>Nền tự cân chỉnh tối để chữ luôn dễ đọc.</small>
   </div>`);
 styleControls.insertAdjacentHTML('beforeend', '<label class="glow-option glow-shortcut" title="Bật/tắt ánh sáng theo chuột và chạm"><span aria-hidden="true">✧</span> Ánh sáng<input type="checkbox" id="global-glow-toggle" aria-label="Ánh sáng theo chuột và chạm" checked><span class="glow-switch" aria-hidden="true"></span></label>');
-styleControls.querySelector('.style-close').addEventListener('click', () => { closeStylePanel(); styleToggle.focus(); });
+styleControls.querySelector('.style-close').addEventListener('click', () => { closeStylePanel(); styleToggle.focus({ preventScroll: true }); });
 const colorInputs = ['theme-first', 'theme-second', 'theme-base'].map(id => document.getElementById(id));
 function hexRGB(hex) { return [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16)); }
 function applyTheme(colors, choice = 'custom') {
@@ -505,7 +507,7 @@ document.addEventListener('click', event => {
   if (!styleControls.contains(event.target)) closeStylePanel();
 });
 styleControls.addEventListener('keydown', event => {
-  if (event.key === 'Escape') { closeStylePanel(); styleToggle.focus(); }
+  if (event.key === 'Escape') { closeStylePanel(); styleToggle.focus({ preventScroll: true }); }
 });
 // Ánh sáng theo chuột: chỉ bật trên thiết bị có chuột và cho phép chuyển động.
 if (matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -532,12 +534,20 @@ if (matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(pr
 const musicPlaylist = [
   { title: 'នារី High Show V2', artist: 'Thanz', src: 'audio/high-show-v2.mp3', cover: 'images/cover-high-show-v2.png' },
   { title: 'កំរ (Kom ro)', artist: 'MUT PHEARIN, YCN TOMIE', src: 'audio/kom-ro.mp3', cover: 'images/cover-kom-ro.png' },
-  { title: 'Thiên đường với người thương', artist: 'Phương Mỹ Chi × DTAP', src: 'audio/thien-duong-voi-nguoi-thuong.mp3', cover: 'images/cover-thien-duong.png' }
+  { title: 'Thiên đường với người thương', artist: 'Phương Mỹ Chi × DTAP', src: 'audio/thien-duong-voi-nguoi-thuong.mp3', cover: 'images/cover-thien-duong.png' },
+  { title: 'Preah Thorng — ព្រះថោង Remix', artist: 'AI Remix ft. All3rgy', src: 'audio/preah-thorng.mp3', cover: 'images/cover-preah-thorng.png' },
+  { title: 'យ៉ាប់នេះយ៉ាប់ (La Mii Remix)', artist: 'ព្រាប សុវត្ថិ · La Mii Remix', src: 'audio/yab-nih-yab.mp3', cover: 'images/cover-yab-nih-yab.png' },
+  { title: 'សូរិយា (អេតាស៊ីវិល)', artist: 'All3rgy & Jenna Norodom', src: 'audio/soriya.mp3', cover: 'images/cover-soriya.png' }
 ];
 const musicAudio = new Audio();
 musicAudio.preload = 'metadata';
 musicAudio.volume = 0.35;
 let musicIndex = 0;
+let shuffleMusic = false;
+function nextMusicIndex() {
+  if (!shuffleMusic || musicPlaylist.length < 2) return (musicIndex + 1) % musicPlaylist.length;
+  return (musicIndex + 1 + Math.floor(Math.random() * (musicPlaylist.length - 1))) % musicPlaylist.length;
+}
 let musicRequest = 0;
 const musicWidget = document.createElement('aside');
 musicWidget.className = 'music-widget compact';
@@ -552,7 +562,7 @@ musicWidget.innerHTML = `
   <div class="music-times"><span class="music-current">0:00</span><span class="music-duration">0:00</span></div>
   <div class="music-controls"><button class="music-prev" type="button" aria-label="Bài trước">❮</button><button class="music-play" type="button">Bật nhạc</button><button class="music-next" type="button" aria-label="Bài tiếp theo">❯</button></div>
   <div class="music-volume"><label for="music-volume">Âm lượng</label><input id="music-volume" type="range" min="0" max="1" step="0.01" value="0.35"></div>
-  <div class="playlist-heading"><span>Danh sách phát</span><span>03 BÀI</span></div><div class="music-playlist" role="group" aria-label="Chọn bài hát"></div>
+  <div class="playlist-heading"><span>Danh sách phát</span><span>${String(musicPlaylist.length).padStart(2, '0')} BÀI</span></div><div class="music-playlist" role="group" aria-label="Chọn bài hát"></div>
   <div class="music-footer"><span>Tự chuyển bài · Lặp danh sách</span><button class="music-off" type="button">Tắt nhạc</button></div>
  </div>`;
 // Giữ hàng nút đóng ở ngoài vùng cuộn để luôn bấm được.
@@ -667,11 +677,11 @@ function compactMusic(compact) {
   musicEl('.music-mini').hidden = !compact;
   musicEl('.music-shell').hidden = compact;
   musicEl('.music-expand').setAttribute('aria-expanded', String(!compact));
-  musicEl(compact ? '.music-expand' : '.music-collapse').focus();
+  musicEl(compact ? '.music-expand' : '.music-collapse').focus({ preventScroll: true });
 }
 musicEl('.music-play').addEventListener('click', toggleMusic);
 musicEl('.mini-play').addEventListener('click', toggleMusic);
-musicEl('.music-next').addEventListener('click', () => { loadMusic(musicIndex + 1); playMusic(); });
+musicEl('.music-next').addEventListener('click', () => { loadMusic(nextMusicIndex()); playMusic(); });
 musicEl('.music-prev').addEventListener('click', () => { loadMusic(musicIndex - 1); playMusic(); });
 musicEl('.music-off').addEventListener('click', stopMusic);
 musicEl('.music-close').addEventListener('click', () => { stopMusic(); compactMusic(true); });
@@ -693,7 +703,7 @@ musicAudio.addEventListener('timeupdate', () => {
 musicAudio.addEventListener('playing', () => { musicButtons(); musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length); });
 musicAudio.addEventListener('pause', musicButtons);
 musicAudio.addEventListener('waiting', () => { if (!musicAudio.paused) musicStatus('Đang tải nhạc…'); });
-musicAudio.addEventListener('ended', () => { loadMusic(musicIndex + 1); playMusic(); });
+musicAudio.addEventListener('ended', () => { loadMusic(nextMusicIndex()); playMusic(); });
 musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không tải được bài · Hãy thử chuyển bài'); });
 loadMusic(0);
 // Trình duyệt quyết định có cho tự phát hay không; nếu chặn, hiển thị nút bật nhạc.
@@ -760,3 +770,125 @@ if ('IntersectionObserver' in window && !reducedMotion) {
     textObserver.observe(element);
   });
 }
+
+// Kéo các tiện ích bằng tay nắm; không cản nút bấm, thanh tua hoặc cuộn trang.
+function makeWidgetDraggable(widget, handleParents) {
+  let drag = null;
+  let moved = false;
+  let preferred = null;
+  function bounds() {
+    const viewport = window.visualViewport;
+    return { left: (viewport?.offsetLeft || 0) + 8, top: (viewport?.offsetTop || 0) + 8,
+      width: viewport?.width || innerWidth, height: viewport?.height || innerHeight };
+  }
+  function place(left, top, remember = true) {
+    if (remember) preferred = { left, top };
+    const b = bounds();
+    const rect = widget.getBoundingClientRect();
+    widget.style.left = Math.max(b.left, Math.min(left, b.left + b.width - rect.width - 16)) + 'px';
+    widget.style.top = Math.max(b.top, Math.min(top, b.top + b.height - rect.height - 16)) + 'px';
+    widget.style.right = 'auto'; widget.style.bottom = 'auto';
+    moved = true;
+    positionColorPanel();
+  }
+  function constrain() {
+    if (!moved) { positionColorPanel(); return; }
+    if (preferred) place(preferred.left, preferred.top, false);
+  }
+  handleParents.forEach(parent => {
+    const handle = document.createElement('button');
+    handle.type = 'button'; handle.className = 'widget-drag-handle';
+    handle.textContent = '⠿';
+    handle.setAttribute('aria-label', 'Di chuyển bảng: kéo hoặc dùng phím mũi tên; Home để đặt lại');
+    handle.title = 'Kéo để di chuyển · Nhấn đúp để đặt lại';
+    parent.prepend(handle);
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      const rect = widget.getBoundingClientRect();
+      drag = { id: event.pointerId, x: event.clientX - rect.left, y: event.clientY - rect.top };
+      handle.setPointerCapture(event.pointerId);
+      widget.classList.add('widget-dragging');
+    });
+    handle.addEventListener('pointermove', event => {
+      if (!drag || drag.id !== event.pointerId) return;
+      place(event.clientX - drag.x, event.clientY - drag.y);
+    });
+    function release() { drag = null; widget.classList.remove('widget-dragging'); }
+    handle.addEventListener('pointerup', release);
+    handle.addEventListener('pointercancel', release);
+    handle.addEventListener('lostpointercapture', release);
+    function reset() {
+      moved = false;
+      preferred = null;
+      ['top', 'left', 'right', 'bottom'].forEach(key => widget.style.removeProperty(key));
+      positionColorPanel();
+    }
+    handle.addEventListener('dblclick', reset);
+    handle.addEventListener('keydown', event => {
+      if (event.key === 'Home') { event.preventDefault(); reset(); return; }
+      const steps = { ArrowLeft: [-20,0], ArrowRight: [20,0], ArrowUp: [0,-20], ArrowDown: [0,20] };
+      const step = steps[event.key];
+      if (!step) return;
+      event.preventDefault();
+      const rect = widget.getBoundingClientRect(); place(rect.left + step[0], rect.top + step[1]);
+    });
+  });
+  window.addEventListener('resize', constrain);
+  window.visualViewport?.addEventListener('resize', constrain);
+  if ('ResizeObserver' in window) new ResizeObserver(constrain).observe(widget);
+}
+function positionColorPanel() {
+  if (stylePanel.hidden) return;
+  const anchor = styleControls.getBoundingClientRect();
+  const panel = stylePanel.getBoundingClientRect();
+  const width = window.visualViewport?.width || innerWidth;
+  const height = window.visualViewport?.height || innerHeight;
+  const top = anchor.top - panel.height - 10;
+  stylePanel.style.left = Math.max(8, Math.min(anchor.left, width - panel.width - 8)) + 'px';
+  stylePanel.style.top = Math.max(8, Math.min(top >= 8 ? top : anchor.bottom + 10, height - panel.height - 8)) + 'px';
+}
+styleToggle.addEventListener('click', positionColorPanel);
+makeWidgetDraggable(musicWidget, [musicEl('.music-head'), musicEl('.music-mini')]);
+makeWidgetDraggable(styleControls, [styleControls]);
+
+
+// Góc cá nhân: đồng hồ Việt Nam, bài hát hiện tại và liên hệ nhanh.
+const vnClock = document.getElementById('vietnam-clock');
+const vnDate = document.getElementById('vietnam-date');
+function updateVietnamClock() {
+  const now = new Date();
+  vnClock.textContent = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
+  vnClock.dateTime = now.toISOString();
+  vnDate.textContent = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'long', day: '2-digit', month: '2-digit' }).format(now) + ' · Việt Nam';
+}
+updateVietnamClock();
+setInterval(() => { if (!document.hidden) updateVietnamClock(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) updateVietnamClock(); });
+function syncLifeMusic() {
+  const track = musicPlaylist[musicIndex];
+  document.getElementById('life-song-title').textContent = track.title;
+  document.getElementById('life-song-artist').textContent = track.artist;
+  document.getElementById('life-song-cover').src = track.cover;
+  document.getElementById('life-song-state').textContent = musicAudio.paused ? 'Đang chọn · Bấm mở để nghe' : 'Đang phát trên trang này';
+}
+['playing', 'pause', 'loadstart', 'loadedmetadata'].forEach(event => musicAudio.addEventListener(event, syncLifeMusic));
+syncLifeMusic();
+document.getElementById('life-open-music').addEventListener('click', () => compactMusic(false));
+document.getElementById('copy-contact-email').addEventListener('click', async () => {
+  const status = document.getElementById('copy-email-status');
+  try {
+    await navigator.clipboard.writeText('kienngantu3105@gmail.com');
+    status.textContent = 'Đã sao chép email.';
+  } catch { status.textContent = 'Bạn có thể sao chép: kienngantu3105@gmail.com'; }
+});
+const shuffleButton = document.createElement('button');
+shuffleButton.className = 'shuffle-button';
+shuffleButton.type = 'button';
+shuffleButton.textContent = '⇄ Ngẫu nhiên';
+shuffleButton.setAttribute('aria-pressed', 'false');
+musicEl('.playlist-heading').after(shuffleButton);
+shuffleButton.addEventListener('click', () => {
+  shuffleMusic = !shuffleMusic;
+  shuffleButton.setAttribute('aria-pressed', String(shuffleMusic));
+  musicEl('.music-footer span').textContent = shuffleMusic ? 'Ngẫu nhiên · Lặp danh sách' : 'Tự chuyển bài · Lặp danh sách';
+});
