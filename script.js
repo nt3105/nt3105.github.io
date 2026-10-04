@@ -34,7 +34,7 @@ const PROJECT_LINKS = {
   exercises: { demo: '', source: '' },
   next: { demo: '', source: '' }
 };
-const ROLES = ['Sinh viên CNTT', 'C Learner', 'Telegram Seller', 'Game Hack Developer'];
+const ROLES = ['Đang học C', 'C Learner', 'Telegram Seller', 'Game Hack Developer'];
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Thông báo dùng chung. textContent giúp nội dung không bị hiểu là HTML.
@@ -85,13 +85,15 @@ document.querySelectorAll('[data-project], [data-source]').forEach(link => {
 
 // Ảnh chưa có: giữ placeholder phía dưới, không hiện biểu tượng ảnh lỗi.
 document.querySelectorAll('.optional-image').forEach(img => {
-  const updateImage = () => {
-    if (img.naturalWidth > 0) { img.classList.add('loaded'); img.hidden = false; }
-    else { img.hidden = true; }
+  const show = () => {
+    if (img.naturalWidth > 0) {
+      img.classList.add('loaded');
+      img.hidden = false;
+    }
   };
-  img.addEventListener('load', updateImage);
+  img.addEventListener('load', show);
   img.addEventListener('error', () => { img.hidden = true; });
-  if (img.complete) updateImage();
+  if (img.complete) show();
 });
 
 // Menu trên điện thoại; hỗ trợ Escape và đóng khi chọn mục.
@@ -103,13 +105,28 @@ function closeMenu() {
   header.classList.remove('menu-open');
   menuButton.setAttribute('aria-expanded', 'false');
   menuButton.setAttribute('aria-label', 'Mở menu');
+  if (!document.body.classList.contains('menu-lock')) return;
+  const y = menuScrollY;
+  const root = document.documentElement;
+  root.style.scrollBehavior = 'auto';
+  document.body.classList.remove('menu-lock');
+  document.body.style.top = '';
+  window.scrollTo(0, y);
+  root.style.scrollBehavior = '';
 }
+let menuScrollY = 0;
 menuButton.addEventListener('click', () => {
   const open = menuButton.getAttribute('aria-expanded') !== 'true';
+  if (open) {
+    menuScrollY = window.scrollY;
+    document.body.classList.add('menu-lock');
+    document.body.style.top = `-${menuScrollY}px`;
+  }
   menu.classList.toggle('open', open);
   header.classList.toggle('menu-open', open);
   menuButton.setAttribute('aria-expanded', String(open));
   menuButton.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu');
+  if (!open) closeMenu();
 });
 menu.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
 document.addEventListener('keydown', event => {
@@ -143,6 +160,23 @@ backTop.addEventListener('click', () => {
   document.querySelector('.brand').focus({ preventScroll: true });
 });
 
+// Vỏ ngoài giữ scroll-reveal. Card bên trong chỉ để nghiêng 3D, tránh ghi đè transform.
+document.querySelectorAll('.skill-card, .project-card, .life-card, .social-card, .memory-photo, .hero-visual').forEach(card => {
+  if (card.closest('.tilt-shell, .music-widget, .style-controls, dialog')) return;
+  const shell = document.createElement('div');
+  shell.className = 'tilt-shell reveal-shell';
+  const hit = document.createElement('div');
+  hit.className = 'tilt-hitbox';
+  if (card.classList.contains('reveal')) {
+    shell.classList.add('reveal');
+    card.classList.remove('reveal');
+  }
+  card.classList.add('tilt-card');
+  card.parentNode.insertBefore(shell, card);
+  shell.appendChild(hit);
+  hit.appendChild(card);
+});
+
 // Hiện nội dung một lần khi cuộn tới; không có JS vẫn đọc được trang.
 if ('IntersectionObserver' in window && !reducedMotion) {
   document.documentElement.classList.add('js-reveal');
@@ -152,6 +186,16 @@ if ('IntersectionObserver' in window && !reducedMotion) {
     });
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(element => observer.observe(element));
+}
+if ('IntersectionObserver' in window && !reducedMotion) {
+  const progressObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      progressObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.28 });
+  document.querySelectorAll('.skill-card').forEach(card => progressObserver.observe(card));
 }
 
 // Typing chỉ dùng một bộ hẹn giờ; tạm dừng khi chuyển sang tab khác.
@@ -249,24 +293,30 @@ const qrCaption = document.querySelector('#qr-caption');
 const qrOpen = document.querySelector('#qr-open');
 const amountError = document.querySelector('#amount-error');
 const generateButton = document.querySelector('#generate-qr');
-const originalQR = 'images/qr-techcombank.png';
+const originalQR = 'images/qr-techcombank-card.png';
 let qrRequest = 0;
 let pendingQR = null;
-let qrTimeout;
+let qrTimeout = 0;
+let qrDebounce = 0;
 const moneyFormat = new Intl.NumberFormat('vi-VN');
+const warmQR = new Image();
+warmQR.src = originalQR;
+qrImage.loading = 'eager';
+qrImage.decoding = 'async';
+if (!qrImage.getAttribute('src')) qrImage.src = originalQR;
 function parseDonationAmount(raw) {
-  // Chấp nhận 50000 hoặc 50.000, không làm tròn hay tự bỏ ký tự sai.
   const value = raw.trim();
   if (!/^(?:[0-9]+|[0-9]{1,3}(?:\.[0-9]{3})+)$/.test(value)) return null;
   const amount = Number(value.replaceAll('.', ''));
   return Number.isSafeInteger(amount) && amount >= 1000 && amount <= 500000000 ? amount : null;
 }
-function resetQR() {
-  qrRequest++;
+function showDefaultQR() {
+  qrRequest += 1;
   clearTimeout(qrTimeout);
+  clearTimeout(qrDebounce);
   if (pendingQR) { pendingQR.onload = null; pendingQR.onerror = null; pendingQR = null; }
   qrImage.parentElement.classList.add('qr-static');
-  qrImage.src = originalQR;
+  if (qrImage.getAttribute('src') !== originalQR) qrImage.src = originalQR;
   qrImage.alt = 'QR tài khoản Techcombank của KIEN NGAN TU, chưa có số tiền';
   qrImage.closest('figure').classList.remove('pending');
   qrOpen.href = originalQR;
@@ -277,16 +327,73 @@ function resetQR() {
   generateButton.textContent = 'Tạo QR ủng hộ';
   donationForm.setAttribute('aria-busy', 'false');
 }
-function amountChanged() {
-  resetQR();
-  amountError.textContent = '';
-  amountInput.removeAttribute('aria-invalid');
+function paintAmountQR(amount, href) {
+  qrImage.parentElement.classList.remove('qr-static');
+  qrImage.src = href;
+  qrImage.alt = 'QR ủng hộ ' + moneyFormat.format(amount) + ' đồng cho KIEN NGAN TU tại Techcombank';
+  qrOpen.href = href;
+  qrOpen.hidden = false;
+  qrImage.closest('figure').classList.remove('pending');
+  qrStatus.textContent = 'QR chuyển khoản · ' + moneyFormat.format(amount) + ' ₫';
+  qrCaption.textContent = 'Quét mã và kiểm tra thông tin trong ứng dụng ngân hàng. Website không xác nhận giao dịch.';
+  generateButton.disabled = false;
+  generateButton.textContent = 'Tạo QR ủng hộ';
+  donationForm.setAttribute('aria-busy', 'false');
+}
+function requestAmountQR(amount) {
+  const request = ++qrRequest;
+  clearTimeout(qrTimeout);
+  if (pendingQR) { pendingQR.onload = null; pendingQR.onerror = null; }
+  const url = new URL('https://img.vietqr.io/image/techcombank-19076415749012-compact2.png');
+  url.search = new URLSearchParams({ amount: String(amount), addInfo: 'Ung ho Ngan Tu', accountName: 'KIEN NGAN TU' }).toString();
+  generateButton.disabled = true;
+  generateButton.textContent = 'Đang tạo QR…';
+  donationForm.setAttribute('aria-busy', 'true');
+  qrStatus.textContent = 'Đang tạo QR cho ' + moneyFormat.format(amount) + 'đ…';
+  const candidate = new Image();
+  pendingQR = candidate;
+  candidate.referrerPolicy = 'no-referrer';
+  function fail() {
+    if (request !== qrRequest) return;
+    pendingQR = null;
+    qrImage.closest('figure').classList.remove('pending');
+    generateButton.disabled = false;
+    generateButton.textContent = 'Tạo QR ủng hộ';
+    donationForm.setAttribute('aria-busy', 'false');
+    qrOpen.hidden = false;
+    if (!qrImage.getAttribute('src')) qrImage.src = originalQR;
+    qrStatus.textContent = 'Chưa tạo được QR theo số tiền';
+    qrCaption.textContent = 'Mã đang hiện vẫn là QR trước đó. Bạn có thể quét mã tài khoản và tự nhập tiền.';
+    amountError.textContent = 'Không tải được QR. Kiểm tra Internet rồi thử lại nhé.';
+  }
+  candidate.onload = () => {
+    if (request !== qrRequest) return;
+    clearTimeout(qrTimeout);
+    pendingQR = null;
+    amountError.textContent = '';
+    paintAmountQR(amount, url.href);
+  };
+  candidate.onerror = fail;
+  qrTimeout = setTimeout(fail, 15000);
+  candidate.src = url.href;
+}
+function syncAmountButtons() {
   const amount = parseDonationAmount(amountInput.value);
   document.querySelectorAll('[data-amount]').forEach(button => {
     const selected = Number(button.dataset.amount) === amount;
     button.classList.toggle('selected', selected);
     button.setAttribute('aria-pressed', String(selected));
   });
+  return amount;
+}
+function amountChanged() {
+  amountError.textContent = '';
+  amountInput.removeAttribute('aria-invalid');
+  const amount = syncAmountButtons();
+  clearTimeout(qrDebounce);
+  if (!amountInput.value.trim()) { showDefaultQR(); return; }
+  if (amount === null) return;
+  qrDebounce = setTimeout(() => requestAmountQR(amount), 320);
 }
 amountInput.addEventListener('input', amountChanged);
 document.querySelectorAll('[data-amount]').forEach(button => {
@@ -298,7 +405,7 @@ document.querySelectorAll('[data-amount]').forEach(button => {
 });
 donationForm.addEventListener('submit', event => {
   event.preventDefault();
-  resetQR();
+  clearTimeout(qrDebounce);
   const amount = parseDonationAmount(amountInput.value);
   if (amount === null) {
     amountError.textContent = 'Nhập số tiền nguyên từ 1.000đ đến 500.000.000đ, ví dụ 50.000.';
@@ -309,56 +416,20 @@ donationForm.addEventListener('submit', event => {
   amountError.textContent = '';
   amountInput.removeAttribute('aria-invalid');
   amountInput.value = moneyFormat.format(amount);
-  const request = qrRequest;
-  const url = new URL('https://img.vietqr.io/image/techcombank-19076415749012-compact2.png');
-  url.search = new URLSearchParams({ amount: String(amount), addInfo: 'Ung ho Ngan Tu', accountName: 'KIEN NGAN TU' }).toString();
-  generateButton.disabled = true;
-  generateButton.textContent = 'Đang tạo QR…';
-  donationForm.setAttribute('aria-busy', 'true');
-  qrStatus.textContent = 'Đang tạo QR cho ' + moneyFormat.format(amount) + 'đ…';
-  qrImage.closest('figure').classList.add('pending');
-  qrOpen.hidden = true;
-  const candidate = new Image();
-  pendingQR = candidate;
-  candidate.referrerPolicy = 'no-referrer';
-  function fail() {
-    if (request !== qrRequest) return;
-    resetQR();
-    qrStatus.textContent = 'Chưa tạo được QR theo số tiền';
-    qrCaption.textContent = 'Mã bên dưới là QR tài khoản gốc, chưa có số tiền. Bạn có thể quét và tự nhập tiền.';
-    amountError.textContent = 'Không tải được QR. Kiểm tra Internet rồi thử lại nhé.';
-  }
-  candidate.onload = () => {
-    if (request !== qrRequest) return;
-    clearTimeout(qrTimeout);
-    qrImage.parentElement.classList.remove('qr-static');
-    qrImage.src = url.href;
-    qrImage.alt = 'QR ủng hộ ' + moneyFormat.format(amount) + ' đồng cho KIEN NGAN TU tại Techcombank';
-    qrOpen.href = url.href;
-    qrOpen.hidden = false;
-    qrImage.closest('figure').classList.remove('pending');
-    qrStatus.textContent = moneyFormat.format(amount) + 'đ · Ngân Tú';
-    qrCaption.textContent = 'Quét mã và kiểm tra thông tin trong ứng dụng ngân hàng. Website không xác nhận giao dịch.';
-    generateButton.disabled = false;
-    generateButton.textContent = 'Tạo QR ủng hộ';
-    donationForm.setAttribute('aria-busy', 'false');
-    pendingQR = null;
-  };
-  candidate.onerror = fail;
-  qrTimeout = setTimeout(fail, 15000);
-  candidate.src = url.href;
+  requestAmountQR(amount);
 });
 
 // Thanh tiến độ cuộn: chỉ cập nhật một lần trong mỗi khung hình.
 const readingProgress = document.createElement('div');
 readingProgress.className = 'page-progress';
 readingProgress.setAttribute('aria-hidden', 'true');
+readingProgress.innerHTML = '<span></span>';
 document.body.append(readingProgress);
 let progressQueued = false;
 function updateReadingProgress() {
   const distance = document.documentElement.scrollHeight - window.innerHeight;
   const ratio = distance > 0 ? Math.min(1, Math.max(0, window.scrollY / distance)) : 0;
-  readingProgress.style.transform = `scaleX(${ratio})`;
+  readingProgress.querySelector('span').style.transform = `scaleX(${ratio})`;
   progressQueued = false;
 }
 function queueReadingProgress() {
@@ -518,39 +589,24 @@ document.addEventListener('click', event => {
 styleControls.addEventListener('keydown', event => {
   if (event.key === 'Escape') { closeStylePanel(); styleToggle.focus({ preventScroll: true }); }
 });
-// Ánh sáng theo chuột: chỉ bật trên thiết bị có chuột và cho phép chuyển động.
-if (matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  document.querySelectorAll('.skill-card, .social-card, .coming-panel').forEach(card => {
-    card.classList.add('spotlight-card');
-    let frame = 0;
-    let pointerX = 0;
-    let pointerY = 0;
-    card.addEventListener('pointermove', event => {
-      pointerX = event.clientX;
-      pointerY = event.clientY;
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        const rect = card.getBoundingClientRect();
-        card.style.setProperty('--pointer-x', `${pointerX - rect.left}px`);
-        card.style.setProperty('--pointer-y', `${pointerY - rect.top}px`);
-        frame = 0;
-      });
-    }, { passive: true });
-  });
-}
+// Ánh sáng từng card do enhance.js cập nhật cùng tilt, một lần mỗi frame.
+
 
 // NHẠC NỀN: thêm bài mới vào danh sách này, đặt file trong thư mục audio.
 const musicPlaylist = [
-  { title: 'នារី High Show V2', artist: 'Thanz', src: 'audio/high-show-v2.mp3', cover: 'images/cover-high-show-v2.png' },
-  { title: 'កំរ (Kom ro)', artist: 'MUT PHEARIN, YCN TOMIE', src: 'audio/kom-ro.mp3', cover: 'images/cover-kom-ro.png' },
-  { title: 'Thiên đường với người thương', artist: 'Phương Mỹ Chi × DTAP', src: 'audio/thien-duong-voi-nguoi-thuong.mp3', cover: 'images/cover-thien-duong.png' },
-  { title: 'Preah Thorng — ព្រះថោង Remix', artist: 'AI Remix ft. All3rgy', src: 'audio/preah-thorng.mp3', cover: 'images/cover-preah-thorng.png' },
-  { title: 'យ៉ាប់នេះយ៉ាប់ (La Mii Remix)', artist: 'ព្រាប សុវត្ថិ · La Mii Remix', src: 'audio/yab-nih-yab.mp3', cover: 'images/cover-yab-nih-yab.png' },
-  { title: 'សូរិយា (អេតាស៊ីវិល)', artist: 'All3rgy & Jenna Norodom', src: 'audio/soriya.mp3', cover: 'images/cover-soriya.png' }
+  { title: 'Preah Thorng — ព្រះថោង Remix', artist: 'AI Remix ft. All3rgy', src: 'audio/preah-thorng.mp3', cover: 'images/cover-preah-thorng.jpg' },
+  { title: 'នារី High Show V2', artist: 'Thanz', src: 'audio/high-show-v2.mp3', cover: 'images/cover-high-show-v2.jpg' },
+  { title: 'កំរ (Kom ro)', artist: 'MUT PHEARIN, YCN TOMIE', src: 'audio/kom-ro.mp3', cover: 'images/cover-kom-ro.jpg' },
+  { title: 'Thiên đường với người thương', artist: 'Phương Mỹ Chi × DTAP', src: 'audio/thien-duong-voi-nguoi-thuong.mp3', cover: 'images/cover-thien-duong.jpg' },
+  { title: 'យ៉ាប់នេះយ៉ាប់ (La Mii Remix)', artist: 'ព្រាប សុវត្ថិ · La Mii Remix', src: 'audio/yab-nih-yab.mp3', cover: 'images/cover-yab-nih-yab.jpg' },
+  { title: 'សូរិយា (អេតាស៊ីវិល)', artist: 'All3rgy & Jenna Norodom', src: 'audio/soriya.mp3', cover: 'images/cover-soriya.jpg' }
 ];
-const musicAudio = new Audio();
-musicAudio.preload = 'metadata';
-musicAudio.volume = 0.35;
+const introBgm = window.ntBgm instanceof HTMLAudioElement ? window.ntBgm : null;
+const musicAudio = introBgm || new Audio();
+if (!introBgm) {
+  musicAudio.preload = 'auto';
+  musicAudio.volume = 0.35;
+}
 let musicIndex = 0;
 let shuffleMusic = false;
 function nextMusicIndex() {
@@ -562,9 +618,10 @@ const musicWidget = document.createElement('aside');
 musicWidget.className = 'music-widget compact';
 musicWidget.setAttribute('aria-label', 'Trình phát nhạc');
 musicWidget.innerHTML = `
+ <button class="hamster-mascot" type="button" aria-label="Bấm vào để chỉnh nhạc" aria-expanded="false" aria-controls="music-shell"><span class="hamster-dance" aria-hidden="true"></span><span class="hamster-tip">Bấm vào để chỉnh nhạc</span></button>
  <div class="music-mini"><div class="music-mini-label"><strong></strong><span>Nhạc cùng Ngân Tú</span></div><div class="music-mini-actions"><button class="mini-play" type="button">Bật nhạc</button><button class="music-expand" type="button" aria-label="Mở trình phát nhạc" aria-expanded="false" aria-controls="music-shell">↗</button></div></div>
  <div class="music-shell" id="music-shell" hidden>
-  <div class="music-head"><span>NGÂN TÚ / MUSIC</span><div><button class="music-collapse" type="button" aria-label="Thu gọn trình phát">−</button><button class="music-close" type="button" aria-label="Tắt nhạc và thu gọn">×</button></div></div>
+  <div class="music-head"><span>NGÂN TÚ / MUSIC</span><div><button class="music-close" type="button" aria-label="Đóng menu nhạc">×</button></div></div>
   <div class="music-track"><div class="music-cover" aria-hidden="true"><div class="music-disc"></div><img class="music-cover-image" alt="" hidden></div><div class="music-info"><h3 class="music-title"></h3><p class="music-artist"></p></div></div>
   <p class="music-status" role="status" aria-live="polite">Bấm bật nhạc để nghe</p>
   <input class="music-seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Tua bài hát" disabled>
@@ -588,6 +645,9 @@ playerBars.setAttribute('aria-hidden', 'true');
 playerBars.innerHTML = '<i></i><i></i><i></i><i></i><i></i>';
 musicWidget.querySelector('.music-head > span').append(playerBars);
 document.body.append(musicWidget);
+musicWidget.style.left = '78px';
+musicWidget.style.right = 'auto';
+musicWidget.style.bottom = '14px';
 const musicEl = selector => musicWidget.querySelector(selector);
 musicPlaylist.forEach((track, index) => {
   const button = document.createElement('button');
@@ -639,11 +699,21 @@ function musicButtons() {
   musicEl('.mini-play').textContent = playing ? 'Dừng' : 'Bật nhạc';
   musicEl('.mini-play').setAttribute('aria-label', playing ? 'Tạm dừng nhạc' : 'Phát nhạc');
 }
-function loadMusic(index) {
+function syncMusicClock() {
+  const duration = musicAudio.duration;
+  const ready = Number.isFinite(duration) && duration > 0;
+  const seek = musicEl('.music-seek');
+  musicEl('.music-duration').textContent = musicTime(ready ? duration : 0);
+  musicEl('.music-current').textContent = musicTime(musicAudio.currentTime || 0);
+  seek.disabled = !ready;
+  if (ready && document.activeElement !== seek) seek.value = String(musicAudio.currentTime / duration * 100);
+}
+function loadMusic(index, keepTime) {
   musicRequest++;
   musicIndex = (index + musicPlaylist.length) % musicPlaylist.length;
   const track = musicPlaylist[musicIndex];
-  musicAudio.src = track.src;
+  const sameTrack = keepTime && musicAudio.src && musicAudio.src.endsWith(track.src);
+  if (!sameTrack) musicAudio.src = track.src;
   musicEl('.music-title').textContent = track.title;
   musicEl('.music-mini-label strong').textContent = track.title;
   musicEl('.music-artist').textContent = track.artist;
@@ -653,20 +723,35 @@ function loadMusic(index) {
   musicWidget.querySelectorAll('.playlist-track').forEach((button, index) => {
     button.setAttribute('aria-pressed', String(index === musicIndex));
   });
-  musicEl('.music-seek').value = 0;
-  musicEl('.music-seek').disabled = true;
-  musicEl('.music-current').textContent = '0:00';
-  musicEl('.music-duration').textContent = '0:00';
+  if (!sameTrack && musicAudio.readyState < 1) {
+    musicEl('.music-seek').value = 0;
+    musicEl('.music-seek').disabled = true;
+    musicEl('.music-current').textContent = '0:00';
+    musicEl('.music-duration').textContent = '0:00';
+  }
+  syncMusicClock();
   musicButtons();
 }
 async function playMusic() {
   const request = ++musicRequest;
   musicStatus('Đang mở nhạc…');
   try {
-    await musicAudio.play();
+    if (musicAudio.paused) {
+      musicAudio.muted = true;
+      await musicAudio.play();
+      musicAudio.muted = false;
+      musicAudio.volume = musicAudio.volume || 0.35;
+      if (musicAudio.paused) await musicAudio.play();
+    } else {
+      await musicAudio.play();
+    }
   } catch (error) {
-    if (request !== musicRequest) return;
-    musicStatus(error.name === 'NotAllowedError' ? 'Bấm Bật nhạc để nghe' : 'Chưa phát được · Bấm để thử lại');
+    if (request !== musicRequest || error.name === 'AbortError') return;
+    if (error.name === 'NotAllowedError') {
+      const unlock = () => playMusic();
+      window.addEventListener('pointerdown', unlock, { once: true });
+      return;
+    }
     musicButtons();
   }
 }
@@ -681,42 +766,78 @@ function stopMusic() {
   musicStatus('Đã tắt nhạc');
   musicButtons();
 }
+let pinMusic = null;
+let ignoreMusicConstrain = false;
+function musicMenuWidth() {
+  return Math.min(292, window.innerWidth - 24);
+}
 function compactMusic(compact) {
+  const hamster = musicEl('.hamster-mascot');
+  ignoreMusicConstrain = true;
+  const anchor = document.querySelector('.style-toggle') || document.querySelector('.style-controls');
+  const bar = anchor ? anchor.getBoundingClientRect() : null;
+  const hamSize = hamster.offsetWidth || 68;
+  musicWidget.classList.remove('flip-left', 'is-settling');
+  if (!compact && bar) {
+    const hamRight = bar.right + 8 + hamSize;
+    const spaceRight = window.innerWidth - hamRight - 12;
+    const spaceLeft = bar.right + 8 - 12;
+    const menuW = musicMenuWidth();
+    musicWidget.classList.toggle('flip-left', menuW > spaceRight && spaceLeft >= spaceRight);
+  }
   musicWidget.classList.toggle('compact', compact);
   musicEl('.music-mini').hidden = !compact;
   musicEl('.music-shell').hidden = compact;
-  musicEl('.music-expand').setAttribute('aria-expanded', String(!compact));
-  musicEl(compact ? '.music-expand' : '.music-collapse').focus({ preventScroll: true });
+  hamster.setAttribute('aria-expanded', String(!compact));
+  hamster.setAttribute('aria-label', 'Bấm vào để chỉnh nhạc');
+  if (pinMusic) pinMusic();
+  requestAnimationFrame(() => {
+    if (pinMusic) pinMusic();
+    ignoreMusicConstrain = false;
+  });
 }
 musicEl('.music-play').addEventListener('click', toggleMusic);
 musicEl('.mini-play').addEventListener('click', toggleMusic);
 musicEl('.music-next').addEventListener('click', () => { loadMusic(nextMusicIndex()); playMusic(); });
 musicEl('.music-prev').addEventListener('click', () => { loadMusic(musicIndex - 1); playMusic(); });
 musicEl('.music-off').addEventListener('click', stopMusic);
-musicEl('.music-close').addEventListener('click', () => { stopMusic(); compactMusic(true); });
-musicEl('.music-collapse').addEventListener('click', () => compactMusic(true));
-musicEl('.music-expand').addEventListener('click', () => compactMusic(false));
+musicEl('.music-close').addEventListener('click', () => compactMusic(true));
+musicEl('.hamster-mascot').addEventListener('click', () => compactMusic(!musicEl('.music-shell').hidden));
+let hamsterHolding = false;
+const hamsterTip = musicEl('.hamster-tip');
+const hamsterHintTimer = setTimeout(() => { if (!hamsterHolding && hamsterTip) hamsterTip.classList.remove('is-on'); }, 2500);
+if (hamsterTip) hamsterTip.classList.add('is-on');
+musicEl('.hamster-mascot').addEventListener('pointerdown', () => {
+  hamsterHolding = true;
+  clearTimeout(hamsterHintTimer);
+  if (hamsterTip) hamsterTip.classList.add('is-on');
+});
+function hideHamsterHint() {
+  if (!hamsterHolding) return;
+  hamsterHolding = false;
+  if (hamsterTip) hamsterTip.classList.remove('is-on');
+}
+window.addEventListener('pointerup', hideHamsterHint);
+window.addEventListener('pointercancel', hideHamsterHint);
 musicWidget.addEventListener('keydown', event => { if (event.key === 'Escape' && !musicEl('.music-shell').hidden) compactMusic(true); });
 musicEl('#music-volume').addEventListener('input', event => { musicAudio.volume = Number(event.target.value); });
 musicEl('.music-seek').addEventListener('input', event => {
   if (Number.isFinite(musicAudio.duration)) musicAudio.currentTime = musicAudio.duration * Number(event.target.value) / 100;
 });
-musicAudio.addEventListener('loadedmetadata', () => {
-  musicEl('.music-duration').textContent = musicTime(musicAudio.duration);
-  musicEl('.music-seek').disabled = !Number.isFinite(musicAudio.duration);
-});
-musicAudio.addEventListener('timeupdate', () => {
-  musicEl('.music-current').textContent = musicTime(musicAudio.currentTime);
-  if (musicAudio.duration > 0) musicEl('.music-seek').value = musicAudio.currentTime / musicAudio.duration * 100;
-});
+musicAudio.addEventListener('loadedmetadata', syncMusicClock);
+musicAudio.addEventListener('durationchange', syncMusicClock);
+musicAudio.addEventListener('timeupdate', syncMusicClock);
 musicAudio.addEventListener('playing', () => { musicButtons(); musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length); });
 musicAudio.addEventListener('pause', musicButtons);
 musicAudio.addEventListener('waiting', () => { if (!musicAudio.paused) musicStatus('Đang tải nhạc…'); });
 musicAudio.addEventListener('ended', () => { loadMusic(nextMusicIndex()); playMusic(); });
 musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không tải được bài · Hãy thử chuyển bài'); });
-loadMusic(0);
-// Trình duyệt quyết định có cho tự phát hay không; nếu chặn, hiển thị nút bật nhạc.
-playMusic();
+if (introBgm) loadMusic(0, true);
+else loadMusic(0);
+if (!musicAudio.paused && musicAudio.src) {
+  musicButtons();
+  musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length);
+} else playMusic();
 
 
 // Quầng sáng toàn trang: chuột, bút cảm ứng và thao tác vuốt trên điện thoại.
@@ -729,32 +850,20 @@ const glowMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let glowEnabled = true;
 try { glowEnabled = localStorage.getItem('ngan-tu-global-glow') !== 'off'; } catch {}
 glowToggle.checked = glowEnabled;
-let glowFrame = 0;
 let glowTimer;
 let glowX = innerWidth / 2;
 let glowY = innerHeight * .65;
 function hideGlobalGlow() { globalGlow.classList.remove('shown'); }
 function moveGlobalGlow(x, y) {
   if (!glowEnabled || glowMotion.matches || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  glowX = x; glowY = y;
+  glowX = x;
+  glowY = y;
   clearTimeout(glowTimer);
-  if (!glowFrame) glowFrame = requestAnimationFrame(() => {
-    globalGlow.style.transform = `translate3d(${glowX}px,${glowY}px,0) translate(-50%,-50%)`;
-    globalGlow.classList.add('shown');
-    glowFrame = 0;
-  });
-  glowTimer = setTimeout(hideGlobalGlow, 1100);
+  globalGlow.style.transform = `translate3d(${glowX}px,${glowY}px,0) translate(-50%,-50%)`;
+  globalGlow.classList.add('shown');
+  glowTimer = setTimeout(hideGlobalGlow, 900);
 }
-window.addEventListener('pointermove', event => moveGlobalGlow(event.clientX, event.clientY), { passive: true });
-window.addEventListener('pointerdown', event => moveGlobalGlow(event.clientX, event.clientY), { passive: true });
-// touchmove vẫn nhận tọa độ khi trình duyệt chuyển pointer sang cuộn trang.
-window.addEventListener('touchmove', event => {
-  const touch = event.touches[0];
-  if (touch) moveGlobalGlow(touch.clientX, touch.clientY);
-}, { passive: true });
-window.addEventListener('scroll', () => {
-  if (matchMedia('(pointer: coarse)').matches) moveGlobalGlow(glowX, glowY);
-}, { passive: true });
+window.applyPointerGlow = moveGlobalGlow;
 window.addEventListener('blur', hideGlobalGlow);
 glowToggle.addEventListener('change', () => {
   glowEnabled = glowToggle.checked;
@@ -785,35 +894,94 @@ function makeWidgetDraggable(widget) {
   let drag = null;
   let moved = false;
   let preferred = null;
-  const storageKey = widget.classList.contains('music-widget') ? 'ngan-tu-player-pos' : null;
+  const storageKey = widget.classList.contains('music-widget') ? null : null;
   function persistPosition() {
     if (!storageKey || !preferred) return;
     try { localStorage.setItem(storageKey, JSON.stringify(preferred)); } catch { /* Không bắt buộc phải lưu. */ }
   }
   function bounds() {
     const viewport = window.visualViewport;
-    return { left: (viewport?.offsetLeft || 0) + 8, top: (viewport?.offsetTop || 0) + 8,
-      width: viewport?.width || innerWidth, height: viewport?.height || innerHeight };
+    const margin = 12;
+    return {
+      left: (viewport?.offsetLeft || 0) + margin,
+      top: (viewport?.offsetTop || 0) + margin,
+      width: (viewport?.width || innerWidth) - margin * 2,
+      height: (viewport?.height || innerHeight) - margin * 2
+    };
+  }
+  function clampMusic(left, top, rect) {
+    const b = bounds();
+    const maxLeft = Math.max(b.left, b.left + b.width - rect.width);
+    const maxTop = Math.max(b.top, b.top + b.height - rect.height);
+    return {
+      left: Math.min(Math.max(left, b.left), maxLeft),
+      top: Math.min(Math.max(top, b.top), maxTop)
+    };
   }
   function place(left, top, remember = true) {
-    if (remember) preferred = { left, top };
-    const b = bounds();
     const rect = widget.getBoundingClientRect();
-    widget.style.left = Math.max(b.left, Math.min(left, b.left + b.width - rect.width - 16)) + 'px';
-    widget.style.top = Math.max(b.top, Math.min(top, b.top + b.height - rect.height - 16)) + 'px';
-    widget.style.right = 'auto'; widget.style.bottom = 'auto';
+    let next = widget.classList.contains('music-widget')
+      ? clampMusic(left, top, rect)
+      : (() => {
+        const b = bounds();
+        return {
+          left: Math.min(Math.max(left, b.left), Math.max(b.left, b.left + b.width - rect.width)),
+          top: Math.min(Math.max(top, b.top), Math.max(b.top, b.top + b.height - rect.height))
+        };
+      })();
+    if (remember) preferred = next;
+    widget.style.left = next.left + 'px';
+    widget.style.top = next.top + 'px';
+    widget.style.right = 'auto';
+    widget.style.bottom = 'auto';
     moved = true;
     positionColorPanel();
   }
+  function snapMusic(left, top) {
+    const rect = widget.getBoundingClientRect();
+    const b = bounds();
+    const maxLeft = Math.max(b.left, b.left + b.width - rect.width);
+    const maxTop = Math.max(b.top, b.top + b.height - rect.height);
+    const pull = 32;
+    if (left - b.left < pull) left = b.left;
+    else if (maxLeft - left < pull) left = maxLeft;
+    if (top - b.top < pull) top = b.top;
+    else if (maxTop - top < pull) top = maxTop;
+    return clampMusic(left, top, rect);
+  }
+  function dockHamster() {
+    const anchor = document.querySelector('.style-toggle') || document.querySelector('.style-controls');
+    const hamster = widget.querySelector('.hamster-mascot');
+    if (!anchor || !hamster) return;
+    const bar = anchor.getBoundingClientRect();
+    const ham = hamster.getBoundingClientRect();
+    const box = widget.getBoundingClientRect();
+    const hamLeft = bar.right + 8;
+    const left = widget.classList.contains('flip-left') && !widget.classList.contains('compact')
+      ? hamLeft + ham.width - box.width
+      : hamLeft - (ham.left - box.left);
+    const top = bar.top + (bar.height - ham.height) / 2 - (ham.top - box.top);
+    widget.style.left = left + 'px';
+    widget.style.top = top + 'px';
+    widget.style.right = 'auto';
+    widget.style.bottom = 'auto';
+  }
   function constrain() {
+    if (widget.classList.contains('music-widget')) {
+      if (!ignoreMusicConstrain) dockHamster();
+      return;
+    }
+    if (ignoreMusicConstrain) return;
     if (!moved) { positionColorPanel(); return; }
-    if (preferred) place(preferred.left, preferred.top, false);
+    const rect = widget.getBoundingClientRect();
+    place(preferred ? preferred.left : rect.left, preferred ? preferred.top : rect.top, false);
   }
   // Kéo trên toàn bộ bề mặt; chạm nhẹ vẫn bấm nút bình thường.
   let suppressClick = false;
   widget.addEventListener('pointerdown', event => {
+    if (widget.classList.contains('music-widget')) return;
     if (event.button !== 0) return;
-    if (event.target.closest('button, a, input, select, textarea, label, .style-panel, .music-controls, .music-volume, .music-playlist')) return;
+    if (event.target.closest('button, a, input, select, textarea, label, .style-panel, .music-controls, .music-volume, .music-playlist') && !event.target.closest('.hamster-mascot')) return;
     const rect = widget.getBoundingClientRect();
     drag = { id: event.pointerId, startX: event.clientX, startY: event.clientY,
       x: event.clientX - rect.left, y: event.clientY - rect.top, active: false };
@@ -825,16 +993,17 @@ function makeWidgetDraggable(widget) {
       drag.active = true;
       widget.setPointerCapture(event.pointerId);
       widget.classList.add('widget-dragging');
+      widget.classList.remove('is-settling');
       suppressClick = true;
     }
+    event.preventDefault();
     place(event.clientX - drag.x, event.clientY - drag.y);
-  });
+  }, { passive: false });
   function release() {
     const dragged = Boolean(drag && drag.active);
     drag = null;
     widget.classList.remove('widget-dragging');
     if (dragged) persistPosition();
-    // Click phát sinh sau thao tác kéo không được bật/tắt nhạc hay ánh sáng.
     setTimeout(() => { suppressClick = false; }, 0);
   }
   widget.addEventListener('pointerup', release);
@@ -847,7 +1016,7 @@ function makeWidgetDraggable(widget) {
   widget.tabIndex = 0;
   widget.title = 'Kéo để di chuyển · Khi chọn bảng, dùng phím mũi tên để di chuyển';
   widget.addEventListener('keydown', event => {
-    if (event.target !== widget) return;
+    if (event.target !== widget || widget.classList.contains('music-widget')) return;
     if (event.key === 'Home') {
       event.preventDefault(); moved = false; preferred = null;
       ['top', 'left', 'right', 'bottom'].forEach(key => widget.style.removeProperty(key));
@@ -864,13 +1033,29 @@ function makeWidgetDraggable(widget) {
   window.addEventListener('resize', constrain);
   window.visualViewport?.addEventListener('resize', constrain);
   if ('ResizeObserver' in window) new ResizeObserver(constrain).observe(widget);
-  if (storageKey) {
+  if (widget.classList.contains('music-widget')) {
+    pinMusic = dockHamster;
+    widget.title = 'Bấm để mở nhạc';
+    try {
+      localStorage.removeItem('ngan-tu-hamster-pos');
+      localStorage.removeItem('ngan-tu-hamster-pos-v2');
+      localStorage.removeItem('ngan-tu-player-pos');
+    } catch { /* Không cần nhớ vị trí cũ. */ }
+    requestAnimationFrame(dockHamster);
+  } else if (storageKey) {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
       if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
         requestAnimationFrame(() => place(saved.left, saved.top));
-      }
-    } catch { /* Giữ vị trí mặc định. */ }
+      } else requestAnimationFrame(alignHamsterToTheme);
+    } catch { requestAnimationFrame(alignHamsterToTheme); }
+  }
+  function alignHamsterToTheme() {
+    const controls = document.querySelector('.style-controls');
+    if (!controls) return;
+    const bar = controls.getBoundingClientRect();
+    const ham = widget.getBoundingClientRect();
+    place(bar.right + 8, bar.top + (bar.height - ham.height) / 2);
   }
 }
 function positionColorPanel() {
@@ -972,57 +1157,3 @@ shuffleButton.addEventListener('click', () => {
   addEventListener('resize', progress); progress();
 })();
 
-// Nghiêng 3D theo chuột / chạm. Không chặn thao tác cuộn của điện thoại.
-(() => {
-  const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  const cards = [...document.querySelectorAll('.hero-visual, .project-card, .life-card, .memory-photo, .skill-card, .social-card')];
-  const resetters = [];
-  cards.forEach(card => {
-    card.classList.add('depth-card');
-    const shine = document.createElement('span');
-    shine.className = 'depth-shine'; shine.setAttribute('aria-hidden', 'true'); card.append(shine);
-    let frame = 0, rect = null, point = null, resetTimer = 0;
-    function reset() {
-      clearTimeout(resetTimer); cancelAnimationFrame(frame); frame = 0; rect = null;
-      card.classList.remove('depth-active');
-      card.style.setProperty('--depth-angle', '0deg');
-      card.style.setProperty('--layer-x', '0px'); card.style.setProperty('--layer-y', '0px');
-    }
-    resetters.push(reset);
-    function update(event) {
-      if (motion.matches || (event.isPrimary === false)) return;
-      clearTimeout(resetTimer);
-      if (!rect) rect = card.getBoundingClientRect();
-      point = {x:event.clientX, y:event.clientY, touch:event.pointerType === 'touch'};
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const x = Math.max(-1,Math.min(1,(point.x - rect.left) / rect.width * 2 - 1));
-        const y = Math.max(-1,Math.min(1,(point.y - rect.top) / rect.height * 2 - 1));
-        const strength = point.touch ? 4 : (card.classList.contains('hero-visual') ? 9 : 6);
-        const magnitude = Math.hypot(x,y);
-        card.style.setProperty('--depth-axis', magnitude > .001 ? `${-y} ${x} 0` : '1 0 0');
-        card.style.setProperty('--depth-angle', `${Math.min(magnitude,1.2)*strength}deg`);
-        card.style.setProperty('--depth-x', `${(x+1)*50}%`); card.style.setProperty('--depth-y', `${(y+1)*50}%`);
-        card.style.setProperty('--layer-x', `${x*9}px`); card.style.setProperty('--layer-y', `${y*9}px`);
-        card.classList.add('depth-active');
-      });
-    }
-    card.addEventListener('pointerenter', update, {passive:true});
-    card.addEventListener('pointerdown', update, {passive:true});
-    card.addEventListener('pointermove', update, {passive:true});
-    card.addEventListener('pointerleave', reset, {passive:true});
-    card.addEventListener('pointerup', event => { if(event.pointerType !== 'mouse') resetTimer = setTimeout(reset,250); }, {passive:true});
-    card.addEventListener('pointercancel', () => { resetTimer = setTimeout(reset,200); }, {passive:true});
-  });
-  // Xóa trạng thái khi đổi kích thước, rời tab hoặc bật Giảm chuyển động.
-  addEventListener('resize', () => resetters.forEach(reset => reset()), {passive:true});
-  addEventListener('blur', () => resetters.forEach(reset => reset()));
-  motion.addEventListener('change', () => resetters.forEach(reset => reset()));
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
-      if (!entry.isIntersecting) resetters[cards.indexOf(entry.target)]();
-    }));
-    cards.forEach(card => observer.observe(card));
-  }
-})();

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preload" as="image" href="images/moment-1-hero.jpg" fetchpriority="high">
+<link rel="preload" as="image" href="images/cover-preah-thorng.jpg">
+<link rel="preload" as="audio" href="audio/preah-thorng.mp3">
+<title>NGÂN TÚ DEV — 3D intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500&display=swap" rel="stylesheet">
+<style id="intro-css">
+  :root { --bg: #080b14; --ink: #f1f3fb; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+  body { min-height: 100dvh; overflow: hidden; font-family: "Be Vietnam Pro", "Segoe UI", sans-serif; }
+  button, a { font: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: 0; }
+  button:focus-visible, a:focus-visible { outline: 1px solid #d5e6f2; outline-offset: 4px; }
+
+  .stage, .handoff { position: fixed; inset: 0; z-index: 2; overflow: hidden; }
+  .stage[hidden], .handoff[hidden] { display: none; }
+  .sky, .grain, .vignette { position: absolute; inset: 0; pointer-events: none; }
+  .sky {
+    background:
+      radial-gradient(720px 460px at 50% 42%, rgba(120, 230, 238, .09), transparent 62%),
+      radial-gradient(560px 420px at 70% 62%, rgba(161, 138, 255, .16), transparent 64%),
+      linear-gradient(180deg, #0c1222, #080b14 62%, #080b14);
+  }
+  .grain {
+    opacity: .04; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.7'/></svg>");
+  }
+  .vignette { background: radial-gradient(ellipse at 50% 46%, transparent 36%, rgba(0,0,0,.62) 100%); }
+
+  .skip, .meta {
+    position: absolute; z-index: 5;
+    letter-spacing: .22em; font-size: .6rem; color: #8d97aa;
+  }
+  .skip { top: calc(16px + env(safe-area-inset-top)); right: calc(22px + env(safe-area-inset-right)); padding: 8px 0; }
+  .skip:hover { color: var(--ink); }
+  .meta { margin: 0; }
+  .meta.l { top: calc(18px + env(safe-area-inset-top)); left: calc(22px + env(safe-area-inset-left)); }
+  .meta.r { right: calc(22px + env(safe-area-inset-right)); bottom: calc(16px + env(safe-area-inset-bottom)); text-align: right; }
+  .meta b { display: block; margin-top: 4px; color: #d5dcea; font-weight: 400; letter-spacing: .16em; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #78e6ee; }
+
+  .view {
+    position: absolute; inset: 0;
+    perspective: 1100px;
+    display: grid; place-items: center;
+  }
+  .world {
+    position: relative;
+    width: min(920px, 100%);
+    height: min(640px, 100dvh);
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx, 8deg)) rotateY(var(--ry, 0deg));
+  }
+  .gyro {
+    position: absolute; left: 50%; top: 46%;
+    width: 0; height: 0;
+    transform-style: preserve-3d;
+  }
+  .ring { position: absolute; transform-style: preserve-3d; }
+  .ring i {
+    position: absolute; left: 0; top: 0;
+    width: 1px; height: 16px; margin-left: -.5px; margin-top: -8px;
+    background: linear-gradient(#eefcff, rgba(120, 230, 238, .2));
+    transform: rotateY(calc(var(--i) * 7.5deg)) translateZ(var(--z));
+  }
+  .ring.a i { --z: min(38vw, 380px); }
+  .ring.b i { --z: min(30vw, 300px); }
+  .ring.c i { --z: min(22vw, 230px); }
+  .ring.a { animation: tiltA 22s linear infinite; }
+  .ring.b { animation: tiltB 34s linear infinite; }
+  .ring.c { animation: tiltC 28s linear infinite; }
+  @keyframes tiltA { from { transform: rotateX(74deg) rotateZ(0deg); } to { transform: rotateX(74deg) rotateZ(360deg); } }
+  @keyframes tiltB { from { transform: rotateX(78deg) rotateY(0deg); } to { transform: rotateX(78deg) rotateY(360deg); } }
+  @keyframes tiltC { from { transform: rotateZ(68deg) rotateX(0deg); } to { transform: rotateZ(68deg) rotateX(360deg); } }
+
+  .cube {
+    position: absolute; left: 50%; top: 18%;
+    width: 74px; height: 74px; margin: -37px 0 0 -37px;
+    transform-style: preserve-3d;
+    animation: cube 14s linear infinite;
+  }
+  .cube span {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    border: 1px solid rgba(120, 230, 238, .35);
+    background: rgba(12, 16, 32, .42);
+    border-radius: 10px;
+    font-size: .95rem; letter-spacing: -1px;
+    backface-visibility: hidden;
+  }
+  .cube .f1 { transform: rotateY(0deg) translateZ(37px); }
+  .cube .f2 { transform: rotateY(90deg) translateZ(37px); }
+  .cube .f3 { transform: rotateY(180deg) translateZ(37px); }
+  .cube .f4 { transform: rotateY(-90deg) translateZ(37px); }
+  .cube .f5 { transform: rotateX(90deg) translateZ(37px); }
+  .cube .f6 { transform: rotateX(-90deg) translateZ(37px); }
+  @keyframes cube { to { transform: rotateX(360deg) rotateY(360deg); } }
+
+  .copy {
+    position: absolute; left: 0; right: 0; top: 50%;
+    transform: translateY(-42%);
+    text-align: center;
+    z-index: 2;
+  }
+  .mask { display: block; overflow: visible; }
+  h1 { margin: 0; }
+  .name {
+    display: block;
+    font-weight: 300;
+    font-size: min(6.4rem, calc((100vw - 48px) / 6.4));
+    line-height: 1.32;
+    padding: .08em 0 .02em;
+    letter-spacing: -.04em;
+    white-space: nowrap;
+    color: #f3f6ff;
+  }
+  .dev {
+    margin-top: 8px;
+    letter-spacing: .52em; text-indent: .52em;
+    font-size: .72rem; font-weight: 500; color: #78e6ee;
+  }
+  .under { margin: 14px 0 0; color: #a0a7bc; letter-spacing: .24em; font-size: .78rem; font-weight: 300; }
+  .enter {
+    --mx: 0px; --my: 0px;
+    margin-top: 22px;
+    min-height: 46px; padding: 0 18px;
+    display: inline-flex; align-items: center; gap: 10px;
+    border-radius: 999px; position: relative; isolation: isolate;
+    letter-spacing: .18em; font-size: .66rem; font-weight: 500;
+    transform: translate3d(var(--mx), var(--my), 0);
+  }
+  .enter::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+    background: linear-gradient(180deg, rgba(120, 230, 238, .7), rgba(161, 138, 255, .45));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .enter::after {
+    content: ""; position: absolute; inset: 1px; border-radius: inherit; z-index: -1;
+    background: rgba(8, 10, 16, .55);
+  }
+  .load {
+    width: min(220px, 62vw);
+    height: 2px;
+    margin: 18px auto 0;
+    background: rgba(255,255,255,.12);
+    overflow: hidden;
+  }
+  .load span {
+    display: block; height: 100%; width: 100%;
+    transform: scaleX(0); transform-origin: left center;
+    background: linear-gradient(90deg, #78e6ee, #bb8cff);
+  }
+  .play .load span { animation: load 2.4s cubic-bezier(.22,1,.36,1) .35s forwards; }
+  @keyframes load { to { transform: scaleX(1); } }
+
+  .play .cube { animation: cube 14s linear infinite, fade .8s ease .2s both; }
+  .play .dev { animation: fade .6s ease .85s both; }
+  .play .under { animation: fade .6s ease .98s both; }
+  .play .enter { animation: fade .6s ease 1.12s both; }
+  .name, .dev, .under, .enter, .cube { opacity: 0; }
+  .play .name { animation: rise 1s cubic-bezier(.16,1,.3,1) .45s both; }
+  @keyframes rise { from { opacity: 0; transform: translate3d(0, 80%, 0) rotateX(28deg); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .curtain {
+    position: absolute; inset: 0; z-index: 6; pointer-events: none;
+    background: #080b14;
+    opacity: 0;
+  }
+  .stage.is-leaving .curtain { opacity: 1; transition: opacity .1s ease; }
+  .stage.is-leaving .world {
+    opacity: 0;
+    transform: scale(1.01);
+    transition: opacity .1s ease, transform .1s ease;
+  }
+
+  .handoff { display: grid; place-items: center; background: var(--bg); }
+  .handoff.is-in { animation: fade .45s ease both; }
+  .card { text-align: center; padding: 24px; }
+  .card p { letter-spacing: .26em; font-size: .64rem; color: #8d97aa; }
+  .card strong { display: block; font-weight: 300; font-size: clamp(2rem, 6vw, 3.4rem); }
+  .card em { display: block; margin-top: 8px; font-style: normal; color: #8d97aa; }
+  .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  .ghost {
+    min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center;
+    border-radius: 999px; border: 1px solid rgba(210,220,235,.28); text-decoration: none;
+    letter-spacing: .14em; font-size: .66rem;
+  }
+
+  @media (max-width: 760px) {
+    .grain, .ring { display: none; }
+    .play .name, .play .dev, .play .under, .play .enter, .play .cube {
+      opacity: 1;
+      filter: none;
+      animation: none;
+    }
+    .play .load span { animation: load 1.2s ease forwards; }
+    .ring.a i, .ring.b i, .ring.c i { --z: 132px; }
+    .name { font-size: min(2.8rem, calc((100vw - 36px) / 6.2)); }
+    .cube { width: 54px; height: 54px; margin: -27px 0 0 -27px; top: 16%; }
+    .cube .f6 { transform: rotateX(-90deg) translateZ(27px); }
+    .cube .f2 { transform: rotateY(90deg) translateZ(27px); }
+    .cube .f3 { transform: rotateY(180deg) translateZ(27px); }
+    .cube .f4 { transform: rotateY(-90deg) translateZ(27px); }
+    .cube .f5 { transform: rotateX(90deg) translateZ(27px); }
+    .cube .f6 { transform: rotateX(-90deg) translateZ(27px); }
+    .under { letter-spacing: .14em; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+    .name, .dev, .under, .enter, .cube, .skip, .meta { opacity: 1 !important; filter: none !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage play" id="stage">
+    <div class="sky"></div>
+    <div class="grain"></div>
+    <div class="vignette"></div>
+    <div class="curtain" aria-hidden="true"></div>
+    <div class="view">
+      <div class="world" id="world">
+        <div class="gyro" id="gyro">
+          <div class="ring a"></div>
+          <div class="ring b"></div>
+          <div class="ring c"></div>
+        </div>
+        <div class="cube" id="cube">
+          <span class="f1"></span><span class="f2"></span><span class="f3"></span>
+          <span class="f4"></span><span class="f5"></span><span class="f6"></span>
+        </div>
+        <div class="copy">
+          <h1><span class="mask"><span class="name">NGÂN TÚ</span></span></h1>
+          <div class="dev">DEV</div>
+          <p class="under">Code · Life · Music</p>
+          <div class="load" aria-hidden="true"><span id="loadbar"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="handoff" id="handoff" hidden>
+    <div class="card">
+      <p>3D INTRO</p>
+      <strong>Main portfolio</strong>
+      <em>Demo riêng. Website chính chưa bị đổi.</em>
+      <div class="actions">
+        <button class="ghost" id="replay" type="button">XEM LẠI</button>
+        <a class="ghost" href="index.html">MỞ WEBSITE HIỆN TẠI</a>
+      </div>
+    </div>
+  </div>
+<script>
+  const stage = document.querySelector('#stage');
+  const world = document.querySelector('#world');
+  const handoff = document.querySelector('#handoff');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const mark = '</' + '>';
+  document.querySelectorAll('.cube span').forEach(face => { face.textContent = mark; });
+  if (fine) {
+    document.querySelectorAll('.ring').forEach(ring => {
+      for (let i = 0; i < 24; i++) {
+        const tick = document.createElement('i');
+        tick.style.setProperty('--i', i);
+        ring.append(tick);
+      }
+    });
+  }
+  let tx = 0, ty = 0, px = 0, py = 0, frame = 0;
+  function paint() {
+    frame = 0;
+    px += (tx - px) * .08;
+    py += (ty - py) * .08;
+    world.style.setProperty('--rx', (8 - py * 7).toFixed(2) + 'deg');
+    world.style.setProperty('--ry', (px * 10).toFixed(2) + 'deg');
+    if (Math.abs(tx - px) > .004 || Math.abs(ty - py) > .004) frame = requestAnimationFrame(paint);
+  }
+  if (!reduce && fine) {
+    addEventListener('pointermove', e => {
+      tx = e.clientX / innerWidth - .5;
+      ty = e.clientY / innerHeight - .5;
+      if (!frame) frame = requestAnimationFrame(paint);
+    }, { passive: true });
+  }
+  const bgm = new Audio('audio/preah-thorng.mp3');
+  bgm.preload = 'auto';
+  bgm.autoplay = true;
+  bgm.playsInline = true;
+  bgm.volume = 0.35;
+  window.ntBgm = bgm;
+  let starting = false;
+  const startBgm = () => {
+    if (!bgm.paused || starting) return;
+    starting = true;
+    bgm.muted = true;
+    bgm.play().then(() => {
+      bgm.muted = false;
+      bgm.volume = 0.35;
+      if (bgm.paused) return bgm.play();
+    }).catch(() => {}).finally(() => { starting = false; });
+  };
+  startBgm();
+  const bgmRetry = setInterval(() => { if (!bgm.paused) clearInterval(bgmRetry); else startBgm(); }, 400);
+  const heroImg = new Image();
+  heroImg.className = 'optional-image loaded';
+  heroImg.alt = 'Ảnh chân dung Ngân Tú';
+  heroImg.decoding = 'sync';
+  heroImg.fetchPriority = 'high';
+  const heroReady = new Promise(resolve => {
+    heroImg.onload = () => Promise.resolve(heroImg.decode?.()).then(resolve, resolve);
+    heroImg.onerror = () => resolve();
+    heroImg.src = 'images/moment-1-hero.jpg';
+  });
+  const warm = src => { const img = new Image(); img.decoding = 'async'; img.src = src; };
+  warm('images/moment-1-card.jpg');
+  warm('images/moment-2-card.jpg');
+  warm('images/moment-3-card.jpg');
+  warm('images/moment-4-card.jpg');
+  const pageBase = location.pathname.replace(/[^/]*$/, '');
+  const siteHtml = fetch(pageBase + 'index.html').then(response => response.text());
+  function addStyle(href) {
+    return new Promise(resolve => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = resolve;
+      link.onerror = resolve;
+      document.head.append(link);
+    });
+  }
+  function addScript(src) {
+    return new Promise(resolve => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.body.append(script);
+    });
+  }
+  async function leave() {
+    if (stage.classList.contains('is-leaving')) return;
+    stage.classList.add('is-leaving');
+    startBgm();
+    const html = await siteHtml;
+    await Promise.all([heroReady, new Promise(resolve => setTimeout(resolve, 100))]);
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    document.title = doc.title;
+    await Promise.all(['style.css', 'enhance.css'].map(addStyle));
+    document.documentElement.classList.add('from-intro');
+    document.getElementById('intro-css')?.remove();
+    stage.remove();
+    document.body.style.overflow = '';
+    const nodes = document.createDocumentFragment();
+    [...doc.body.children].forEach(node => {
+      if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
+    });
+    document.body.append(nodes);
+    const hero = document.querySelector('.avatar .optional-image');
+    if (hero && heroImg.naturalWidth) hero.replaceWith(heroImg);
+    else if (hero) { hero.hidden = false; hero.classList.add('loaded'); }
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    document.documentElement.classList.add('is-in');
+    clearInterval(bgmRetry);
+    for (const src of ['script.js', 'enhance.js', 'snake.js']) await addScript(src);
+    startBgm();
+    try { history.replaceState(null, '', pageBase + 'index.html'); } catch (error) {}
+  }
+  document.querySelector('#loadbar').addEventListener('animationend', leave);
+  if (reduce) setTimeout(leave, 900);
+</script>
+</body>
+</html>
