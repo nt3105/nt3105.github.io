@@ -258,13 +258,23 @@
   }
 
   function onOrient(event) {
-    if (document.hidden || calm() || reduce.matches || event.beta == null || event.gamma == null) return;
+    if (document.hidden || calm() || reduce.matches) return;
+    let beta = event.beta;
+    let gamma = event.gamma;
+    if (beta == null || gamma == null) return;
+    const angle = (screen.orientation && screen.orientation.angle) || Number(window.orientation) || 0;
+    if (angle === 90) {
+      const swap = gamma;
+      gamma = beta;
+      beta = -swap;
+    } else if (angle === -90 || angle === 270) {
+      const swap = gamma;
+      gamma = -beta;
+      beta = swap;
+    }
     gotOrient = true;
-    if (baseBeta == null) { baseBeta = event.beta; baseGamma = event.gamma; }
-    const deltaBeta = clamp((event.beta - baseBeta) / 18, -1, 1);
-    const deltaGamma = clamp((event.gamma - baseGamma) / 18, -1, 1);
-    targetRx = deltaBeta * 4;
-    targetRy = deltaGamma * 4;
+    targetRy = clamp(gamma / 16, -1, 1) * 8;
+    targetRx = clamp((beta - 42) / 20, -1, 1) * 6;
     if (!orientFrame) orientFrame = requestAnimationFrame(stepOrient);
   }
 
@@ -368,13 +378,20 @@
     window.addEventListener('pointerup', endTouch, listen);
     window.addEventListener('pointercancel', endTouch, listen);
     const askOrient = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
-    window.addEventListener('pointerdown', () => {
-      if (askOrient) {
-        DeviceOrientationEvent.requestPermission().then(state => {
-          if (state === 'granted') startOrientation();
-        }).catch(() => {});
-      } else startOrientation();
-    }, { once: true });
+    const armOrient = () => {
+      if (!askOrient) {
+        startOrientation();
+        return;
+      }
+      DeviceOrientationEvent.requestPermission().then(state => {
+        if (state === 'granted') startOrientation();
+      }).catch(() => {});
+    };
+    if (!askOrient) startOrientation();
+    else {
+      window.addEventListener('touchend', armOrient, { once: true });
+      window.addEventListener('click', armOrient, { once: true });
+    }
   }
 
   window.addEventListener('blur', resetTilts);

@@ -304,19 +304,23 @@
         if (!frame) frame = requestAnimationFrame(paint);
       }
     }, { passive: true });
-    const followPhone = () => {
+    const followPhone = event => {
       const ask = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
-      const listen = () => addEventListener('deviceorientation', event => {
-        if (event.gamma == null) return;
-        tx = Math.max(-.7, Math.min(.7, event.gamma / 35));
-        ty = Math.max(-.7, Math.min(.7, ((event.beta || 0) - 35) / 45));
+      const listen = () => addEventListener('deviceorientation', orient => {
+        if (orient.gamma == null || orient.beta == null) return;
+        tx = Math.max(-.8, Math.min(.8, orient.gamma / 28));
+        ty = Math.max(-.8, Math.min(.8, -((orient.beta || 0) - 42) / 36));
         if (!frame) frame = requestAnimationFrame(paint);
       });
-      if (ask) {
-        DeviceOrientationEvent.requestPermission().then(state => { if (state === 'granted') listen(); }).catch(() => {});
-      } else listen();
+      if (!ask) { listen(); return; }
+      if (event && event.cancelable) event.preventDefault();
+      DeviceOrientationEvent.requestPermission().then(state => { if (state === 'granted') listen(); }).catch(() => {});
     };
-    addEventListener('pointerdown', followPhone, { once: true });
+    if (!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) followPhone();
+    else {
+      addEventListener('touchend', followPhone, { once: true });
+      addEventListener('click', followPhone, { once: true });
+    }
   }
   const bgm = new Audio('audio/preah-thorng.mp3');
   bgm.preload = 'auto';
