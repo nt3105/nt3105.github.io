@@ -607,7 +607,17 @@ if (!introBgm) {
   musicAudio.preload = 'auto';
   musicAudio.volume = 0.35;
 }
-let musicIndex = 0;
+let musicIndex = Math.floor(Math.random() * musicPlaylist.length);
+try {
+  const saved = Number(sessionStorage.getItem('nt-visit-track'));
+  if (Number.isInteger(saved) && saved >= 0 && saved < musicPlaylist.length) musicIndex = saved;
+  else {
+    const last = Number(localStorage.getItem('nt-last-track'));
+    if (musicPlaylist.length > 1 && last === musicIndex) musicIndex = (musicIndex + 1) % musicPlaylist.length;
+    localStorage.setItem('nt-last-track', String(musicIndex));
+    sessionStorage.setItem('nt-visit-track', String(musicIndex));
+  }
+} catch (error) {}
 let shuffleMusic = false;
 function nextMusicIndex() {
   if (!shuffleMusic || musicPlaylist.length < 2) return (musicIndex + 1) % musicPlaylist.length;
@@ -832,8 +842,8 @@ musicAudio.addEventListener('pause', musicButtons);
 musicAudio.addEventListener('waiting', () => { if (!musicAudio.paused) musicStatus('Đang tải nhạc…'); });
 musicAudio.addEventListener('ended', () => { loadMusic(nextMusicIndex()); playMusic(); });
 musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không tải được bài · Hãy thử chuyển bài'); });
-if (introBgm) loadMusic(0, true);
-else loadMusic(0);
+if (introBgm) loadMusic(musicIndex, true);
+else loadMusic(musicIndex);
 if (!musicAudio.paused && musicAudio.src) {
   musicButtons();
   musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length);

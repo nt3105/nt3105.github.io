@@ -322,7 +322,15 @@
       addEventListener('click', followPhone, { once: true });
     }
   }
-  const bgm = new Audio('audio/preah-thorng.mp3');
+  const visitTracks = ['audio/preah-thorng.mp3', 'audio/high-show-v2.mp3', 'audio/kom-ro.mp3', 'audio/thien-duong-voi-nguoi-thuong.mp3', 'audio/yab-nih-yab.mp3', 'audio/soriya.mp3'];
+  let visitTrack = Math.floor(Math.random() * visitTracks.length);
+  try {
+    const last = Number(localStorage.getItem('nt-last-track'));
+    if (visitTracks.length > 1 && last === visitTrack) visitTrack = (visitTrack + 1 + Math.floor(Math.random() * (visitTracks.length - 1))) % visitTracks.length;
+    localStorage.setItem('nt-last-track', String(visitTrack));
+    sessionStorage.setItem('nt-visit-track', String(visitTrack));
+  } catch (error) {}
+  const bgm = new Audio(visitTracks[visitTrack]);
   bgm.preload = 'auto';
   bgm.autoplay = true;
   bgm.playsInline = true;
