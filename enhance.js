@@ -258,7 +258,7 @@
   }
 
   function onOrient(event) {
-    if (document.hidden || calm() || reduce.matches) return;
+    if (document.hidden || calm()) return;
     let beta = event.beta;
     let gamma = event.gamma;
     if (beta == null || gamma == null) return;
@@ -273,15 +273,54 @@
       beta = swap;
     }
     gotOrient = true;
-    targetRy = clamp(gamma / 16, -1, 1) * 8;
-    targetRx = clamp((beta - 42) / 20, -1, 1) * 6;
+    targetRy = clamp(gamma * 0.55, -14, 14);
+    targetRx = clamp((beta - 45) * 0.35, -10, 10);
     if (!orientFrame) orientFrame = requestAnimationFrame(stepOrient);
+  }
+
+  function onMotion(event) {
+    if (gotOrient || document.hidden || calm()) return;
+    const g = event.accelerationIncludingGravity;
+    if (!g) return;
+    const gx = clamp((g.x || 0) / 9.8, -1, 1);
+    const gy = clamp(-(g.y || 0) / 9.8, -1, 1);
+    onOrient({
+      gamma: Math.asin(gx) * 180 / Math.PI,
+      beta: Math.asin(gy) * 180 / Math.PI
+    });
+    gotOrient = false;
   }
 
   function startOrientation() {
     if (orientOn) return;
     orientOn = true;
     window.addEventListener('deviceorientation', onOrient, listen);
+    window.addEventListener('deviceorientationabsolute', onOrient, listen);
+    window.addEventListener('devicemotion', onMotion, listen);
+  }
+
+  function bootPhoneTilt() {
+    if (fine.matches) return;
+    const askOrient = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
+    const askMotion = window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function';
+    const request = () => {
+      if (orientOn) return;
+      if (!askOrient && !askMotion) {
+        startOrientation();
+        return;
+      }
+      const jobs = [];
+      if (askOrient) jobs.push(DeviceOrientationEvent.requestPermission());
+      if (askMotion) jobs.push(DeviceMotionEvent.requestPermission());
+      Promise.all(jobs).then(states => {
+        if (states.includes('granted')) startOrientation();
+      }).catch(() => {});
+    };
+    if (!askOrient && !askMotion) startOrientation();
+    else {
+      document.addEventListener('touchend', request, true);
+      document.addEventListener('click', request, true);
+    }
   }
 
   document.querySelectorAll('.tilt-card').forEach(card => {
@@ -377,22 +416,9 @@
     }, { passive: true, signal: tiltEvents.signal });
     window.addEventListener('pointerup', endTouch, listen);
     window.addEventListener('pointercancel', endTouch, listen);
-    const askOrient = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
-    const armOrient = () => {
-      if (!askOrient) {
-        startOrientation();
-        return;
-      }
-      DeviceOrientationEvent.requestPermission().then(state => {
-        if (state === 'granted') startOrientation();
-      }).catch(() => {});
-    };
-    if (!askOrient) startOrientation();
-    else {
-      window.addEventListener('touchend', armOrient, { once: true });
-      window.addEventListener('click', armOrient, { once: true });
-    }
   }
+
+  bootPhoneTilt();
 
   window.addEventListener('blur', resetTilts);
   document.addEventListener('visibilitychange', () => {
