@@ -1062,4 +1062,36 @@ html.page-hidden *::after {
   font-weight: 800;
 }
 
+.motion-note {
+  position: fixed;
+  left: 50%;
+  bottom: calc(150px + env(safe-area-inset-bottom));
+  z-index: 80;
+  width: min(340px, calc(100vw - 28px));
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(120, 230, 238, .38);
+  background: rgba(8, 12, 24, .92);
+  color: #eef3ff;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  transform: translateX(-50%) translateY(12px);
+  opacity: 0;
+  transition: opacity .28s ease, transform .28s ease;
+  font-family: Inter, "Segoe UI", sans-serif;
+}
+.motion-note.is-in { opacity: 1; transform: translateX(-50%) translateY(0); }
+.motion-kicker { margin: 0 0 6px; color: #78e6ee; letter-spacing: .18em; font-size: .62rem; }
+.motion-title { margin: 0; font-size: 1.02rem; font-weight: 620; letter-spacing: -.02em; }
+.motion-copy { margin: 6px 0 0; color: #b7c0d4; font-size: .84rem; line-height: 1.45; }
+.motion-actions { display: flex; gap: 8px; margin-top: 12px; }
+.motion-allow, .motion-skip {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font: 600 .78rem/1 Inter, "Segoe UI", sans-serif;
+}
+.motion-allow { border: 0; background: #78e6ee; color: #071016; }
+.motion-skip { border: 1px solid rgba(210, 220, 235, .28); background: transparent; color: #d5dcea; }
+.motion-note.is-on { border-color: rgba(125, 255, 168, .45); }
+
 

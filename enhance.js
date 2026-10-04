@@ -303,24 +303,46 @@
     if (fine.matches) return;
     const askOrient = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
     const askMotion = window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function';
-    const request = () => {
-      if (orientOn) return;
-      if (!askOrient && !askMotion) {
-        startOrientation();
-        return;
-      }
+    const needsAsk = Boolean(askOrient || askMotion);
+    if (!needsAsk) startOrientation();
+
+    const note = document.createElement('div');
+    note.className = 'motion-note';
+    note.setAttribute('role', 'status');
+    note.innerHTML = needsAsk
+      ? '<p class="motion-kicker">CHUYỂN ĐỘNG</p><p class="motion-title">Cho phép điện thoại dẫn hiệu ứng</p><p class="motion-copy">Bật cảm biến, rồi nghiêng hoặc lắc nhẹ máy. Không gian sẽ nghiêng theo đúng phía bạn.</p><div class="motion-actions"><button type="button" class="motion-allow">Bật hiệu ứng</button><button type="button" class="motion-skip">Để sau</button></div>'
+      : '<p class="motion-kicker">CHUYỂN ĐỘNG</p><p class="motion-title">Nghiêng hoặc lắc nhẹ máy</p><p class="motion-copy">Hiệu ứng 3D đang chạy theo điện thoại của bạn.</p>';
+    document.body.append(note);
+    requestAnimationFrame(() => note.classList.add('is-in'));
+
+    const close = () => {
+      note.classList.remove('is-in');
+      setTimeout(() => note.remove(), 320);
+    };
+    if (!needsAsk) {
+      setTimeout(close, 3200);
+      return;
+    }
+    note.querySelector('.motion-skip').addEventListener('click', close);
+    note.querySelector('.motion-allow').addEventListener('click', () => {
       const jobs = [];
       if (askOrient) jobs.push(DeviceOrientationEvent.requestPermission());
       if (askMotion) jobs.push(DeviceMotionEvent.requestPermission());
       Promise.all(jobs).then(states => {
-        if (states.includes('granted')) startOrientation();
-      }).catch(() => {});
-    };
-    if (!askOrient && !askMotion) startOrientation();
-    else {
-      document.addEventListener('touchend', request, true);
-      document.addEventListener('click', request, true);
-    }
+        if (!states.includes('granted')) {
+          note.querySelector('.motion-copy').textContent = 'Trình duyệt chưa cho phép. Bạn có thể bật lại trong phần cài đặt của Safari.';
+          return;
+        }
+        startOrientation();
+        note.classList.add('is-on');
+        note.querySelector('.motion-title').textContent = 'Đã bật';
+        note.querySelector('.motion-copy').textContent = 'Nghiêng hoặc lắc nhẹ điện thoại. Hiệu ứng sẽ nghiêng theo phía máy.';
+        note.querySelector('.motion-actions').hidden = true;
+        setTimeout(close, 2400);
+      }).catch(() => {
+        note.querySelector('.motion-copy').textContent = 'Chạm lại nút Bật hiệu ứng để hiện câu hỏi cho phép.';
+      });
+    });
   }
 
   document.querySelectorAll('.tilt-card').forEach(card => {
