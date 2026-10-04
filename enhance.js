@@ -319,12 +319,18 @@
       note.classList.remove('is-in');
       setTimeout(() => note.remove(), 320);
     };
+    const chose = () => window.dispatchEvent(new Event('nt-motion-choice'));
     if (!needsAsk) {
+      chose();
       setTimeout(close, 3200);
       return;
     }
-    note.querySelector('.motion-skip').addEventListener('click', close);
+    note.querySelector('.motion-skip').addEventListener('click', () => {
+      chose();
+      close();
+    });
     note.querySelector('.motion-allow').addEventListener('click', () => {
+      chose();
       const jobs = [];
       if (askOrient) jobs.push(DeviceOrientationEvent.requestPermission());
       if (askMotion) jobs.push(DeviceMotionEvent.requestPermission());

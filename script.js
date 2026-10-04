@@ -818,18 +818,30 @@ musicEl('.music-off').addEventListener('click', stopMusic);
 musicEl('.music-close').addEventListener('click', () => compactMusic(true));
 musicEl('.hamster-mascot').addEventListener('click', () => compactMusic(!musicEl('.music-shell').hidden));
 let hamsterHolding = false;
+let hamsterIntro = true;
+let hamsterHintTimer = 0;
 const hamsterTip = musicEl('.hamster-tip');
-const hamsterHintTimer = setTimeout(() => { if (!hamsterHolding && hamsterTip) hamsterTip.classList.remove('is-on'); }, 4500);
+function scheduleHamsterHint(delay) {
+  clearTimeout(hamsterHintTimer);
+  hamsterHintTimer = setTimeout(() => {
+    hamsterIntro = false;
+    if (!hamsterHolding && hamsterTip) hamsterTip.classList.remove('is-on');
+  }, delay);
+}
 if (hamsterTip) hamsterTip.classList.add('is-on');
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) scheduleHamsterHint(5000);
+else window.addEventListener('nt-motion-choice', () => scheduleHamsterHint(3000), { once: true });
 musicEl('.hamster-mascot').addEventListener('pointerdown', () => {
   hamsterHolding = true;
+  if (hamsterIntro) return;
   clearTimeout(hamsterHintTimer);
   if (hamsterTip) hamsterTip.classList.add('is-on');
 });
 function hideHamsterHint() {
   if (!hamsterHolding) return;
   hamsterHolding = false;
-  if (hamsterTip) hamsterTip.classList.remove('is-on');
+  if (hamsterIntro || !hamsterTip) return;
+  hamsterTip.classList.remove('is-on');
 }
 window.addEventListener('pointerup', hideHamsterHint);
 window.addEventListener('pointercancel', hideHamsterHint);
