@@ -517,11 +517,14 @@
   const menuMobile = () => window.matchMedia('(max-width: 760px)').matches;
   function placeMenu() {
     if (menuMobile()) {
-      ntjr.style.left = '';
-      ntjr.style.top = '';
-      ntjr.style.right = '';
+      ntjr.style.right = 'auto';
+      ntjr.style.bottom = 'auto';
+      ntjr.style.left = '50%';
+      ntjr.style.top = '50%';
+      ntjr.style.transform = 'translate(-50%, -50%)';
       return;
     }
+    ntjr.style.transform = '';
     try {
       const saved = JSON.parse(localStorage.getItem('ngan-tu-ntjr-pos') || 'null');
       if (saved && saved.left && saved.top) {
@@ -534,9 +537,13 @@
   const dragHead = document.querySelector('#ntjr-drag');
   let drag = null;
   dragHead.addEventListener('pointerdown', event => {
-    if (menuMobile() || event.target.closest('button, input, select, label')) return;
+    if (event.target.closest('button, input, select, label')) return;
     const rect = ntjr.getBoundingClientRect();
-    drag = { dx: event.clientX - rect.left, dy: event.clientY - rect.top };
+    ntjr.style.transform = 'none';
+    ntjr.style.left = rect.left + 'px';
+    ntjr.style.top = rect.top + 'px';
+    ntjr.style.right = 'auto';
+    drag = { dx: event.clientX - rect.left, dy: event.clientY - rect.top, mobile: menuMobile() };
     dragHead.setPointerCapture(event.pointerId);
   });
   dragHead.addEventListener('pointermove', event => {
@@ -551,7 +558,9 @@
   });
   dragHead.addEventListener('pointerup', () => {
     if (!drag) return;
+    const mobile = drag.mobile;
     drag = null;
+    if (mobile) return;
     localStorage.setItem('ngan-tu-ntjr-pos', JSON.stringify({ left: ntjr.style.left, top: ntjr.style.top }));
   });
   document.querySelector('#snake-sound').addEventListener('click', event => {

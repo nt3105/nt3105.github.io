@@ -330,11 +330,41 @@
       if (active) release(active.card);
       active = null;
     }, listen);
-  } else if (!reduce.matches) {
+  } else if (!reduce.matches && root.dataset.tiltTouch !== '1') {
+    root.dataset.tiltTouch = '1';
+    let touch = null;
+    const endTouch = event => {
+      if (!touch || (event && event.pointerId !== touch.id)) return;
+      release(touch.box.card);
+      touch = null;
+    };
     window.addEventListener('pointerdown', event => {
-      if (event.pointerType !== 'touch' || calm()) return;
+      if (event.pointerType !== 'touch' || calm() || scrolling) return;
+      if (event.target.closest('.ntjr, .music-widget, .style-controls, .snake-dock, .header, button, a, input, textarea')) return;
       boxesDirty = true;
+      const box = hitAt(event.clientX, event.clientY);
+      if (!box) return;
+      touch = { id: event.pointerId, box, x: event.clientX, y: event.clientY, locked: false };
     }, listen);
+    window.addEventListener('pointermove', event => {
+      if (!touch || event.pointerId !== touch.id || calm() || scrolling) return;
+      const dx = event.clientX - touch.x;
+      const dy = event.clientY - touch.y;
+      if (!touch.locked) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        if (Math.abs(dy) > Math.abs(dx) * 1.35) {
+          touch = null;
+          return;
+        }
+        touch.locked = true;
+      }
+      const nx = clamp(dx / 90, -1, 1);
+      const ny = clamp(dy / 110, -1, 1);
+      writeTilt(touch.box.card, -ny * 5, nx * 5);
+      glowVars(touch.box.card, nx, ny);
+    }, { passive: true, signal: tiltEvents.signal });
+    window.addEventListener('pointerup', endTouch, listen);
+    window.addEventListener('pointercancel', endTouch, listen);
   }
 
   window.addEventListener('blur', resetTilts);

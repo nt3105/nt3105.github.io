@@ -945,15 +945,20 @@ body.snake-open .music-widget.snake-tucked { width: 220px; }
 @media (max-width: 760px) {
   .snake-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
   .ntjr {
-    position: static;
-    width: 100%;
-    max-height: 65vh;
-    margin-top: 10px;
+    position: fixed;
+    left: 50%;
+    top: 50%;
     right: auto;
-    top: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(340px, calc(100vw - 28px));
+    max-height: min(72dvh, calc(100dvh - 32px));
+    margin: 0;
+    z-index: 120;
   }
-  .ntjr-head { cursor: default; touch-action: auto; }
+  .ntjr-head { cursor: grab; touch-action: none; }
   .ntjr-row { font-size: 14px; min-height: 42px; }
+  .ntjr-scroll { max-height: min(46dvh, 420px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .ntjr-orb-float,
