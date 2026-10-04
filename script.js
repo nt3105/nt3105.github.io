@@ -428,8 +428,8 @@ const styleControls = document.createElement('aside');
 styleControls.className = 'style-controls';
 styleControls.setAttribute('aria-label', 'Tùy chỉnh giao diện');
 styleControls.innerHTML = `
-  <button class="style-toggle" type="button" aria-expanded="false" aria-controls="style-panel"><span aria-hidden="true"></span>Giao diện</button>
-  <div class="style-panel" id="style-panel" hidden><div class="style-panel-head"><h3>Màu của bạn</h3><button class="style-close" type="button" aria-label="Đóng bảng màu">×</button></div><p>Chọn bảng màu có sẵn hoặc tự phối.</p>
+  <button class="style-toggle" type="button" aria-expanded="false" aria-controls="style-panel" aria-label="Tùy chỉnh giao diện"><span aria-hidden="true"></span></button>
+  <div class="style-panel" id="style-panel" hidden><div class="style-panel-head"><p class="eyebrow">GIAO DIỆN</p><h3>Tinh chỉnh</h3><button class="style-close" type="button" aria-label="Đóng bảng màu">×</button></div><p class="style-lead">Màu, ánh sáng và nhịp chuyển động. Lưu ngay trên máy bạn.</p><h4 class="fx-label">Màu nhấn</h4>
     <div class="accent-options" role="group" aria-label="Màu nhấn">
       <button type="button" data-accent-choice="violet" aria-pressed="true"><i style="--swatch:linear-gradient(135deg,#7ee8ee,#bb8cff)" aria-hidden="true"></i>Tím</button>
       <button type="button" data-accent-choice="ice" aria-pressed="false"><i style="--swatch:linear-gradient(135deg,#9bf7e6,#66cfff)" aria-hidden="true"></i>Xanh băng</button>
@@ -452,7 +452,7 @@ stylePanel.insertAdjacentHTML('beforeend', `
     <label>Nền<input type="color" id="theme-base" value="#18112e"></label>
     <small>Nền tự cân chỉnh tối để chữ luôn dễ đọc.</small>
   </div>`);
-styleControls.insertAdjacentHTML('beforeend', '<label class="glow-option glow-shortcut" title="Bật/tắt ánh sáng theo chuột và chạm"><span aria-hidden="true">✧</span> Ánh sáng<input type="checkbox" id="global-glow-toggle" aria-label="Ánh sáng theo chuột và chạm" checked><span class="glow-switch" aria-hidden="true"></span></label>');
+stylePanel.insertAdjacentHTML('beforeend', '<h4 class="fx-label">Ánh sáng</h4><label class="glow-option glow-shortcut" title="Bật/tắt ánh sáng theo chuột"><span aria-hidden="true">✧</span> Ánh sáng theo chuột<input type="checkbox" id="global-glow-toggle" aria-label="Ánh sáng theo chuột" checked><span class="glow-switch" aria-hidden="true"></span></label>');
 styleControls.querySelector('.style-close').addEventListener('click', () => { closeStylePanel(); styleToggle.focus({ preventScroll: true }); });
 const colorInputs = ['theme-first', 'theme-second', 'theme-base'].map(id => document.getElementById(id));
 function hexRGB(hex) { return [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16)); }
@@ -489,14 +489,23 @@ colorInputs.forEach(input => input.addEventListener('input', () => {
   applyTheme(colors);
   try { localStorage.setItem('ngan-tu-custom-colors', JSON.stringify(colors)); } catch {}
 }));
+let styleCloseTimer = 0;
 function closeStylePanel() {
-  stylePanel.hidden = true;
+  stylePanel.classList.remove('is-open');
   styleToggle.setAttribute('aria-expanded', 'false');
+  clearTimeout(styleCloseTimer);
+  styleCloseTimer = setTimeout(() => {
+    if (!stylePanel.classList.contains('is-open')) stylePanel.hidden = true;
+  }, 220);
 }
 styleToggle.addEventListener('click', () => {
-  const opening = stylePanel.hidden;
-  stylePanel.hidden = !opening;
-  styleToggle.setAttribute('aria-expanded', String(opening));
+  const opening = stylePanel.hidden || !stylePanel.classList.contains('is-open');
+  if (opening) {
+    clearTimeout(styleCloseTimer);
+    stylePanel.hidden = false;
+    styleToggle.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(() => stylePanel.classList.add('is-open'));
+  } else closeStylePanel();
 });
 accentButtons.forEach(button => button.addEventListener('click', () => {
   const choice = button.dataset.accentChoice;
@@ -726,7 +735,7 @@ let glowX = innerWidth / 2;
 let glowY = innerHeight * .65;
 function hideGlobalGlow() { globalGlow.classList.remove('shown'); }
 function moveGlobalGlow(x, y) {
-  if (!glowEnabled || glowMotion.matches) return;
+  if (!glowEnabled || glowMotion.matches || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   glowX = x; glowY = y;
   clearTimeout(glowTimer);
   if (!glowFrame) glowFrame = requestAnimationFrame(() => {
@@ -772,10 +781,15 @@ if ('IntersectionObserver' in window && !reducedMotion) {
 }
 
 // Kéo các tiện ích bằng tay nắm; không cản nút bấm, thanh tua hoặc cuộn trang.
-function makeWidgetDraggable(widget, handleParents) {
+function makeWidgetDraggable(widget) {
   let drag = null;
   let moved = false;
   let preferred = null;
+  const storageKey = widget.classList.contains('music-widget') ? 'ngan-tu-player-pos' : null;
+  function persistPosition() {
+    if (!storageKey || !preferred) return;
+    try { localStorage.setItem(storageKey, JSON.stringify(preferred)); } catch { /* Không bắt buộc phải lưu. */ }
+  }
   function bounds() {
     const viewport = window.visualViewport;
     return { left: (viewport?.offsetLeft || 0) + 8, top: (viewport?.offsetTop || 0) + 8,
@@ -795,47 +809,69 @@ function makeWidgetDraggable(widget, handleParents) {
     if (!moved) { positionColorPanel(); return; }
     if (preferred) place(preferred.left, preferred.top, false);
   }
-  handleParents.forEach(parent => {
-    const handle = document.createElement('button');
-    handle.type = 'button'; handle.className = 'widget-drag-handle';
-    handle.textContent = '⠿';
-    handle.setAttribute('aria-label', 'Di chuyển bảng: kéo hoặc dùng phím mũi tên; Home để đặt lại');
-    handle.title = 'Kéo để di chuyển · Nhấn đúp để đặt lại';
-    parent.prepend(handle);
-    handle.addEventListener('pointerdown', event => {
-      if (event.button !== 0) return;
-      const rect = widget.getBoundingClientRect();
-      drag = { id: event.pointerId, x: event.clientX - rect.left, y: event.clientY - rect.top };
-      handle.setPointerCapture(event.pointerId);
+  // Kéo trên toàn bộ bề mặt; chạm nhẹ vẫn bấm nút bình thường.
+  let suppressClick = false;
+  widget.addEventListener('pointerdown', event => {
+    if (event.button !== 0) return;
+    if (event.target.closest('button, a, input, select, textarea, label, .style-panel, .music-controls, .music-volume, .music-playlist')) return;
+    const rect = widget.getBoundingClientRect();
+    drag = { id: event.pointerId, startX: event.clientX, startY: event.clientY,
+      x: event.clientX - rect.left, y: event.clientY - rect.top, active: false };
+  });
+  widget.addEventListener('pointermove', event => {
+    if (!drag || drag.id !== event.pointerId) return;
+    if (!drag.active && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 7) return;
+    if (!drag.active) {
+      drag.active = true;
+      widget.setPointerCapture(event.pointerId);
       widget.classList.add('widget-dragging');
-    });
-    handle.addEventListener('pointermove', event => {
-      if (!drag || drag.id !== event.pointerId) return;
-      place(event.clientX - drag.x, event.clientY - drag.y);
-    });
-    function release() { drag = null; widget.classList.remove('widget-dragging'); }
-    handle.addEventListener('pointerup', release);
-    handle.addEventListener('pointercancel', release);
-    handle.addEventListener('lostpointercapture', release);
-    function reset() {
-      moved = false;
-      preferred = null;
-      ['top', 'left', 'right', 'bottom'].forEach(key => widget.style.removeProperty(key));
-      positionColorPanel();
+      suppressClick = true;
     }
-    handle.addEventListener('dblclick', reset);
-    handle.addEventListener('keydown', event => {
-      if (event.key === 'Home') { event.preventDefault(); reset(); return; }
-      const steps = { ArrowLeft: [-20,0], ArrowRight: [20,0], ArrowUp: [0,-20], ArrowDown: [0,20] };
-      const step = steps[event.key];
-      if (!step) return;
-      event.preventDefault();
-      const rect = widget.getBoundingClientRect(); place(rect.left + step[0], rect.top + step[1]);
-    });
+    place(event.clientX - drag.x, event.clientY - drag.y);
+  });
+  function release() {
+    const dragged = Boolean(drag && drag.active);
+    drag = null;
+    widget.classList.remove('widget-dragging');
+    if (dragged) persistPosition();
+    // Click phát sinh sau thao tác kéo không được bật/tắt nhạc hay ánh sáng.
+    setTimeout(() => { suppressClick = false; }, 0);
+  }
+  widget.addEventListener('pointerup', release);
+  widget.addEventListener('pointercancel', release);
+  widget.addEventListener('lostpointercapture', release);
+  widget.addEventListener('click', event => {
+    if (suppressClick) { event.preventDefault(); event.stopImmediatePropagation(); }
+  }, true);
+  widget.addEventListener('dragstart', event => event.preventDefault());
+  widget.tabIndex = 0;
+  widget.title = 'Kéo để di chuyển · Khi chọn bảng, dùng phím mũi tên để di chuyển';
+  widget.addEventListener('keydown', event => {
+    if (event.target !== widget) return;
+    if (event.key === 'Home') {
+      event.preventDefault(); moved = false; preferred = null;
+      ['top', 'left', 'right', 'bottom'].forEach(key => widget.style.removeProperty(key));
+      if (storageKey) { try { localStorage.removeItem(storageKey); } catch { /* Giữ vị trí mặc định. */ } }
+      positionColorPanel(); return;
+    }
+    const steps = { ArrowLeft: [-20,0], ArrowRight: [20,0], ArrowUp: [0,-20], ArrowDown: [0,20] };
+    const step = steps[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const rect = widget.getBoundingClientRect(); place(rect.left + step[0], rect.top + step[1]);
+    persistPosition();
   });
   window.addEventListener('resize', constrain);
   window.visualViewport?.addEventListener('resize', constrain);
   if ('ResizeObserver' in window) new ResizeObserver(constrain).observe(widget);
+  if (storageKey) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+        requestAnimationFrame(() => place(saved.left, saved.top));
+      }
+    } catch { /* Giữ vị trí mặc định. */ }
+  }
 }
 function positionColorPanel() {
   if (stylePanel.hidden) return;
@@ -848,22 +884,10 @@ function positionColorPanel() {
   stylePanel.style.top = Math.max(8, Math.min(top >= 8 ? top : anchor.bottom + 10, height - panel.height - 8)) + 'px';
 }
 styleToggle.addEventListener('click', positionColorPanel);
-makeWidgetDraggable(musicWidget, [musicEl('.music-head'), musicEl('.music-mini')]);
-makeWidgetDraggable(styleControls, [styleControls]);
+makeWidgetDraggable(musicWidget);
 
 
-// Góc cá nhân: đồng hồ Việt Nam, bài hát hiện tại và liên hệ nhanh.
-const vnClock = document.getElementById('vietnam-clock');
-const vnDate = document.getElementById('vietnam-date');
-function updateVietnamClock() {
-  const now = new Date();
-  vnClock.textContent = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
-  vnClock.dateTime = now.toISOString();
-  vnDate.textContent = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'long', day: '2-digit', month: '2-digit' }).format(now) + ' · Việt Nam';
-}
-updateVietnamClock();
-setInterval(() => { if (!document.hidden) updateVietnamClock(); }, 30000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) updateVietnamClock(); });
+// Góc riêng: đồng bộ bài hát hiện tại và chế độ phát ngẫu nhiên.
 function syncLifeMusic() {
   const track = musicPlaylist[musicIndex];
   document.getElementById('life-song-title').textContent = track.title;
@@ -874,13 +898,6 @@ function syncLifeMusic() {
 ['playing', 'pause', 'loadstart', 'loadedmetadata'].forEach(event => musicAudio.addEventListener(event, syncLifeMusic));
 syncLifeMusic();
 document.getElementById('life-open-music').addEventListener('click', () => compactMusic(false));
-document.getElementById('copy-contact-email').addEventListener('click', async () => {
-  const status = document.getElementById('copy-email-status');
-  try {
-    await navigator.clipboard.writeText('kienngantu3105@gmail.com');
-    status.textContent = 'Đã sao chép email.';
-  } catch { status.textContent = 'Bạn có thể sao chép: kienngantu3105@gmail.com'; }
-});
 const shuffleButton = document.createElement('button');
 shuffleButton.className = 'shuffle-button';
 shuffleButton.type = 'button';
@@ -892,3 +909,120 @@ shuffleButton.addEventListener('click', () => {
   shuffleButton.setAttribute('aria-pressed', String(shuffleMusic));
   musicEl('.music-footer span').textContent = shuffleMusic ? 'Ngẫu nhiên · Lặp danh sách' : 'Tự chuyển bài · Lặp danh sách';
 });
+
+
+// Điều hướng nhanh: chạy cục bộ, tìm tiếng Việt có hoặc không dấu.
+(() => {
+  const dialog = document.getElementById('explorer');
+  const query = document.getElementById('explorer-query');
+  const results = document.getElementById('explorer-results');
+  const destinations = [
+    ['✧', 'Về mình', 'Một chút về Ngân Tú', '#about'],
+    ['⌘', 'Dự án', 'Website cá nhân & game con sâu', '#projects'],
+    ['♫', 'Âm nhạc', 'Mở playlist của mình', 'music'],
+    ['▧', 'Khoảnh khắc', 'Bộ ảnh và kỷ niệm', '#memories'],
+    ['◇', 'Góc riêng', 'Code, game và những điều mình thích', '#personal-space'],
+    ['♡', 'Ủng hộ', 'Góp gió thành bão', '#donate'],
+    ['↗', 'Liên hệ', 'Gửi mình một lời chào', '#contact']
+  ];
+  const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase();
+  let opener = null;
+  let oldOverflow = '';
+  function render() {
+    results.replaceChildren();
+    destinations.filter(item => normalize(item[1] + ' ' + item[2]).includes(normalize(query.value.trim()))).forEach(item => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'explorer-item';
+      const icon = document.createElement('span'); icon.textContent = item[0]; icon.setAttribute('aria-hidden', 'true');
+      const text = document.createElement('div');
+      const title = document.createElement('strong'); title.textContent = item[1];
+      const description = document.createElement('small'); description.textContent = item[2];
+      const arrow = document.createElement('span'); arrow.textContent = '↗'; arrow.setAttribute('aria-hidden', 'true');
+      text.append(title, description); button.append(icon, text, arrow);
+      button.addEventListener('click', () => {
+        dialog.close();
+        if (item[3] === 'music') { compactMusic(false); musicEl('.music-head button')?.focus({preventScroll:true}); }
+        else document.querySelector(item[3])?.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+      });
+      results.append(button);
+    });
+    document.getElementById('explorer-empty').hidden = results.childElementCount > 0;
+  }
+  function open() {
+    if (dialog.open || document.querySelector('dialog[open]')) return;
+    opener = document.activeElement; oldOverflow = document.body.style.overflow;
+    query.value = ''; render(); dialog.showModal(); document.body.style.overflow = 'hidden'; query.focus();
+  }
+  document.querySelectorAll('[data-open-explorer]').forEach(button => button.addEventListener('click', open));
+  query.addEventListener('input', render);
+  query.addEventListener('keydown', event => { if (event.key === 'ArrowDown') { event.preventDefault(); results.querySelector('button')?.focus(); } });
+  document.getElementById('explorer-close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', event => { const r = dialog.getBoundingClientRect(); if(event.target === dialog && (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)) dialog.close(); });
+  dialog.addEventListener('close', () => { document.body.style.overflow = oldOverflow; opener?.focus({preventScroll:true}); });
+  document.addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); dialog.open ? dialog.close() : open(); } });
+  const back = document.getElementById('back-top');
+  const percent = document.createElement('small'); percent.setAttribute('aria-hidden', 'true'); back.append(percent);
+  let scheduled = false;
+  function progress() {
+    const total = document.documentElement.scrollHeight - innerHeight;
+    const value = Math.max(0,Math.min(100,Math.round(scrollY / Math.max(1,total) * 100)));
+    back.style.setProperty('--read-progress', value + '%'); percent.textContent = value + '%'; scheduled = false;
+  }
+  addEventListener('scroll', () => { if (!scheduled) { scheduled = true; requestAnimationFrame(progress); } }, {passive:true});
+  addEventListener('resize', progress); progress();
+})();
+
+// Nghiêng 3D theo chuột / chạm. Không chặn thao tác cuộn của điện thoại.
+(() => {
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const cards = [...document.querySelectorAll('.hero-visual, .project-card, .life-card, .memory-photo, .skill-card, .social-card')];
+  const resetters = [];
+  cards.forEach(card => {
+    card.classList.add('depth-card');
+    const shine = document.createElement('span');
+    shine.className = 'depth-shine'; shine.setAttribute('aria-hidden', 'true'); card.append(shine);
+    let frame = 0, rect = null, point = null, resetTimer = 0;
+    function reset() {
+      clearTimeout(resetTimer); cancelAnimationFrame(frame); frame = 0; rect = null;
+      card.classList.remove('depth-active');
+      card.style.setProperty('--depth-angle', '0deg');
+      card.style.setProperty('--layer-x', '0px'); card.style.setProperty('--layer-y', '0px');
+    }
+    resetters.push(reset);
+    function update(event) {
+      if (motion.matches || (event.isPrimary === false)) return;
+      clearTimeout(resetTimer);
+      if (!rect) rect = card.getBoundingClientRect();
+      point = {x:event.clientX, y:event.clientY, touch:event.pointerType === 'touch'};
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const x = Math.max(-1,Math.min(1,(point.x - rect.left) / rect.width * 2 - 1));
+        const y = Math.max(-1,Math.min(1,(point.y - rect.top) / rect.height * 2 - 1));
+        const strength = point.touch ? 4 : (card.classList.contains('hero-visual') ? 9 : 6);
+        const magnitude = Math.hypot(x,y);
+        card.style.setProperty('--depth-axis', magnitude > .001 ? `${-y} ${x} 0` : '1 0 0');
+        card.style.setProperty('--depth-angle', `${Math.min(magnitude,1.2)*strength}deg`);
+        card.style.setProperty('--depth-x', `${(x+1)*50}%`); card.style.setProperty('--depth-y', `${(y+1)*50}%`);
+        card.style.setProperty('--layer-x', `${x*9}px`); card.style.setProperty('--layer-y', `${y*9}px`);
+        card.classList.add('depth-active');
+      });
+    }
+    card.addEventListener('pointerenter', update, {passive:true});
+    card.addEventListener('pointerdown', update, {passive:true});
+    card.addEventListener('pointermove', update, {passive:true});
+    card.addEventListener('pointerleave', reset, {passive:true});
+    card.addEventListener('pointerup', event => { if(event.pointerType !== 'mouse') resetTimer = setTimeout(reset,250); }, {passive:true});
+    card.addEventListener('pointercancel', () => { resetTimer = setTimeout(reset,200); }, {passive:true});
+  });
+  // Xóa trạng thái khi đổi kích thước, rời tab hoặc bật Giảm chuyển động.
+  addEventListener('resize', () => resetters.forEach(reset => reset()), {passive:true});
+  addEventListener('blur', () => resetters.forEach(reset => reset()));
+  motion.addEventListener('change', () => resetters.forEach(reset => reset()));
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (!entry.isIntersecting) resetters[cards.indexOf(entry.target)]();
+    }));
+    cards.forEach(card => observer.observe(card));
+  }
+})();
