@@ -550,11 +550,17 @@ function setAccent(choice) {
   applyTheme(themePresets[choice], choice);
   try { localStorage.removeItem('ngan-tu-custom-colors'); } catch {}
 }
+const accentNames = Object.keys(themePresets);
+let visitAccent = accentNames[Math.floor(Math.random() * accentNames.length)];
 try {
-  const custom = JSON.parse(localStorage.getItem('ngan-tu-custom-colors') || 'null');
-  if (custom) applyTheme(custom);
-  else setAccent(localStorage.getItem('ngan-tu-accent') || 'violet');
-} catch { setAccent('violet'); }
+  const last = localStorage.getItem('ngan-tu-accent');
+  if (accentNames.length > 1 && last === visitAccent) {
+    const rest = accentNames.filter(name => name !== last);
+    visitAccent = rest[Math.floor(Math.random() * rest.length)];
+  }
+  localStorage.setItem('ngan-tu-accent', visitAccent);
+} catch {}
+setAccent(visitAccent);
 colorInputs.forEach(input => input.addEventListener('input', () => {
   const colors = colorInputs.map(field => field.value);
   applyTheme(colors);
