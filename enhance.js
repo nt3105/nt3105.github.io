@@ -336,6 +336,7 @@
     const endTouch = event => {
       if (!touch || (event && event.pointerId !== touch.id)) return;
       release(touch.box.card);
+      if (touchBox && touchBox.card === touch.box.card) touchBox = null;
       touch = null;
     };
     window.addEventListener('pointerdown', event => {
@@ -345,6 +346,7 @@
       const box = hitAt(event.clientX, event.clientY);
       if (!box) return;
       touch = { id: event.pointerId, box, x: event.clientX, y: event.clientY, locked: false };
+      touchBox = box;
     }, listen);
     window.addEventListener('pointermove', event => {
       if (!touch || event.pointerId !== touch.id || calm() || scrolling) return;
@@ -365,6 +367,14 @@
     }, { passive: true, signal: tiltEvents.signal });
     window.addEventListener('pointerup', endTouch, listen);
     window.addEventListener('pointercancel', endTouch, listen);
+    const askOrient = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
+    window.addEventListener('pointerdown', () => {
+      if (askOrient) {
+        DeviceOrientationEvent.requestPermission().then(state => {
+          if (state === 'granted') startOrientation();
+        }).catch(() => {});
+      } else startOrientation();
+    }, { once: true });
   }
 
   window.addEventListener('blur', resetTilts);

@@ -68,7 +68,7 @@
     position: absolute; left: 0; top: 0;
     width: 1px; height: 16px; margin-left: -.5px; margin-top: -8px;
     background: linear-gradient(#eefcff, rgba(120, 230, 238, .2));
-    transform: rotateY(calc(var(--i) * 7.5deg)) translateZ(var(--z));
+    transform: rotateY(calc(var(--i) * var(--step, 7.5deg))) translateZ(var(--z));
   }
   .ring.a i { --z: min(38vw, 380px); }
   .ring.b i { --z: min(30vw, 300px); }
@@ -197,13 +197,18 @@
   }
 
   @media (max-width: 760px) {
-    .grain, .ring { display: none; }
-    .play .name, .play .dev, .play .under, .play .enter, .play .cube {
+    .grain { display: none; }
+    .play .name, .play .dev, .play .under, .play .enter {
       opacity: 1;
       filter: none;
       animation: none;
     }
-    .play .load span { animation: load 1.2s ease forwards; }
+    .play .cube {
+      opacity: 1;
+      filter: none;
+      animation: cube 18s linear infinite;
+    }
+    .play .load span { animation: load 1.6s ease forwards; }
     .ring.a i, .ring.b i, .ring.c i { --z: 132px; }
     .name { font-size: min(2.8rem, calc((100vw - 36px) / 6.2)); }
     .cube { width: 54px; height: 54px; margin: -27px 0 0 -27px; top: 16%; }
@@ -266,15 +271,16 @@
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const mark = '</' + '>';
   document.querySelectorAll('.cube span').forEach(face => { face.textContent = mark; });
-  if (fine) {
-    document.querySelectorAll('.ring').forEach(ring => {
-      for (let i = 0; i < 24; i++) {
-        const tick = document.createElement('i');
-        tick.style.setProperty('--i', i);
-        ring.append(tick);
-      }
-    });
-  }
+  const phone = matchMedia('(max-width: 760px)').matches;
+  const count = phone ? 18 : 48;
+  document.querySelectorAll('.ring').forEach(ring => {
+    ring.style.setProperty('--step', (360 / count) + 'deg');
+    for (let i = 0; i < count; i++) {
+      const tick = document.createElement('i');
+      tick.style.setProperty('--i', i);
+      ring.append(tick);
+    }
+  });
   let tx = 0, ty = 0, px = 0, py = 0, frame = 0;
   function paint() {
     frame = 0;
@@ -290,6 +296,27 @@
       ty = e.clientY / innerHeight - .5;
       if (!frame) frame = requestAnimationFrame(paint);
     }, { passive: true });
+  } else if (!reduce) {
+    addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch') {
+        tx = e.clientX / innerWidth - .5;
+        ty = e.clientY / innerHeight - .5;
+        if (!frame) frame = requestAnimationFrame(paint);
+      }
+    }, { passive: true });
+    const followPhone = () => {
+      const ask = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
+      const listen = () => addEventListener('deviceorientation', event => {
+        if (event.gamma == null) return;
+        tx = Math.max(-.7, Math.min(.7, event.gamma / 35));
+        ty = Math.max(-.7, Math.min(.7, ((event.beta || 0) - 35) / 45));
+        if (!frame) frame = requestAnimationFrame(paint);
+      });
+      if (ask) {
+        DeviceOrientationEvent.requestPermission().then(state => { if (state === 'granted') listen(); }).catch(() => {});
+      } else listen();
+    };
+    addEventListener('pointerdown', followPhone, { once: true });
   }
   const bgm = new Audio('audio/preah-thorng.mp3');
   bgm.preload = 'auto';
