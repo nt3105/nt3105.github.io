@@ -613,13 +613,11 @@ if (!introBgm) {
   musicAudio.preload = 'auto';
   musicAudio.volume = 0.35;
 }
-let musicIndex = Math.floor(Math.random() * musicPlaylist.length);
+let musicIndex = Math.random() < 0.65 ? 0 : 1 + Math.floor(Math.random() * (musicPlaylist.length - 1));
 try {
   const saved = Number(sessionStorage.getItem('nt-visit-track'));
   if (Number.isInteger(saved) && saved >= 0 && saved < musicPlaylist.length) musicIndex = saved;
   else {
-    const last = Number(localStorage.getItem('nt-last-track'));
-    if (musicPlaylist.length > 1 && last === musicIndex) musicIndex = (musicIndex + 1) % musicPlaylist.length;
     localStorage.setItem('nt-last-track', String(musicIndex));
     sessionStorage.setItem('nt-visit-track', String(musicIndex));
   }
