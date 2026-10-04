@@ -310,7 +310,7 @@
     note.className = 'motion-note';
     note.setAttribute('role', 'status');
     note.innerHTML = needsAsk
-      ? '<p class="motion-kicker">CHUYỂN ĐỘNG</p><p class="motion-title">Cho phép điện thoại dẫn hiệu ứng</p><p class="motion-copy">Bật cảm biến, rồi nghiêng hoặc lắc nhẹ máy. Không gian sẽ nghiêng theo đúng phía bạn.</p><div class="motion-actions"><button type="button" class="motion-allow">Bật hiệu ứng</button><button type="button" class="motion-skip">Để sau</button></div>'
+      ? '<p class="motion-kicker">CHUYỂN ĐỘNG</p><p class="motion-title">Cho phép điện thoại mở hiệu ứng</p><p class="motion-copy">Khi bạn nghiêng hoặc lắc nhẹ máy. Không gian sẽ nghiêng theo.</p><div class="motion-actions"><button type="button" class="motion-allow">Bật hiệu ứng</button><button type="button" class="motion-skip">Để sau</button></div>'
       : '<p class="motion-kicker">CHUYỂN ĐỘNG</p><p class="motion-title">Nghiêng hoặc lắc nhẹ máy</p><p class="motion-copy">Hiệu ứng 3D đang chạy theo điện thoại của bạn.</p>';
     document.body.append(note);
     requestAnimationFrame(() => note.classList.add('is-in'));

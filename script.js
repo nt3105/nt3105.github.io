@@ -821,7 +821,7 @@ musicEl('.music-close').addEventListener('click', () => compactMusic(true));
 musicEl('.hamster-mascot').addEventListener('click', () => compactMusic(!musicEl('.music-shell').hidden));
 let hamsterHolding = false;
 const hamsterTip = musicEl('.hamster-tip');
-const hamsterHintTimer = setTimeout(() => { if (!hamsterHolding && hamsterTip) hamsterTip.classList.remove('is-on'); }, 2500);
+const hamsterHintTimer = setTimeout(() => { if (!hamsterHolding && hamsterTip) hamsterTip.classList.remove('is-on'); }, 4500);
 if (hamsterTip) hamsterTip.classList.add('is-on');
 musicEl('.hamster-mascot').addEventListener('pointerdown', () => {
   hamsterHolding = true;
