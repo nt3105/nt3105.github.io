@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="ring" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9af7ff"/>
+      <stop offset="1" stop-color="#c9b0ff"/>
+    </linearGradient>
+    <radialGradient id="core" cx="36%" cy="30%" r="72%">
+      <stop offset="0" stop-color="#243456"/>
+      <stop offset="1" stop-color="#070b16"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#070b16"/>
+  <circle cx="32" cy="32" r="22" fill="url(#core)" stroke="url(#ring)" stroke-width="2.4"/>
+  <path d="M32 12c6 6 9 12 9 20s-3 14-9 20c-6-6-9-12-9-20s3-14 9-20z" fill="none" stroke="#78e6ee" stroke-opacity=".45" stroke-width="1.2"/>
+  <path d="M14 32h36" fill="none" stroke="#bb8cff" stroke-opacity=".4" stroke-width="1.2"/>
+  <text x="32" y="38" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#f4fbff">NT</text>
+</svg>
