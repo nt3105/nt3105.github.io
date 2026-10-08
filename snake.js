@@ -669,11 +669,6 @@
     dock.querySelectorAll('[data-preset]').forEach(item => item.classList.toggle('is-on', item === button));
     refreshFlags();
   }));
-  dock.querySelectorAll('[data-ntjr-tab]').forEach(button => button.addEventListener('click', () => {
-    const name = button.dataset.ntjrTab;
-    dock.querySelectorAll('[data-ntjr-tab]').forEach(item => item.classList.toggle('is-on', item === button));
-    dock.querySelectorAll('[data-ntjr-pane]').forEach(pane => pane.classList.toggle('is-on', pane.dataset.ntjrPane === name));
-  }));
   resetBoard();
   showOverlay('Sẵn sàng', 'Bắt đầu');
   draw(0);
