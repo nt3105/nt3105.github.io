@@ -143,8 +143,8 @@ int main(void) {
       <button type="button" id="snake-ntjr" class="ntjr-orb" aria-expanded="false" aria-controls="ntjr" aria-label="Mở NTJR MENU">
         <span class="ntjr-orb-float">
           <i class="ntjr-orb-dot" aria-hidden="true"></i>
-          <span class="ntjr-orb-copy ntjr-orb-copy-off"><b>OPEN</b><small>MENU</small></span>
-          <span class="ntjr-orb-copy ntjr-orb-copy-on"><b>MENU</b><small>OPEN</small></span>
+          <span class="ntjr-orb-copy ntjr-orb-copy-off"><b>MỞ</b><small>MENU</small></span>
+          <span class="ntjr-orb-copy ntjr-orb-copy-on"><b>ĐÓNG</b><small>MENU</small></span>
         </span>
       </button>
       <button type="button" id="snake-sound" aria-pressed="true">Âm thanh</button>
@@ -169,37 +169,37 @@ int main(void) {
     </div>
     <aside class="ntjr" id="ntjr" hidden>
       <div class="ntjr-head" id="ntjr-drag">
-        <span class="ntjr-chip" aria-hidden="true">S</span>
-        <div><b>Snake</b><small>Swift · Objective-C</small></div>
+        <span class="ntjr-chip" aria-hidden="true">NT</span>
+        <div><b>Ngân Tú Dev</b><small>Menu trò chơi</small></div>
         <span class="ntjr-online">iOS</span>
         <button type="button" id="ntjr-close" aria-label="Đóng menu">×</button>
       </div>
       <div class="ntjr-presets">
-        <button type="button" data-preset="normal">NORMAL</button>
-        <button type="button" data-preset="farm">AUTO FARM</button>
-        <button type="button" data-preset="speed">SPEED RUN</button>
-        <button type="button" data-preset="god">GOD MODE</button>
-        <button type="button" data-preset="chaos">CHAOS</button>
+        <button type="button" data-preset="normal">Thường</button>
+        <button type="button" data-preset="farm">Tự cày</button>
+        <button type="button" data-preset="speed">Chạy nhanh</button>
+        <button type="button" data-preset="god">Bất tử</button>
+        <button type="button" data-preset="chaos">Hỗn loạn</button>
       </div>
       <div class="ntjr-scroll">
-        <p class="ntjr-group">AUTO</p>
-        <label class="ntjr-row"><span>Auto Play</span><input id="mod-auto" type="checkbox"></label>
-        <label class="ntjr-row"><span>Path Preview</span><input id="mod-path" type="checkbox"></label>
-        <p class="ntjr-group">PLAYER</p>
-        <label class="ntjr-row"><span>Speed <b id="speed-label">1x</b></span><input id="mod-speed" type="range" min="0" max="4" step="1" value="1"></label>
-        <label class="ntjr-row"><span>Ghost Wall</span><input id="mod-wall" type="checkbox"></label>
-        <label class="ntjr-row"><span>Ghost Body</span><input id="mod-body" type="checkbox"></label>
-        <label class="ntjr-row"><span>Slow Motion</span><input id="mod-slow" type="checkbox"></label>
-        <label class="ntjr-row"><span>God Mode</span><input id="mod-god" type="checkbox"></label>
-        <p class="ntjr-group">FOOD</p>
-        <label class="ntjr-row"><span>Food Locator</span><input id="mod-locator" type="checkbox"></label>
-        <label class="ntjr-row"><span>Food Magnet</span><input id="mod-magnet" type="checkbox"></label>
-        <p class="ntjr-group">SCORE</p>
-        <label class="ntjr-row"><span>Score multiplier</span><select id="mod-mult"><option value="1">x1</option><option value="2">x2</option><option value="5">x5</option></select></label>
-        <p class="ntjr-group">FUN</p>
-        <label class="ntjr-row"><span>Chaos</span><input id="mod-chaos" type="checkbox"></label>
-        <p class="ntjr-group">DEV</p>
-        <label class="ntjr-row"><span>Hitbox</span><input id="mod-hit" type="checkbox"></label>
+        <p class="ntjr-group">Tự động</p>
+        <label class="ntjr-row"><span>Tự chơi</span><input id="mod-auto" type="checkbox"></label>
+        <label class="ntjr-row"><span>Xem đường</span><input id="mod-path" type="checkbox"></label>
+        <p class="ntjr-group">Người chơi</p>
+        <label class="ntjr-row"><span>Tốc độ <b id="speed-label">1x</b></span><input id="mod-speed" type="range" min="0" max="4" step="1" value="1"></label>
+        <label class="ntjr-row"><span>Xuyên tường</span><input id="mod-wall" type="checkbox"></label>
+        <label class="ntjr-row"><span>Xuyên thân</span><input id="mod-body" type="checkbox"></label>
+        <label class="ntjr-row"><span>Chuyển động chậm</span><input id="mod-slow" type="checkbox"></label>
+        <label class="ntjr-row"><span>Bất tử</span><input id="mod-god" type="checkbox"></label>
+        <p class="ntjr-group">Mồi</p>
+        <label class="ntjr-row"><span>Định vị mồi</span><input id="mod-locator" type="checkbox"></label>
+        <label class="ntjr-row"><span>Hút mồi</span><input id="mod-magnet" type="checkbox"></label>
+        <p class="ntjr-group">Điểm</p>
+        <label class="ntjr-row"><span>Nhân điểm</span><select id="mod-mult"><option value="1">x1</option><option value="2">x2</option><option value="5">x5</option></select></label>
+        <p class="ntjr-group">Vui</p>
+        <label class="ntjr-row"><span>Hỗn loạn</span><input id="mod-chaos" type="checkbox"></label>
+        <p class="ntjr-group">Dev</p>
+        <label class="ntjr-row"><span>Vùng va chạm</span><input id="mod-hit" type="checkbox"></label>
       </div>
       <div class="ntjr-foot" id="ntjr-status">Sẵn sàng</div>
     </aside>

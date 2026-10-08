@@ -177,9 +177,9 @@
     const flag = mods();
     godBadge.hidden = !flag.god;
     const bits = [];
-    if (flag.god) bits.push('GOD MODE ACTIVE');
-    if (flag.chaos) bits.push('CHAOS ACTIVE');
-    if (flag.auto) bits.push('AUTO PILOT ACTIVE');
+    if (flag.god) bits.push('Bất tử đang bật');
+    if (flag.chaos) bits.push('Hỗn loạn đang bật');
+    if (flag.auto) bits.push('Tự chơi đang bật');
     ntjrStatus.textContent = bits[0] || 'Sẵn sàng';
     speedLabel.textContent = flag.speed + 'x';
     if (!accountLocked && mode === 'play') noteScore(flag);
