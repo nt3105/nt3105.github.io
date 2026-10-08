@@ -39,12 +39,6 @@
   let chaosBoost = 1;
   let soundOn = true;
   const SCORE_MAX = 1000;
-  const SCORE_MARKS = [
-    [100, '100 điểm. Ván này bắt đầu ổn.'],
-    [300, '300 điểm. Đang vào nhịp.'],
-    [500, '500 điểm. Đã qua nửa đường.'],
-    [800, '800 điểm. Sắp tới full.']
-  ];
   let toldScore = new Set();
   let accountLocked = false;
   function ping(message) {
@@ -232,12 +226,6 @@
       lockAccount();
       return;
     }
-    for (const [mark, text] of SCORE_MARKS) {
-      if (score >= mark && !toldScore.has(mark)) {
-        toldScore.add(mark);
-        ping(text);
-      }
-    }
     if (score >= SCORE_MAX && !toldScore.has(SCORE_MAX)) {
       toldScore.add(SCORE_MAX);
       mode = 'over';
@@ -246,9 +234,9 @@
         localStorage.setItem(BEST_KEY, String(best));
         bestEl.textContent = String(best);
       }
-      ping('1000 điểm. Full điểm, ván này sạch.');
+      ping('Bạn chơi full điểm. Qua màn khác, chơi lại nhé.');
       setStatus('FULL ĐIỂM');
-      showOverlay('FULL ĐIỂM', 'Chơi lại', 'Score: 1000    Best: ' + best);
+      showOverlay('FULL ĐIỂM', 'Chơi lại', 'Bạn chơi full điểm');
     }
   }
   function tick() {
