@@ -479,7 +479,7 @@ if (memoryLinks.length && typeof HTMLDialogElement !== 'undefined') {
   viewer.innerHTML = `
     <div class="viewer-top"><strong>NGÂN TÚ / KHOẢNH KHẮC</strong><button type="button" class="viewer-close" aria-label="Đóng ảnh">×</button></div>
     <img class="viewer-image" alt="">
-    <div class="viewer-bottom"><p class="viewer-count" aria-live="polite"></p><a class="viewer-original" target="_blank" rel="noopener">Mở ảnh gốc ↗</a><div><button type="button" class="viewer-prev" aria-label="Ảnh trước">←</button><button type="button" class="viewer-next" aria-label="Ảnh tiếp theo">→</button></div></div>`;
+    <div class="viewer-bottom"><p class="viewer-count" aria-live="polite"></p><a class="viewer-original" target="_blank" rel="noopener">Mở ảnh gốc <span class="go" aria-hidden="true"></span></a><div><button type="button" class="viewer-prev" aria-label="Ảnh trước">←</button><button type="button" class="viewer-next" aria-label="Ảnh tiếp theo">→</button></div></div>`;
   document.body.append(viewer);
   let photoIndex = 0;
   let previousOverflow = '';
@@ -661,7 +661,7 @@ musicWidget.className = 'music-widget compact';
 musicWidget.setAttribute('aria-label', 'Trình phát nhạc');
 musicWidget.innerHTML = `
  <button class="hamster-mascot" type="button" aria-label="Bấm vào để chỉnh nhạc" aria-expanded="false" aria-controls="music-shell"><span class="hamster-dance" aria-hidden="true"></span><span class="hamster-tip">Bấm vào để chỉnh nhạc</span></button>
- <div class="music-mini"><div class="music-mini-label"><strong></strong><span>Nhạc cùng Ngân Tú</span></div><div class="music-mini-actions"><button class="mini-play" type="button">Bật nhạc</button><button class="music-expand" type="button" aria-label="Mở trình phát nhạc" aria-expanded="false" aria-controls="music-shell">↗</button></div></div>
+ <div class="music-mini"><div class="music-mini-label"><strong></strong><span>Nhạc cùng Ngân Tú</span></div><div class="music-mini-actions"><button class="mini-play" type="button">Bật nhạc</button><button class="music-expand" type="button" aria-label="Mở trình phát nhạc" aria-expanded="false" aria-controls="music-shell"><span class="go" aria-hidden="true"></span></button></div></div>
  <div class="music-shell" id="music-shell" hidden>
   <div class="music-head"><span>NGÂN TÚ / MUSIC</span><div><button class="music-close" type="button" aria-label="Đóng menu nhạc">×</button></div></div>
   <div class="music-track"><div class="music-cover" aria-hidden="true"><div class="music-disc"></div><img class="music-cover-image" alt="" hidden></div><div class="music-info"><h3 class="music-title"></h3><p class="music-artist"></p></div></div>
@@ -716,7 +716,7 @@ musicPlaylist.forEach((track, index) => {
   button.append(image, details, indicator);
   button.addEventListener('click', () => {
     if (musicIndex === index) toggleMusic();
-    else { loadMusic(index); playMusic(); }
+    else { musicByUser = true; loadMusic(index); playMusic(); }
   });
   musicEl('.music-playlist').append(button);
 });
@@ -774,6 +774,7 @@ function loadMusic(index, keepTime) {
   syncMusicClock();
   musicButtons();
 }
+let musicByUser = false;
 async function playMusic() {
   const request = ++musicRequest;
   musicStatus('Đang mở nhạc…');
@@ -799,10 +800,12 @@ async function playMusic() {
   }
 }
 function toggleMusic() {
-  if (musicAudio.paused) playMusic();
-  else { musicRequest++; musicAudio.pause(); musicStatus('Đã tạm dừng'); }
+  if (musicAudio.paused) { autoKick = false; musicByUser = true; playMusic(); }
+  else { autoKick = false; musicByUser = false; musicRequest++; musicAudio.pause(); musicStatus('Đã tạm dừng'); }
 }
 function stopMusic() {
+  autoKick = false;
+  musicByUser = false;
   musicRequest++;
   musicAudio.pause();
   musicAudio.currentTime = 0;
@@ -841,8 +844,8 @@ function compactMusic(compact) {
 }
 musicEl('.music-play').addEventListener('click', toggleMusic);
 musicEl('.mini-play').addEventListener('click', toggleMusic);
-musicEl('.music-next').addEventListener('click', () => { loadMusic(nextMusicIndex()); playMusic(); });
-musicEl('.music-prev').addEventListener('click', () => { loadMusic(musicIndex - 1); playMusic(); });
+musicEl('.music-next').addEventListener('click', () => { musicByUser = true; loadMusic(nextMusicIndex()); playMusic(); });
+musicEl('.music-prev').addEventListener('click', () => { musicByUser = true; loadMusic(musicIndex - 1); playMusic(); });
 musicEl('.music-off').addEventListener('click', stopMusic);
 musicEl('.music-close').addEventListener('click', () => compactMusic(true));
 musicEl('.hamster-mascot').addEventListener('click', () => compactMusic(!musicEl('.music-shell').hidden));
@@ -889,10 +892,26 @@ musicAudio.addEventListener('ended', () => { loadMusic(nextMusicIndex()); playMu
 musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không tải được bài · Hãy thử chuyển bài'); });
 if (introBgm) loadMusic(musicIndex, true);
 else loadMusic(musicIndex);
-if (!musicAudio.paused && musicAudio.src) {
-  musicButtons();
-  musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length);
-} else { musicButtons(); musicStatus('Bấm nút phát để nghe nhạc'); }
+let autoKick = true;
+function bootMusic() {
+  if (!musicAudio.paused) {
+    autoKick = false;
+    musicByUser = true;
+    musicButtons();
+    musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length);
+    return;
+  }
+  musicByUser = true;
+  playMusic();
+}
+bootMusic();
+function nudgeMusic() {
+  if (!autoKick || !musicAudio.paused) return;
+  bootMusic();
+}
+['pointerdown', 'touchstart', 'keydown'].forEach(type => window.addEventListener(type, nudgeMusic, { passive: true }));
+window.addEventListener('scroll', nudgeMusic, { passive: true });
+musicAudio.addEventListener('playing', () => { autoKick = false; }, { once: true });
 
 
 // Quầng sáng toàn trang: chuột, bút cảm ứng và thao tác vuốt trên điện thoại.
@@ -1165,7 +1184,7 @@ shuffleButton.addEventListener('click', () => {
     ['▧', 'Khoảnh khắc', 'Bộ ảnh và kỷ niệm', '#memories'],
     ['◇', 'Góc riêng', 'Code, game và những điều mình thích', '#personal-space'],
     ['♡', 'Ủng hộ', 'Góp gió thành bão', '#donate'],
-    ['↗', 'Liên hệ', 'Gửi mình một lời chào', '#contact']
+    ['go', 'Liên hệ', 'Gửi mình một lời chào', '#contact']
   ];
   const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase();
   let opener = null;
@@ -1175,11 +1194,13 @@ shuffleButton.addEventListener('click', () => {
     destinations.filter(item => normalize(item[1] + ' ' + item[2]).includes(normalize(query.value.trim()))).forEach(item => {
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'explorer-item';
-      const icon = document.createElement('span'); icon.textContent = item[0]; icon.setAttribute('aria-hidden', 'true');
+      const icon = document.createElement('span'); icon.setAttribute('aria-hidden', 'true');
+      if (item[0] === 'go') icon.className = 'go';
+      else icon.textContent = item[0];
       const text = document.createElement('div');
       const title = document.createElement('strong'); title.textContent = item[1];
       const description = document.createElement('small'); description.textContent = item[2];
-      const arrow = document.createElement('span'); arrow.textContent = '↗'; arrow.setAttribute('aria-hidden', 'true');
+      const arrow = document.createElement('span'); arrow.className = 'go'; arrow.textContent = ''; arrow.setAttribute('aria-hidden', 'true');
       text.append(title, description); button.append(icon, text, arrow);
       button.addEventListener('click', () => {
         dialog.close();

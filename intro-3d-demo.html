@@ -52,6 +52,7 @@
     letter-spacing: .22em; font-size: .6rem; color: #8d97aa;
   }
   .skip { top: calc(16px + env(safe-area-inset-top)); right: calc(22px + env(safe-area-inset-right)); padding: 8px 0; }
+  .go { display: inline-block; width: .55em; height: .55em; margin-left: .35em; border-top: 1.6px solid currentColor; border-right: 1.6px solid currentColor; transform: translateY(-.05em) rotate(-45deg); }
   .skip:hover { color: var(--ink); }
   .meta { margin: 0; }
   .meta.l { top: calc(18px + env(safe-area-inset-top)); left: calc(22px + env(safe-area-inset-left)); }
@@ -241,7 +242,7 @@
 </head>
 <body>
   <div class="stage play" id="stage">
-    <a class="skip" href="index.html?intro=off" id="skip-intro">Bỏ qua intro ↗</a>
+    <a class="skip" href="index.html?intro=off" id="skip-intro">Bỏ qua intro <span class="go" aria-hidden="true"></span></a>
     <div class="sky"></div>
     <div class="grain"></div>
     <div class="vignette"></div>
@@ -343,7 +344,10 @@
       if (bgm.paused) return bgm.play();
     }).catch(() => {}).finally(() => { starting = false; });
   };
-  // Audio starts only after the visitor presses its play button.
+  startBgm();
+  const kickBgm = () => { if (bgm.paused) startBgm(); };
+  ['pointerdown', 'touchstart', 'keydown'].forEach(type => addEventListener(type, kickBgm, { passive: true }));
+  addEventListener('scroll', kickBgm, { passive: true });
   const heroImg = new Image();
   heroImg.className = 'optional-image loaded';
   heroImg.alt = 'Ảnh chân dung Ngân Tú';
