@@ -26,3 +26,10 @@ section[id], #memories { scroll-margin-top: 100px; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .reveal, .scroll-text { opacity: 1 !important; transform: none !important; }
 }
+
+.launch-grid .explore-trigger{width:auto;margin:0;padding:14px;font-size:inherit}
+.score-card{overflow:hidden}
+.score-filters select{box-sizing:border-box}
+.go{display:inline-block;width:.55em;height:.55em;margin-left:.35em;border-top:1.6px solid currentColor;border-right:1.6px solid currentColor;transform:translateY(-.05em) rotate(-45deg);flex:none;vertical-align:middle}
+.button .go,.explore-trigger .go{width:8px;height:8px;margin-left:2px;border-width:1.7px}
+.launch-arrow .go,.about-text-link .go{margin-left:0}
