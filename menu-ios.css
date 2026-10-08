@@ -1,0 +1,42 @@
+/* iOS-inspired settings sheet; native HTML controls and dialog behavior. */
+#snake-ntjr.ios-menu-trigger{position:static;transform:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:9px 14px;border:1px solid #ffffff20;border-radius:14px;background:#ffffff0d;color:#edf2ff;font:600 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:none;cursor:pointer}
+#snake-ntjr.ios-menu-trigger>span{font-size:21px;line-height:1}
+#snake-ntjr.ios-menu-trigger:hover{background:#ffffff19}
+#snake-ntjr.ios-menu-trigger[aria-expanded=true]{color:#9ac7ff;background:#0a84ff24;border-color:#0a84ff70}
+#ntjr.ios-game-menu{position:fixed;inset:0;margin:auto;width:min(430px,calc(100vw - 24px));height:fit-content;max-height:min(820px,calc(100dvh - 32px));padding:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid #ffffff1c;border-radius:30px;background:#19191deF;color:#f5f5f7;box-shadow:0 28px 100px #0009;backdrop-filter:blur(28px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transform:none;z-index:auto}
+#ntjr.ios-game-menu::backdrop{background:#0008;backdrop-filter:blur(7px)}
+.ios-sheet-handle{flex:none;width:36px;height:5px;border-radius:10px;background:#ffffff38;margin:10px auto 0}
+#ntjr .ntjr-head{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:12px;align-items:center;padding:20px 22px 10px;border:0;background:none;cursor:default;touch-action:auto}
+.ios-app-icon{width:44px;height:44px;display:grid;place-items:center;background:linear-gradient(145deg,#347dff,#6954e8);color:#fff;border-radius:13px;font-size:26px;box-shadow:inset 0 1px #ffffff40}
+#ntjr .ntjr-head small{display:block;color:#92929e;font-size:10px;letter-spacing:1.5px;margin-bottom:5px}
+#ntjr .ntjr-head h2{font-size:22px;letter-spacing:-.7px;font-weight:700;margin:0;color:#f5f5f7}
+#ntjr #ntjr-close{width:36px;height:36px;min-height:36px;justify-self:end;padding:0;background:#ffffff10;border:0;border-radius:50%;font-size:25px;font-weight:400;color:#a6a6b0}
+#ntjr #ntjr-close:hover{background:#ffffff20;color:white}
+.ios-menu-description{flex:none;font-size:12px;line-height:1.5;margin:0;padding:0 22px 16px;color:#9a9aa6}
+#ntjr .ntjr-scroll{overflow-y:auto;overscroll-behavior:contain;min-height:0;padding:0 18px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#55555f transparent}
+.ios-settings-section{margin:0 0 22px}
+.ios-settings-section h3{margin:0 0 8px;padding:0 10px;color:#9696a3;font-size:10px;font-weight:600;letter-spacing:1.3px}
+.ios-settings-group{background:#28282e;border:1px solid #ffffff05;border-radius:16px;overflow:hidden}
+#ntjr .ntjr-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;min-height:66px;margin:0 0 0 16px;padding:12px 16px 12px 0;white-space:normal;border-bottom:1px solid #ffffff0a;cursor:pointer}
+#ntjr .ntjr-row:last-child{border-bottom:0}
+#ntjr .ntjr-row>span{display:block;overflow:visible;min-width:0}
+#ntjr .ntjr-row b{display:block;color:#f2f2f6;font-size:14px;font-weight:500;line-height:1.35}
+#ntjr .ntjr-row small{display:block;color:#9b9ba8;font-size:11px;font-weight:400;line-height:1.4;margin-top:4px}
+#ntjr .ntjr-row input[type=checkbox]{appearance:none;-webkit-appearance:none;display:block;flex:none;width:49px;height:30px;margin:0;border:0;border-radius:20px;background:#484850;position:relative;cursor:pointer;transition:background .18s ease;box-shadow:inset 0 0 0 1px #ffffff06}
+#ntjr .ntjr-row input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 4px #0003;transform:translateX(0);transition:transform .18s ease}
+#ntjr .ntjr-row input[type=checkbox]:checked{background:#30d158;border:0}
+#ntjr .ntjr-row input[type=checkbox]:checked::after{transform:translateX(19px);background:#fff}
+#ntjr :is(input,select,button):focus-visible{outline:3px solid #70b9ff;outline-offset:4px}
+#ntjr .ios-range-row{grid-template-columns:1fr;padding-right:16px;gap:12px;cursor:default}
+#ntjr .ios-range-row>span{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#ntjr .ios-range-row #speed-label{font-size:13px;color:#8dc2ff;font-weight:600;margin:0}
+#ntjr .ntjr-row input[type=range]{width:100%;height:30px;margin:0;accent-color:#0a84ff;cursor:pointer}
+#ntjr .ntjr-row select{min-width:76px;min-height:44px;padding:8px 10px;background:#35353e;color:#a8d1ff;border:1px solid #ffffff0c;border-radius:12px;font-size:15px}
+#ntjr .ntjr-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:0}
+#ntjr .ntjr-presets button{min-height:42px;padding:10px 5px;border:1px solid #ffffff0b;border-radius:12px;background:#292930;color:#a9a9b5;font-size:12px;letter-spacing:0;font-weight:500}
+#ntjr .ntjr-presets button.is-on{background:#0a84ff;color:white;border-color:#0a84ff;box-shadow:0 3px 12px #0a84ff30}
+.ios-score-note{font-size:11px;line-height:1.5;color:#9696a3;margin:0;padding:0 10px 10px}
+#ntjr .ntjr-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px max(16px,env(safe-area-inset-bottom));border-top:1px solid #ffffff0a;background:#1d1d22;font-size:11px;color:#9b9baa;letter-spacing:0}
+#ntjr #ntjr-done{min-height:44px;padding:10px 18px;border:0;border-radius:13px;background:#0a84ff;color:white;font-size:13px;font-weight:600;white-space:nowrap}
+@media(max-width:600px){#ntjr.ios-game-menu{inset:auto 0 0;margin:0 auto;width:100%;max-height:91dvh;border-radius:28px 28px 0 0;border-bottom:0}#ntjr .ntjr-head{padding:16px 20px 10px}.ios-menu-description{padding-inline:20px}#ntjr .ntjr-scroll{padding-inline:16px}#ntjr .ntjr-head h2{font-size:21px}#snake-ntjr.ios-menu-trigger{padding:8px 10px;font-size:12px}}
+@media(prefers-reduced-motion:reduce){#ntjr input[type=checkbox],#ntjr input[type=checkbox]::after{transition:none}}

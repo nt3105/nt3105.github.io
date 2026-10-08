@@ -2,6 +2,8 @@
   const dock = document.querySelector('#snake-dock');
   const canvas = document.querySelector('#snake-board');
   if (!dock || !canvas) return;
+  // The intro route may still load the previous menu stylesheet.
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => { if (new URL(link.href, location.href).pathname.endsWith('/menu-ios.css')) link.disabled = true; });
   const ctx = canvas.getContext('2d');
   const COLS = 20;
   const ROWS = 20;
@@ -21,7 +23,8 @@
   const BEST_KEY = 'ngan-tu-snake-best';
   const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
   const OPP = { up: 'down', down: 'up', left: 'right', right: 'left' };
-  let best = Number(localStorage.getItem(BEST_KEY)) || 0;
+  let best = 0;
+  try { best = Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0); } catch { /* Storage is optional. */ }
   bestEl.textContent = String(best);
   let snake = [];
   let dir = 'right';
@@ -29,7 +32,14 @@
   let food = null;
   let bonus = null;
   let score = 0;
+  let lockAt = 0;
+  let bites = 0;
+  let accountLocked = false;
   let mode = 'ready';
+  const difficultySelect = document.querySelector('#snake-difficulty');
+  let roundDifficulty = 'normal';
+  let roundAssisted = false;
+  function hasAssistance() { const m = mods(); return m.auto || m.locator || m.path || m.wall || m.body || m.magnet || m.slow || m.hit || m.god || m.chaos || m.mult !== 1 || m.speed !== 1; }
   let raf = 0;
   let last = 0;
   let acc = 0;
@@ -38,21 +48,6 @@
   let chaosHue = 270;
   let chaosBoost = 1;
   let soundOn = true;
-  const SCORE_MAX = 1000;
-  let toldScore = new Set();
-  let accountLocked = false;
-  function ping(message) {
-    const toast = document.querySelector('#toast');
-    const messageEl = document.querySelector('#toast-message');
-    if (!toast || !messageEl) return;
-    messageEl.textContent = message;
-    toast.hidden = false;
-    clearTimeout(ping.timer);
-    ping.timer = setTimeout(() => { toast.hidden = true; }, 4200);
-  }
-  function usingHack(flag) {
-    return flag.god || flag.auto || flag.chaos || flag.wall || flag.body || flag.magnet || Number(flag.mult) > 1;
-  }
   let audio;
   const mods = () => ({
     auto: document.querySelector('#mod-auto').checked,
@@ -69,6 +64,35 @@
     speed: speeds[Number(speedInput.value)] || 1
   });
 
+  function ping(message) {
+    const toast = document.querySelector('#toast');
+    const messageEl = document.querySelector('#toast-message');
+    if (!toast || !messageEl) return;
+    messageEl.textContent = message;
+    toast.hidden = false;
+    clearTimeout(ping.timer);
+    ping.timer = setTimeout(() => { toast.hidden = true; }, 4200);
+  }
+  function usingHack(flag) {
+    return flag.god || flag.auto || flag.chaos || flag.wall || flag.body || flag.magnet || Number(flag.mult) > 1;
+  }
+  function noteScore(flag) {
+    if (accountLocked || mode === 'over') return;
+    if (usingHack(flag) && score >= lockAt) lockAccount();
+  }
+  function lockAccount() {
+    if (accountLocked) return;
+    accountLocked = true;
+    mode = 'over';
+    cancelAnimationFrame(raf); raf = 0;
+    if (!ntjr.hidden) setMenuOpen(false);
+    difficultySelect.disabled = false;
+    ping('Tài khoản của bạn đã bị khóa');
+    setStatus('THÔNG BÁO');
+    showOverlay('THÔNG BÁO', 'Chơi lại', 'Tài khoản của bạn đã bị khóa');
+    draw(performance.now());
+    document.querySelector('#snake-start').focus();
+  }
   function beep(freq, dur, gain) {
     if (!soundOn) return;
     try {
@@ -161,11 +185,10 @@
     snake = [{ x: 4, y: 10 }, { x: 3, y: 10 }, { x: 2, y: 10 }];
     dir = 'right';
     queued = null;
-    score = 0;
+    score = 0; bites = 0; accountLocked = false;
+    lockAt = 2000 + Math.floor(Math.random() * 18001);
     bonus = null;
     chaosBoost = 1;
-    toldScore = new Set();
-    accountLocked = false;
     food = spawnAt(false);
     scoreEl.textContent = '0';
     path = [];
@@ -174,15 +197,17 @@
   const overlayDetail = document.querySelector('#snake-overlay-detail');
   function setStatus(text) { stateEl.textContent = text; }
   function refreshFlags() {
+    if (mode === 'play' || mode === 'pause') roundAssisted = roundAssisted || hasAssistance();
     const flag = mods();
+    if ((mode === 'play' || mode === 'pause') && !accountLocked) noteScore(flag);
     godBadge.hidden = !flag.god;
     const bits = [];
-    if (flag.god) bits.push('Bất tử đang bật');
-    if (flag.chaos) bits.push('Hỗn loạn đang bật');
-    if (flag.auto) bits.push('Tự chơi đang bật');
-    ntjrStatus.textContent = bits[0] || 'Sẵn sàng';
-    speedLabel.textContent = flag.speed + 'x';
-    if (!accountLocked && mode === 'play') noteScore(flag);
+    if (flag.god) bits.push('GOD MODE ACTIVE');
+    if (flag.chaos) bits.push('CHAOS ACTIVE');
+    if (flag.auto) bits.push('AUTO PILOT ACTIVE');
+    ntjrStatus.textContent = flag.god ? 'Đang bật bất tử' : flag.auto ? 'Đang bật tự chơi' : hasAssistance() ? 'Chế độ tuỳ chỉnh' : 'Chế độ thường';
+    speedLabel.textContent = flag.speed + '×';
+    speedInput.setAttribute('aria-valuetext', flag.speed + ' lần');
     if (flag.locator && food && snake[0]) {
       const dist = Math.abs(food.x - snake[0].x) + Math.abs(food.y - snake[0].y);
       const arrow = Math.abs(food.x - snake[0].x) >= Math.abs(food.y - snake[0].y)
@@ -201,45 +226,21 @@
   }
   function hideOverlay() { overlay.hidden = true; }
   function die() {
+    if (mode !== 'play' || accountLocked) return;
     mode = 'over';
+    difficultySelect.disabled = false;
+    document.dispatchEvent(new CustomEvent('nt-snake-result', { detail: { score, difficulty: roundDifficulty, assisted: roundAssisted || hasAssistance() } }));
     beep(140, 0.22, 0.05);
     if (score > best) {
       best = score;
-      localStorage.setItem(BEST_KEY, String(best));
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch { /* Keep score for this visit. */ }
       bestEl.textContent = String(best);
     }
     setStatus('GAME OVER');
     showOverlay('GAME OVER', 'Chơi lại', 'Score: ' + score + '    Best: ' + best);
   }
-  function lockAccount() {
-    if (accountLocked) return;
-    accountLocked = true;
-    mode = 'over';
-    beep(90, 0.28, 0.06);
-    ping('Tài khoản bạn bị khóa');
-    setStatus('BỊ KHÓA');
-    showOverlay('BỊ KHÓA', 'Chơi lại', 'Tài khoản bạn bị khóa');
-  }
-  function noteScore(flag) {
-    if (accountLocked || mode === 'over') return;
-    if (usingHack(flag) && score >= 800) {
-      lockAccount();
-      return;
-    }
-    if (score >= SCORE_MAX && !toldScore.has(SCORE_MAX)) {
-      toldScore.add(SCORE_MAX);
-      mode = 'over';
-      if (score > best) {
-        best = score;
-        localStorage.setItem(BEST_KEY, String(best));
-        bestEl.textContent = String(best);
-      }
-      ping('Bạn chơi full điểm. Qua màn khác, chơi lại nhé.');
-      setStatus('FULL ĐIỂM');
-      showOverlay('FULL ĐIỂM', 'Chơi lại', 'Bạn chơi full điểm');
-    }
-  }
   function tick() {
+    if (mode !== 'play' || accountLocked) return;
     const flag = mods();
     if (flag.auto) {
       const plan = chooseAuto();
@@ -252,18 +253,21 @@
     const head = snake[0];
     const cell = wrap(head.x + dx, head.y + dy, flag.wall || flag.god);
     if (!cell) { die(); return; }
-    const hitSelf = occupied(cell.x, cell.y, false);
+    const eating = (cell.x === food.x && cell.y === food.y) || (bonus && cell.x === bonus.x && cell.y === bonus.y);
+    const hitSelf = occupied(cell.x, cell.y, !eating);
     if (hitSelf && !(flag.body || flag.god)) { die(); return; }
     snake.unshift(cell);
     let ate = cell.x === food.x && cell.y === food.y;
     let bonusHit = bonus && cell.x === bonus.x && cell.y === bonus.y;
     if (!ate && !bonusHit) snake.pop();
     if (ate || bonusHit) {
-      const gain = (ate ? 10 : 25) * flag.mult * (flag.god ? 2 : 1) * (flag.chaos && chaosBoost > 1 ? 2 : 1);
-      score = Math.min(SCORE_MAX, score + gain);
+      const gain = (ate ? 50 : 120) * flag.mult * (flag.god ? 2 : 1) * (flag.chaos && chaosBoost > 1 ? 2 : 1);
+      score += gain;
+      bites += 1;
       scoreEl.textContent = String(score);
-      beep(ate ? 620 : 780, 0.08, 0.04);
       noteScore(flag);
+      if (accountLocked) return;
+      beep(ate ? 620 : 780, 0.08, 0.04);
       if (ate) food = spawnAt(flag.magnet);
       if (bonusHit) bonus = null;
     }
@@ -406,10 +410,13 @@
   }
   function stepMs() {
     const flag = mods();
-    const base = Math.max(68, 156 - Math.min(score / 10, 40) * 2);
-    return base / flag.speed / (flag.slow ? 0.45 : 1) / chaosBoost;
+    const base = Math.max(68, 156 - Math.min(bites, 40) * 2);
+    const difficultyFactor = { easy: 1.4, normal: 1, hard: 0.72 }[roundDifficulty];
+    return base * difficultyFactor / flag.speed / (flag.slow ? 0.45 : 1) / chaosBoost;
   }
   function frame(now) {
+    raf = 0;
+    if (!dock.open || document.hidden) return;
     raf = requestAnimationFrame(frame);
     if (document.hidden || mode !== 'play') { last = now; draw(now); return; }
     const dt = Math.min(40, now - last || 0);
@@ -422,11 +429,20 @@
     }
     draw(now);
   }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { if (mode === 'play') pauseGame(); cancelAnimationFrame(raf); raf = 0; }
+    else if (dock.open) ensureLoop();
+  });
   function ensureLoop() {
     if (!raf) raf = requestAnimationFrame(frame);
   }
   function startGame() {
+    document.querySelector('#snake-pause').textContent = 'Tạm dừng';
     if (mode === 'pause') { mode = 'play'; hideOverlay(); setStatus('SYSTEM READY'); refreshFlags(); return; }
+    roundDifficulty = difficultySelect.value;
+    if (!['easy', 'normal', 'hard'].includes(roundDifficulty)) roundDifficulty = 'normal';
+    roundAssisted = hasAssistance();
+    document.querySelector('#difficulty-help').textContent = 'Ván hiện tại: ' + ({ easy: 'Dễ', normal: 'Vừa', hard: 'Khó' }[roundDifficulty]) + '. Đổi lựa chọn rồi bấm Chơi lại để bắt đầu ván mới.';
     resetBoard();
     mode = 'play';
     hideOverlay();
@@ -437,33 +453,42 @@
   function pauseGame() {
     if (mode !== 'play') return;
     mode = 'pause';
+    document.querySelector('#snake-pause').textContent = 'Tiếp tục';
     setStatus('PAUSED');
     showOverlay('Tạm dừng', 'Tiếp tục');
   }
+  let dockOpener = null;
   function openDock(event) {
+    dockOpener = event?.currentTarget || document.activeElement;
     if (event) event.preventDefault();
     if (typeof dock.showModal === 'function' && !dock.open) dock.showModal();
     document.body.classList.add('snake-open');
+    measureOrbOrigin();
     const widget = document.querySelector('.music-widget');
     if (widget) widget.classList.add('snake-tucked');
     ensureLoop();
     draw(performance.now());
-    measureOrbOrigin();
   }
   function closeDock() {
+    if (!ntjr.hidden) setMenuOpen(false);
+    cancelAnimationFrame(raf); raf = 0;
     if (dock.open) dock.close();
     document.body.classList.remove('snake-open');
     document.querySelector('.music-widget')?.classList.remove('snake-tucked');
     if (mode === 'play') pauseGame();
+    dockOpener?.focus({ preventScroll: true });
   }
   document.querySelectorAll('[data-open-snake]').forEach(link => link.addEventListener('click', openDock));
   document.querySelector('#snake-close').addEventListener('click', closeDock);
-  dock.addEventListener('cancel', event => { event.preventDefault(); closeDock(); });
+  dock.addEventListener('cancel', event => { event.preventDefault(); if (!ntjr.hidden) setMenuOpen(false); else closeDock(); });
   document.querySelector('#snake-start').addEventListener('click', startGame);
-  document.querySelector('#snake-restart').addEventListener('click', startGame);
+  document.querySelector('#snake-restart').addEventListener('click', () => { mode = 'ready'; startGame(); });
   document.querySelector('#snake-pause').addEventListener('click', () => {
     if (mode === 'pause') startGame(); else pauseGame();
   });
+  function placeMenu() {
+    ['left', 'top', 'right', 'transform'].forEach(key => ntjr.style.removeProperty(key));
+  }
   function setMenuOpen(open) {
     ntjr.hidden = !open;
     ntjrBtn.setAttribute('aria-expanded', String(open));
@@ -508,7 +533,7 @@
         orbY = saved.y;
         return;
       }
-    } catch { /* default */ }
+    } catch {}
     const size = window.matchMedia('(max-width: 760px)').matches ? 66 : 84;
     orbX = 16;
     orbY = Math.max(16, window.innerHeight - size - 110);
@@ -556,60 +581,34 @@
     if (suppressOrbClick) { suppressOrbClick = false; return; }
     setMenuOpen(ntjr.hidden);
   });
-  window.addEventListener('resize', () => {
-    if (!dock.open) return;
-    measureOrbOrigin();
-  });
   document.querySelector('#ntjr-close').addEventListener('click', () => setMenuOpen(false));
-  const menuMobile = () => window.matchMedia('(max-width: 760px)').matches;
-  function placeMenu() {
-    if (menuMobile()) {
-      ntjr.style.right = 'auto';
-      ntjr.style.bottom = 'auto';
-      ntjr.style.left = '50%';
-      ntjr.style.top = '50%';
-      ntjr.style.transform = 'translate(-50%, -50%)';
-      return;
-    }
-    ntjr.style.transform = '';
-    try {
-      const saved = JSON.parse(localStorage.getItem('ngan-tu-ntjr-pos') || 'null');
-      if (saved && saved.left && saved.top) {
-        ntjr.style.left = saved.left;
-        ntjr.style.top = saved.top;
-        ntjr.style.right = 'auto';
-      }
-    } catch { /* keep default */ }
-  }
+  ntjr.addEventListener('keydown', event => {
+    if (event.key !== 'Tab') return;
+    const items = [...ntjr.querySelectorAll('button,input,select')].filter(item => !item.disabled && (!item.closest('.ntjr-pane') || item.closest('.ntjr-pane').classList.contains('is-on')));
+    const first = items[0], last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
   const dragHead = document.querySelector('#ntjr-drag');
-  let drag = null;
+  let menuDrag = null;
   dragHead.addEventListener('pointerdown', event => {
-    if (event.target.closest('button, input, select, label')) return;
+    if (event.target.closest('button') || (event.button != null && event.button !== 0)) return;
     const rect = ntjr.getBoundingClientRect();
-    ntjr.style.transform = 'none';
-    ntjr.style.left = rect.left + 'px';
-    ntjr.style.top = rect.top + 'px';
-    ntjr.style.right = 'auto';
-    drag = { dx: event.clientX - rect.left, dy: event.clientY - rect.top, mobile: menuMobile() };
+    menuDrag = { id: event.pointerId, x: event.clientX - rect.left, y: event.clientY - rect.top };
+    ntjr.style.transform = 'none'; ntjr.style.right = 'auto';
+    ntjr.style.left = rect.left + 'px'; ntjr.style.top = rect.top + 'px';
     dragHead.setPointerCapture(event.pointerId);
   });
   dragHead.addEventListener('pointermove', event => {
-    if (!drag) return;
-    const width = ntjr.offsetWidth;
-    const height = ntjr.offsetHeight;
-    const x = Math.max(8, Math.min(window.innerWidth - width - 8, event.clientX - drag.dx));
-    const y = Math.max(8, Math.min(window.innerHeight - height - 8, event.clientY - drag.dy));
-    ntjr.style.left = x + 'px';
-    ntjr.style.top = y + 'px';
-    ntjr.style.right = 'auto';
+    if (!menuDrag || menuDrag.id !== event.pointerId) return;
+    ntjr.style.left = Math.max(8,Math.min(innerWidth - ntjr.offsetWidth - 8,event.clientX-menuDrag.x)) + 'px';
+    ntjr.style.top = Math.max(8,Math.min(innerHeight - ntjr.offsetHeight - 8,event.clientY-menuDrag.y)) + 'px';
   });
-  dragHead.addEventListener('pointerup', () => {
-    if (!drag) return;
-    const mobile = drag.mobile;
-    drag = null;
-    if (mobile) return;
-    localStorage.setItem('ngan-tu-ntjr-pos', JSON.stringify({ left: ntjr.style.left, top: ntjr.style.top }));
-  });
+  const stopMenuDrag = () => { menuDrag = null; };
+  dragHead.addEventListener('pointerup', stopMenuDrag);
+  dragHead.addEventListener('pointercancel', stopMenuDrag);
+  dragHead.addEventListener('lostpointercapture', stopMenuDrag);
+  window.addEventListener('resize', () => { if (dock.open) measureOrbOrigin(); menuDrag = null; ['left','top','right','transform'].forEach(key => ntjr.style.removeProperty(key)); });
   document.querySelector('#snake-sound').addEventListener('click', event => {
     soundOn = !soundOn;
     event.currentTarget.setAttribute('aria-pressed', String(soundOn));
@@ -617,12 +616,12 @@
   });
   function queueDir(name) {
     if (!DIRS[name] || mode !== 'play') return;
-    const current = queued || dir;
-    if (OPP[current] === name) return;
+    if (OPP[dir] === name) return;
     queued = name;
   }
   window.addEventListener('keydown', event => {
-    if (!dock.open) return;
+    if (!dock.open || !ntjr.hidden || event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
+    if (event.key === ' ' && event.target.closest('button, a')) return;
     const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', a: 'left', s: 'down', d: 'right', W: 'up', A: 'left', S: 'down', D: 'right' };
     if (map[event.key]) { event.preventDefault(); queueDir(map[event.key]); }
     if (event.key === ' ' || event.key === 'p' || event.key === 'P') { event.preventDefault(); if (mode === 'play') pauseGame(); else if (mode === 'pause' || mode === 'ready' || mode === 'over') startGame(); }
@@ -643,8 +642,9 @@
     if (Math.abs(dx) > Math.abs(dy)) queueDir(dx > 0 ? 'right' : 'left');
     else queueDir(dy > 0 ? 'down' : 'up');
   }, { passive: true });
-  speedInput.addEventListener('input', refreshFlags);
-  dock.querySelectorAll('#ntjr input, #ntjr select').forEach(control => control.addEventListener('change', refreshFlags));
+  function clearPresetSelection() { dock.querySelectorAll('[data-preset]').forEach(item => { item.classList.remove('is-on'); item.setAttribute('aria-pressed', 'false'); }); }
+  speedInput.addEventListener('input', () => { clearPresetSelection(); refreshFlags(); });
+  dock.querySelectorAll('#ntjr input, #ntjr select').forEach(control => control.addEventListener('change', () => { clearPresetSelection(); refreshFlags(); }));
   const presets = {
     normal: { auto: false, locator: false, path: false, wall: false, body: false, magnet: false, slow: false, hit: false, god: false, chaos: false, speed: 1, mult: '1' },
     farm: { auto: true, locator: true, path: true, wall: false, body: false, magnet: false, slow: false, hit: false, god: false, chaos: false, speed: 3, mult: '1' },
@@ -666,9 +666,17 @@
     document.querySelector('#mod-chaos').checked = preset.chaos;
     document.querySelector('#mod-mult').value = preset.mult;
     speedInput.value = String(preset.speed);
-    dock.querySelectorAll('[data-preset]').forEach(item => item.classList.toggle('is-on', item === button));
+    dock.querySelectorAll('[data-preset]').forEach(item => { item.classList.toggle('is-on', item === button); item.setAttribute('aria-pressed', String(item === button)); });
     refreshFlags();
   }));
+  const tabButtons = [...dock.querySelectorAll('[data-ntjr-tab]')];
+  function selectMenuTab(button) {
+    const name = button.dataset.ntjrTab;
+    tabButtons.forEach(item => { item.classList.toggle('is-on', item === button); item.setAttribute('aria-pressed', String(item === button)); });
+    dock.querySelectorAll('[data-ntjr-pane]').forEach(pane => { const active = pane.dataset.ntjrPane === name; pane.classList.toggle('is-on', active); pane.hidden = !active; });
+  }
+  tabButtons.forEach(button => button.addEventListener('click', () => selectMenuTab(button)));
+  if (tabButtons[0]) selectMenuTab(tabButtons[0]);
   resetBoard();
   showOverlay('Sẵn sàng', 'Bắt đầu');
   draw(0);

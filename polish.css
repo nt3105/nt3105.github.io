@@ -1,0 +1,28 @@
+/* Final layout and accessibility refinements. */
+[hidden] { display: none !important; }
+html { scroll-padding-top: 100px; }
+section[id], #memories { scroll-margin-top: 100px; }
+:where(a, button, input, textarea, select):focus-visible { outline: 2px solid var(--cyan, #7ee8ee); outline-offset: 4px; }
+.footer-intro { display: inline-block; margin-top: 8px; color: var(--muted, #aebbd0); font-size: .75rem; }
+.form-feedback textarea { display: block; width: 100%; min-height: 160px; padding: 12px; border-radius: 12px; background: #0c1321; color: #eef4ff; border: 1px solid #526179; resize: vertical; }
+.contact-email { overflow-wrap: anywhere; }
+.nojs-note { margin: 20px auto; padding: 16px; max-width: 1000px; color: #c8d3e4; }
+.avatar:has(.optional-image[hidden]) .avatar-placeholder { display: flex !important; }
+.mail-actions { gap: 10px; }
+.mail-actions .button { min-height: 44px; }
+@media (max-width: 760px) {
+  input, textarea, select { font-size: 16px !important; }
+  .container { max-width: 100%; }
+  .contact-panel, .donate-panel, .about-grid, .journey-grid { min-width: 0; }
+  .contact-panel > *, .donate-panel > *, .hero > * { min-width: 0; }
+  .menu-toggle, .viewer-close, .viewer-prev, .viewer-next, #snake-close, #snake-pause, #snake-restart { min-height: 44px; min-width: 44px; }
+  .back-top { bottom: max(20px, env(safe-area-inset-bottom)); }
+  .style-controls { bottom: max(15px, env(safe-area-inset-bottom)); }
+  .mail-actions { flex-direction: column; }
+  .footer { padding-bottom: 100px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .reveal, .scroll-text { opacity: 1 !important; transform: none !important; }
+}

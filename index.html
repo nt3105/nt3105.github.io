@@ -2,10 +2,19 @@
 <html lang="vi">
 <head>
   <script>
-    try { if (sessionStorage.getItem('nt-skip-intro') !== '1') location.replace('intro-3d-demo.html'); } catch (e) {}
+    try {
+      const params = new URLSearchParams(location.search);
+      const skip = params.get('intro') === 'off' || !!location.hash ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData;
+      if (skip) sessionStorage.setItem('nt-skip-intro', '1');
+      if (!skip && location.protocol !== 'file:' && sessionStorage.getItem('nt-skip-intro') !== '1') {
+        sessionStorage.setItem('nt-skip-intro', '1');
+        location.replace('intro-3d-demo.html' + location.search);
+      }
+    } catch (e) { /* Le contenu principal reste accessible sans stockage. */ }
   </script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ngân Tú — Code & Game</title>
   <meta name="description" content="Ngân Tú — sinh viên Đại học Trà Vinh, yêu thích lập trình và game. Kết nối với mình trên Telegram.">
   <meta name="theme-color" content="#080b14">
@@ -14,16 +23,32 @@
   <meta property="og:title" content="Ngân Tú — Portfolio">
   <meta property="og:description" content="Ngân Tú — lập trình, game và những dự án cá nhân.">
   <meta property="og:site_name" content="Ngân Tú">
+  <meta property="og:url" content="https://nt3105.github.io/">
+  <meta property="og:image" content="https://nt3105.github.io/images/social-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Ngân Tú — Code, Life &amp; Music">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ngân Tú — Code &amp; Game">
+  <meta name="twitter:description" content="Lập trình, game và những dự án cá nhân của Ngân Tú.">
+  <meta name="twitter:image" content="https://nt3105.github.io/images/social-preview.png">
+  <link rel="canonical" href="https://nt3105.github.io/">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="favicon.svg">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
   <link rel="preload" as="image" href="images/moment-1-hero.jpg" fetchpriority="high">
   <link rel="preload" as="image" href="images/cover-preah-thorng.jpg">
-  <link rel="preload" as="audio" href="audio/preah-thorng.mp3">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="enhance.css">
+  <link rel="stylesheet" href="polish.css">
+  <link rel="stylesheet" href="features.css">
+  <link rel="stylesheet" href="design.css">
+  <link rel="stylesheet" href="ios-effects.css">
   <script src="script.js" defer></script>
   <script src="enhance.js" defer></script>
+  <script src="journal-data.js" defer></script>
+  <script src="features.js" defer></script>
   <script src="snake.js" defer></script>
+  <script src="ios-effects.js" defer></script>
   <script>
     try {
       if (sessionStorage.getItem('nt-from-intro') === '1') {
@@ -34,7 +59,7 @@
   </script>
 </head>
 <body>
-  <div class="loader" aria-hidden="true"><div class="intro-orbit intro-orbit-one"></div><div class="intro-orbit intro-orbit-two"></div><div class="intro-content"><div class="intro-symbol">&lt;/&gt;</div><p class="intro-kicker">WELCOME TO MY SPACE</p><div class="intro-name">NGÂN TÚ<span> DEV</span></div><p class="intro-caption">Code · Life · Music</p><div class="intro-progress" aria-hidden="true"><span></span></div><div class="intro-line"><span></span></div></div><div class="intro-footer">MỘT CHÚT VỀ MÌNH, MỘT THẾ GIỚI RIÊNG.</div></div>
+  <div class="loader" aria-hidden="true" hidden><div class="intro-orbit intro-orbit-one"></div><div class="intro-orbit intro-orbit-two"></div><div class="intro-content"><div class="intro-symbol">&lt;/&gt;</div><p class="intro-kicker">WELCOME TO MY SPACE</p><div class="intro-name">NGÂN TÚ<span> DEV</span></div><p class="intro-caption">Code · Life · Music</p><div class="intro-progress" aria-hidden="true"><span></span></div><div class="intro-line"><span></span></div></div><div class="intro-footer">MỘT CHÚT VỀ MÌNH, MỘT THẾ GIỚI RIÊNG.</div></div>
   <a class="skip-link" href="#main">Đến nội dung chính</a>
   <div class="ambient" aria-hidden="true"><i></i><i></i></div>
   <div class="scene" aria-hidden="true"><div class="scene-mesh"></div><div class="scene-grid"></div><span class="orb orb-a"></span><span class="orb orb-b"></span><span class="orb orb-c"></span><canvas id="spark-field"></canvas><div class="scene-noise"></div></div>
@@ -55,6 +80,12 @@
         <p class="role"><span aria-hidden="true" class="code-bracket">&lt;</span> <span id="typing">Đang học C</span><span class="cursor" aria-hidden="true">|</span> <span aria-hidden="true" class="code-bracket">/&gt;</span></p>
         <p class="hero-description">Mình là Ngân Tú, sinh viên năm nhất ngành Công nghệ thông tin tại Đại học Trà Vinh (Tra Vinh University – TVU).</p>
         <div class="hero-actions"><a class="button primary" href="#projects">Xem dự án <span aria-hidden="true">▦</span></a><a class="button secondary" href="#contact">Liên hệ với tôi</a></div>
+        <div class="site-tools launch-grid" aria-label="Tiện ích website">
+          <a class="launch-card" href="#code-corner" style="--tile-rgb:125,211,252"><span class="launch-icon" aria-hidden="true">&lt;/&gt;</span><span class="launch-copy"><strong>Góc code</strong><small>Đọc, thử và khám phá</small></span><span class="launch-arrow" aria-hidden="true">↗</span></a>
+          <a class="launch-card" href="#journal" style="--tile-rgb:196,181,253"><span class="launch-icon" aria-hidden="true">✎</span><span class="launch-copy"><strong>Nhật ký</strong><small>Từng bước trên hành trình</small></span><span class="launch-arrow" aria-hidden="true">↗</span></a>
+          <a class="launch-card" href="#game-scores" style="--tile-rgb:134,239,172"><span class="launch-icon" aria-hidden="true">★</span><span class="launch-copy"><strong>Bảng thành tích</strong><small>Thử phá kỷ lục của bạn</small></span><span class="launch-arrow" aria-hidden="true">↗</span></a>
+          <button class="launch-card" type="button" data-share-web style="--tile-rgb:253,186,116"><span class="launch-icon" aria-hidden="true">↗</span><span class="launch-copy"><strong>Chia sẻ</strong><small>Gửi một kết nối mới</small></span><span class="launch-arrow" aria-hidden="true">＋</span></button>
+        </div>
         <button class="explore-trigger" type="button" data-open-explorer><span aria-hidden="true">⌘</span> Khám phá không gian <kbd>Ctrl K</kbd><span aria-hidden="true">↗</span></button><div class="hero-socials" aria-label="Mạng xã hội"><span>Kết nối với mình</span><a data-social="facebook" href="https://www.facebook.com/bolantokk">Facebook</a><a data-social="tiktok" href="https://www.tiktok.com/@nt31055">TikTok</a><a data-social="github" href="https://github.com/nt3105">GitHub</a></div>
       </div>
       <div class="hero-visual" aria-label="Ảnh đại diện Ngân Tú">
@@ -74,15 +105,16 @@
       </div>
     </section>
     <section class="section skills-section" id="skills"><div class="container">
-      <div class="section-heading split-heading reveal"><div><p class="eyebrow">02 / BỘ CÔNG CỤ CỦA MÌNH</p><h2>Kỹ năng &amp;<br>công cụ<span class="accent">.</span></h2></div><p>Mình tập trung học C, code được Objective-C, Swift và JavaScript, các công cụ web khác thì đang làm quen.</p></div>
+      <div class="section-heading split-heading reveal"><div><p class="eyebrow">02 / BỘ CÔNG CỤ CỦA MÌNH</p><h2>Kỹ năng &amp;<br>công cụ<span class="accent">.</span></h2></div><p>Những ngôn ngữ và công cụ mình đang thực hành.</p></div>
       <div class="skills-grid">
         <article class="skill-card reveal" style="--level:55%;--skill-color:#75b9ff"><div class="skill-top"><span class="skill-icon">C</span><span class="skill-value">Đang học</span></div><h3>C</h3><p>Biến, điều kiện, vòng lặp và mảng.</p><div class="progress" aria-hidden="true"><span></span></div><small>Tập trung hiện tại</small></article>
         <article class="skill-card reveal" style="--level:40%;--skill-color:#939dff"><div class="skill-top"><span class="skill-icon">C++</span><span class="skill-value">Làm quen</span></div><h3>C++</h3><p>Cú pháp cơ bản và bài tập nhỏ.</p><div class="progress" aria-hidden="true"><span></span></div><small>Tìm hiểu thêm</small></article>
         <article class="skill-card skill-ios reveal" style="--level:38%;--skill-color:#64d2ff"><div class="skill-top"><span class="skill-icon">ObjC</span><span class="skill-value">Làm được</span></div><h3>Objective-C</h3><p>Đối tượng, message và code iOS.</p><div class="progress" aria-hidden="true"><span></span></div><small>Biết viết</small></article>
         <article class="skill-card skill-ios reveal" style="--level:42%;--skill-color:#ffb086"><div class="skill-top"><span class="skill-icon">Sw</span><span class="skill-value">Làm được</span></div><h3>Swift</h3><p>Cú pháp Swift cho ứng dụng iOS.</p><div class="progress" aria-hidden="true"><span></span></div><small>Biết viết</small></article>
-        <article class="skill-card skill-ios reveal" style="--level:40%;--skill-color:#f1d37e"><div class="skill-top"><span class="skill-icon">JS</span><span class="skill-value">Làm được</span></div><h3>JavaScript</h3><p>DOM, sự kiện và tương tác trên web.</p><div class="progress" aria-hidden="true"><span></span></div><small>Biết viết</small></article>
+        <article class="skill-card reveal" style="--level:15%;--skill-color:#f2aa75"><div class="skill-top"><span class="skill-icon" aria-hidden="true">J</span><span class="skill-value">Đang tìm hiểu</span></div><h3>Java</h3><p>Cú pháp cơ bản, lớp và lập trình hướng đối tượng.</p><div class="progress" aria-hidden="true"><span></span></div><small>Khám phá thêm một ngôn ngữ</small></article>
         <article class="skill-card reveal" style="--level:50%;--skill-color:#ffb08a"><div class="skill-top"><span class="skill-icon">&lt;/&gt;</span><span class="skill-value">Làm quen</span></div><h3>HTML</h3><p>Cấu trúc trang và nội dung web.</p><div class="progress" aria-hidden="true"><span></span></div><small>Làm quen cấu trúc web</small></article>
         <article class="skill-card reveal" style="--level:40%;--skill-color:#67d6ed"><div class="skill-top"><span class="skill-icon">#</span><span class="skill-value">Làm quen</span></div><h3>CSS</h3><p>Bố cục, màu sắc và responsive.</p><div class="progress" aria-hidden="true"><span></span></div><small>Làm quen giao diện</small></article>
+        <article class="skill-card skill-ios reveal" style="--level:40%;--skill-color:#f1d37e"><div class="skill-top"><span class="skill-icon">JS</span><span class="skill-value">Làm được</span></div><h3>JavaScript</h3><p>DOM, sự kiện và tương tác trên web.</p><div class="progress" aria-hidden="true"><span></span></div><small>Biết viết</small></article>
         <article class="skill-card reveal" style="--level:20%;--skill-color:#d29bff"><div class="skill-top"><span class="skill-icon">⑂</span><span class="skill-value">Làm quen</span></div><h3>Git / GitHub</h3><p>Lưu mã nguồn và theo dõi thay đổi.</p><div class="progress" aria-hidden="true"><span></span></div><small>Làm quen công cụ</small></article>
       </div>
     </div></section>
@@ -99,7 +131,7 @@
         </article>
       </div>
     </section>
-    <section class="section journey-section" id="journey"><div class="container journey-grid"><div class="journey-intro reveal"><p class="eyebrow">04 / HÀNH TRÌNH</p><h2>Học tập &amp;<br>khám phá<span class="accent">.</span></h2><p>Một chút về những gì mình đang làm.</p></div><ol class="timeline"><li class="reveal"><span class="timeline-step">01</span><div><span class="timeline-label">HỌC TẬP</span><h3>Tự học lập trình</h3><p>Mình đang học C và ngồi làm những bài tập ngắn để quen cách code.</p></div></li><li class="reveal"><span class="timeline-step">02</span><div><span class="timeline-label">HIỆN TẠI</span><h3>Học ngôn ngữ C</h3><p>Luyện tư duy và thực hành qua những bài tập cơ bản.</p></div></li><li class="reveal"><span class="timeline-step">03</span><div><span class="timeline-label">HOẠT ĐỘNG</span><h3>Seller &amp; dev hack game</h3><p>Free Fire, Play Together, Liên Quân và nhiều game khác. Liên hệ qua Telegram.</p></div></li></ol></div><div class="container memories" id="memories"><div class="memories-heading reveal"><div><p class="eyebrow">NHỮNG KHOẢNH KHẮC CỦA MÌNH</p><h3>Một chút ngoài những dòng code.</h3></div></div><div class="memories-grid"><a class="memory-photo reveal photo-1" href="images/moment-1.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 1 đầy đủ"><img src="images/moment-1-card.jpg" alt="Ảnh kỷ niệm 1 của Ngân Tú" decoding="async" width="760" height="1141"><span>01 / KHOẢNH KHẮC</span></a><a class="memory-photo reveal photo-2" href="images/moment-2.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 2 đầy đủ"><img src="images/moment-2-card.jpg" alt="Ảnh kỷ niệm 2 của Ngân Tú" decoding="async" width="760" height="1142"><span>02 / KHOẢNH KHẮC</span></a><a class="memory-photo reveal photo-3" href="images/moment-3.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 3 đầy đủ"><img src="images/moment-3-card.jpg" alt="Ảnh kỷ niệm 3 của Ngân Tú" decoding="async" width="760" height="1141"><span>03 / KHOẢNH KHẮC</span></a><a class="memory-photo reveal photo-4" href="images/moment-4.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 4 đầy đủ"><img src="images/moment-4-card.jpg" alt="Ảnh kỷ niệm 4 của Ngân Tú" decoding="async" width="760" height="1142"><span>04 / KHOẢNH KHẮC</span></a></div></div></section>
+    <section class="section journey-section" id="journey"><div class="container journey-grid"><div class="journey-intro reveal"><p class="eyebrow">04 / HÀNH TRÌNH</p><h2>Học tập &amp;<br>khám phá<span class="accent">.</span></h2><p>Từng bước nhỏ trong hành trình học và làm.</p></div><ol class="timeline"><li class="reveal"><span class="timeline-step">01</span><div><span class="timeline-label">HỌC TẬP</span><h3>Bắt đầu từ nền tảng</h3><p>Làm quen cách phân tích bài toán và viết chương trình từng bước.</p></div></li><li class="reveal"><span class="timeline-step">02</span><div><span class="timeline-label">HIỆN TẠI</span><h3>Học qua thực hành</h3><p>Luyện C qua bài tập nhỏ, kiểm tra kết quả và sửa lỗi sau mỗi lần chạy.</p></div></li><li class="reveal"><span class="timeline-step">03</span><div><span class="timeline-label">HOẠT ĐỘNG</span><h3>Seller &amp; dev hack game</h3><p>Free Fire, Play Together, Liên Quân và nhiều game khác. Liên hệ qua Telegram.</p></div></li></ol></div><div class="container memories" id="memories"><div class="memories-heading reveal"><div><p class="eyebrow">NHỮNG KHOẢNH KHẮC CỦA MÌNH</p><h3>Một chút ngoài những dòng code.</h3></div></div><div class="memories-grid"><a class="memory-photo reveal photo-1" href="images/moment-1.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 1 đầy đủ"><img loading="lazy" src="images/moment-1-card.jpg" alt="Ảnh kỷ niệm 1 của Ngân Tú" decoding="async" width="760" height="1141"><span>01 / KHOẢNH KHẮC</span></a><a class="memory-photo reveal photo-2" href="images/moment-2.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 2 đầy đủ"><img loading="lazy" src="images/moment-2-card.jpg" alt="Ảnh kỷ niệm 2 của Ngân Tú" decoding="async" width="760" height="1142"><span>02 / KHOẢNH KHẮC</span></a><a class="memory-photo reveal photo-3" href="images/moment-3.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 3 đầy đủ"><img loading="lazy" src="images/moment-3-card.jpg" alt="Ảnh kỷ niệm 3 của Ngân Tú" decoding="async" width="760" height="1141"><span>03 / KHOẢNH KHẮC</span></a><a class="memory-photo reveal photo-4" href="images/moment-4.png" target="_blank" rel="noopener" aria-label="Xem ảnh kỷ niệm 4 đầy đủ"><img loading="lazy" src="images/moment-4-card.jpg" alt="Ảnh kỷ niệm 4 của Ngân Tú" decoding="async" width="760" height="1142"><span>04 / KHOẢNH KHẮC</span></a></div></div></section>
     <section class="section container" id="social"><div class="section-heading reveal"><p class="eyebrow">05 / KEEP IN TOUCH</p><h2>Kết nối với mình<span class="accent">.</span></h2></div><div class="social-grid"><a class="social-card reveal telegram-card" data-social="telegram" href="https://t.me/neverdierrr"><span class="social-icon">✈</span><div><h3>Telegram</h3><p>@neverdierrr · Seller &amp; dev game</p></div></a><a class="social-card reveal" data-social="facebook" href="https://www.facebook.com/bolantokk"><span class="social-icon">f</span><div><h3>Facebook</h3><p>Một chút đời thường</p></div></a><a class="social-card reveal" data-social="tiktok" href="https://www.tiktok.com/@nt31055"><span class="social-icon">♪</span><div><h3>TikTok</h3><p>Chia sẻ những điều hay</p></div></a><a class="social-card reveal" data-social="github" href="https://github.com/nt3105"><span class="social-icon">⑂</span><div><h3>GitHub</h3><p>Nơi lưu những dòng code</p></div></a><a class="social-card reveal" data-social="email" href="mailto:kienngantu3105@gmail.com"><span class="social-icon">@</span><div><h3>Email</h3><p>Gửi một lời chào</p></div></a></div></section>
     <section class="section container personal-space" id="personal-space">
       <div class="section-heading split-heading reveal"><div><p class="eyebrow">06 / GÓC RIÊNG</p><h2>Ngoài những<br><span class="gradient-text">dòng code.</span></h2></div></div>
@@ -110,12 +142,35 @@ int main(void) {
     return 0;
 }</code></pre></article>
         <article class="life-card life-play reveal"><div class="life-label"><span>02 / TAKE A BREAK</span><span aria-hidden="true">↗</span></div><h3>Nghỉ một chút.<br><span class="gradient-text">Chơi một ván.</span></h3><div class="mini-snake-art" aria-hidden="true"><svg class="snake-scene" viewBox="0 0 320 148" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="snake-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9fff6"/><stop offset=".45" stop-color="#5ef0d2"/><stop offset="1" stop-color="#2fbf93"/></linearGradient><radialGradient id="snake-food" cx="40%" cy="35%" r="65%"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#e4c8ff"/><stop offset="1" stop-color="#7a4dff"/></radialGradient></defs><rect width="320" height="148" rx="16" fill="#070b16"/><g opacity=".35" stroke="#7ee7f2" stroke-width=".6"><path d="M0 28H320M0 56H320M0 84H320M0 112H320M0 140H320M28 0V148M56 0V148M84 0V148M112 0V148M140 0V148M168 0V148M196 0V148M224 0V148M252 0V148M280 0V148"/></g><path d="M70 100 H146 C170 100 166 40 214 40" fill="none" stroke="url(#snake-body)" stroke-width="16" stroke-linecap="round"/><circle cx="214" cy="40" r="9" fill="#e7fff8"/><circle class="snake-food-orb" cx="262" cy="78" r="9" fill="url(#snake-food)"/><text x="16" y="132" fill="#8f9fbd" font-family="ui-monospace,monospace" font-size="9" letter-spacing="2">SNAKE / PLAY MODE</text></svg></div><a class="button secondary small" data-open-snake href="https://ngan-tu-snake.bolantokk2.chatgpt.site" target="_blank" rel="noopener">Chơi con sâu ↗</a></article>
-        <article class="life-card life-music reveal"><div class="life-label"><span>03 / ON MY PLAYLIST</span><span aria-hidden="true">♫</span></div><div class="life-now"><img id="life-song-cover" src="images/cover-preah-thorng.jpg" alt="" width="160" height="160" decoding="async"><div><p id="life-song-state">Sẵn sàng để nghe</p><h3 id="life-song-title">Preah Thorng — ព្រះថោង Remix</h3><p id="life-song-artist">AI Remix ft. All3rgy</p></div></div><button class="button secondary small" id="life-open-music" type="button">Mở góc âm nhạc ↗</button></article>
-        <article class="life-card life-moments reveal"><div class="life-label"><span>04 / LITTLE MEMORIES</span><span aria-hidden="true">✧</span></div><div class="moments-layout"><div><h3>Giữ lại<br><span class="gradient-text">một khoảnh khắc.</span></h3><p>Những tấm ảnh ngoài màn hình code.</p><a class="about-text-link" href="#memories">Mở bộ ảnh <span aria-hidden="true">↗</span></a></div><div class="mini-photo-stack" aria-hidden="true"><img src="images/moment-2-card.jpg" alt="" decoding="async"><img src="images/moment-3-card.jpg" alt="" decoding="async"></div></div></article>
+        <article class="life-card life-music reveal"><div class="life-label"><span>03 / ON MY PLAYLIST</span><span aria-hidden="true">♫</span></div><div class="life-now"><img loading="lazy" id="life-song-cover" src="images/cover-preah-thorng.jpg" alt="" width="160" height="160" decoding="async"><div><p id="life-song-state">Sẵn sàng để nghe</p><h3 id="life-song-title">Preah Thorng — ព្រះថោង Remix</h3><p id="life-song-artist">AI Remix ft. All3rgy</p></div></div><button class="button secondary small" id="life-open-music" type="button">Mở góc âm nhạc ↗</button></article>
+        <article class="life-card life-moments reveal"><div class="life-label"><span>04 / LITTLE MEMORIES</span><span aria-hidden="true">✧</span></div><div class="moments-layout"><div><h3>Giữ lại<br><span class="gradient-text">một khoảnh khắc.</span></h3><p>Những tấm ảnh ngoài màn hình code.</p><a class="about-text-link" href="#memories">Mở bộ ảnh <span aria-hidden="true">↗</span></a></div><div class="mini-photo-stack" aria-hidden="true"><img loading="lazy" src="images/moment-2-card.jpg" alt="" decoding="async"><img loading="lazy" src="images/moment-3-card.jpg" alt="" decoding="async"></div></div></article>
       </div>
     </section>
-    <section class="section container" id="donate"><div class="donate-panel reveal"><div class="donate-copy"><p class="eyebrow">07 / MỘT CHÚT ĐỘNG LỰC</p><h2>Góp gió<br><span class="gradient-text">thành bão.</span></h2><p>Một chút ủng hộ, thêm nhiều động lực. Cảm ơn bạn đã đồng hành cùng Ngân Tú!</p><dl class="bank-details"><div><dt>Ngân hàng</dt><dd>Techcombank</dd></div><div><dt>Chủ tài khoản</dt><dd>KIEN NGAN TU</dd></div><div><dt>Số tài khoản</dt><dd id="bank-account">19076415749012</dd></div></dl><form id="donate-form" class="amount-form" novalidate><label for="donate-amount">Số tiền ủng hộ</label><div class="amount-input-wrap"><input id="donate-amount" name="amount" inputmode="numeric" autocomplete="off" placeholder="Nhập số tiền" maxlength="15" aria-describedby="amount-error qr-help" required><span>VNĐ</span></div><div class="amount-presets" aria-label="Chọn nhanh số tiền"><button type="button" data-amount="20000">20.000đ</button><button type="button" data-amount="50000">50.000đ</button><button type="button" data-amount="100000">100.000đ</button></div><p id="amount-error" class="field-error" role="alert"></p><button id="generate-qr" type="submit" class="button primary">Tạo QR ủng hộ</button><p id="qr-help" class="qr-help">Cần Internet để tạo QR qua VietQR.io. Mã chỉ điền sẵn thông tin chuyển khoản, không tự trừ tiền.</p></form><div class="hero-actions"><button class="button primary" type="button" id="copy-account">Sao chép số tài khoản</button><a id="qr-open" class="button secondary" href="images/qr-techcombank-card.png" target="_blank" rel="noopener">Mở ảnh QR</a></div><p class="donate-note">Ủng hộ hoàn toàn tự nguyện. Kiểm tra tên người nhận và số tài khoản trong ứng dụng ngân hàng trước khi xác nhận.</p></div><figure class="qr-panel"><div id="qr-status" class="qr-status" role="status">QR tài khoản · Chưa có số tiền</div><div class="qr-crop qr-static"><img id="donation-qr" src="images/qr-techcombank-card.png" alt="Mã QR Techcombank của KIEN NGAN TU, số tài khoản 19076415749012" decoding="async"></div><figcaption id="qr-caption">Nhập số tiền và bấm tạo QR, hoặc quét mã tài khoản để tự nhập tiền.</figcaption></figure></div></section>
-    <section class="section container" id="contact"><div class="contact-panel"><div class="contact-copy reveal"><p class="eyebrow">08 / SAY HELLO</p><h2>Có gì muốn nói?<br><span class="gradient-text">Nhắn mình nhé.</span></h2><p>Bạn muốn trao đổi về game, liên hệ seller hay đơn giản là làm quen? Nhắn mình trên Telegram hoặc gửi email nhé.</p><a class="contact-email" data-social="email" href="mailto:kienngantu3105@gmail.com">kienngantu3105@gmail.com <span aria-hidden="true">✉</span></a><p class="form-note">Điền lời nhắn rồi mở Gmail hoặc ứng dụng Mail. Bạn kiểm tra và bấm Gửi trong hộp thư của mình.</p></div><form id="contact-form" class="reveal" novalidate><div class="form-row"><div class="field"><label for="name">Họ tên</label><input id="name" name="name" autocomplete="name" placeholder="Tên của bạn" maxlength="100" required aria-describedby="name-error"><span class="field-error" id="name-error"></span></div><div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" placeholder="ban@example.com" maxlength="254" required aria-describedby="email-error"><span class="field-error" id="email-error"></span></div></div><div class="field"><label for="message">Nội dung</label><textarea id="message" name="message" rows="5" placeholder="Bạn muốn chia sẻ điều gì?" minlength="10" maxlength="1000" required aria-describedby="message-error"></textarea><span class="field-error" id="message-error"></span></div><div class="mail-actions"><button class="button primary" type="submit" name="delivery" value="gmail">Soạn trong Gmail <span aria-hidden="true">✉</span></button><button class="button secondary" type="submit" name="delivery" value="mail">Mở ứng dụng Mail</button></div><div class="form-feedback" id="form-feedback" role="status" hidden></div></form></div></section>
+    <section class="section container" id="code-corner" aria-labelledby="code-heading">
+  <div class="section-heading split-heading"><div><p class="eyebrow">CODE / MỖI NGÀY MỘT CHÚT</p><h2 id="code-heading">Góc code<span class="accent">.</span></h2></div><p>Những ví dụ nhỏ để đọc, thử và học. Chọn ngôn ngữ rồi sao chép để chạy trên máy.</p></div>
+  <div class="code-workbench"><div class="code-tabs" role="tablist" aria-label="Ngôn ngữ mẫu">
+    <button id="code-tab-c" role="tab" aria-controls="code-panel" aria-selected="true" data-code-language="c">C</button>
+    <button id="code-tab-objc" role="tab" aria-controls="code-panel" aria-selected="false" tabindex="-1" data-code-language="objc">Objective-C</button>
+    <button id="code-tab-swift" role="tab" aria-controls="code-panel" aria-selected="false" tabindex="-1" data-code-language="swift">Swift</button>
+  </div><div id="code-panel" role="tabpanel" aria-labelledby="code-tab-c" tabindex="0"><div class="code-toolbar"><span class="code-window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="code-file">hello.c</span><button type="button" id="copy-code">Sao chép code</button></div><pre><code id="code-content">#include &lt;stdio.h&gt;
+
+int main(void) {
+    printf("Xin chao, minh la Ngan Tu!\n");
+    return 0;
+}</code></pre><p id="code-note">Ví dụ C cơ bản.</p><p id="code-status" role="status"></p><textarea id="code-copy-fallback" aria-label="Code để sao chép thủ công" readonly hidden></textarea></div></div>
+</section>
+<section class="section container" id="journal" aria-labelledby="journal-heading">
+  <div class="section-heading split-heading"><div><p class="eyebrow">JOURNAL / GHI LẠI TỪNG BƯỚC</p><h2 id="journal-heading">Nhật ký học tập<span class="accent">.</span></h2></div><p>Chuyện học code và những thay đổi nhỏ trong không gian này.</p></div>
+  <div class="journal-filters" role="group" aria-label="Lọc nhật ký"><button type="button" data-journal-filter="all" aria-pressed="true">Tất cả</button><button type="button" data-journal-filter="Học tập" aria-pressed="false">Học tập</button><button type="button" data-journal-filter="Website" aria-pressed="false">Website</button></div>
+  <div id="journal-list" class="journal-list"></div><p id="journal-empty" role="status" hidden>Chưa có bài trong mục này.</p><noscript><p>Bật JavaScript để xem nhật ký học tập.</p></noscript>
+</section>
+<section class="section container" id="game-scores" aria-labelledby="scores-heading">
+  <div class="section-heading split-heading"><div><p class="eyebrow">SNAKE / THỬ PHÁ KỶ LỤC</p><h2 id="scores-heading">Bảng thành tích<span class="accent">.</span></h2></div><a class="button primary small" data-open-snake href="#game-scores">Chơi một ván ↗</a></div>
+  <div class="score-card"><div class="score-filters"><label>Độ khó<select id="leaderboard-level"><option value="easy">Dễ</option><option value="normal" selected>Vừa</option><option value="hard">Khó</option></select></label><label>Chế độ<select id="leaderboard-mode"><option value="normal">Chơi thường</option><option value="assisted">Có hỗ trợ / tuỳ chỉnh</option></select></label></div>
+  <table class="leaderboard"><caption>5 điểm cao nhất trên máy này</caption><thead><tr><th scope="col">Hạng</th><th scope="col">Điểm</th><th scope="col">Ngày chơi</th></tr></thead><tbody id="leaderboard-body"></tbody></table><p id="leaderboard-empty">Chưa có thành tích. Chơi một ván để bắt đầu nhé!</p><p class="score-note" id="score-storage-note">Điểm lưu trên trình duyệt này. Chỉ ghi nhận ván đã kết thúc.</p></div>
+</section>
+    <section class="section container" id="donate"><div class="donate-panel reveal"><div class="donate-copy"><p class="eyebrow">07 / MỘT CHÚT ĐỘNG LỰC</p><h2>Góp gió<br><span class="gradient-text">thành bão.</span></h2><p>Một chút ủng hộ, thêm nhiều động lực. Cảm ơn bạn đã đồng hành cùng Ngân Tú!</p><dl class="bank-details"><div><dt>Ngân hàng</dt><dd>Techcombank</dd></div><div><dt>Chủ tài khoản</dt><dd>KIEN NGAN TU</dd></div><div><dt>Số tài khoản</dt><dd id="bank-account">19076415749012</dd></div></dl><form id="donate-form" class="amount-form" novalidate><label for="donate-amount">Số tiền ủng hộ</label><div class="amount-input-wrap"><input id="donate-amount" name="amount" inputmode="numeric" autocomplete="off" placeholder="Nhập số tiền" maxlength="15" aria-describedby="amount-error qr-help" required><span>VNĐ</span></div><div class="amount-presets" aria-label="Chọn nhanh số tiền"><button type="button" data-amount="20000">20.000đ</button><button type="button" data-amount="50000">50.000đ</button><button type="button" data-amount="100000">100.000đ</button></div><p id="amount-error" class="field-error" role="alert"></p><button id="generate-qr" type="submit" class="button primary">Tạo QR ủng hộ</button><p id="qr-help" class="qr-help">Cần Internet để tạo QR qua VietQR.io. Mã chỉ điền sẵn thông tin chuyển khoản, không tự trừ tiền.</p></form><div class="hero-actions"><button class="button primary" type="button" id="copy-account">Sao chép số tài khoản</button><a id="qr-open" class="button secondary" href="images/qr-techcombank-card.png" target="_blank" rel="noopener">Mở ảnh QR</a></div><p class="donate-note">Ủng hộ hoàn toàn tự nguyện. Kiểm tra tên người nhận và số tài khoản trong ứng dụng ngân hàng trước khi xác nhận.</p></div><figure class="qr-panel"><div id="qr-status" class="qr-status" role="status">QR tài khoản · Chưa có số tiền</div><div class="qr-crop qr-static"><img loading="lazy" id="donation-qr" src="images/qr-techcombank-card.png" alt="Mã QR Techcombank của KIEN NGAN TU, số tài khoản 19076415749012" decoding="async"></div><figcaption id="qr-caption">Nhập số tiền và bấm tạo QR, hoặc quét mã tài khoản để tự nhập tiền.</figcaption></figure></div></section>
+    <section class="section container" id="contact"><div class="contact-panel"><div class="contact-copy reveal"><p class="eyebrow">08 / SAY HELLO</p><h2>Có gì muốn nói?<br><span class="gradient-text">Nhắn mình nhé.</span></h2><p>Có ý tưởng, câu hỏi hoặc muốn làm quen? Mình ưu tiên trả lời qua Telegram và email.</p><a class="contact-email" data-social="email" href="mailto:kienngantu3105@gmail.com">kienngantu3105@gmail.com <span aria-hidden="true">✉</span></a><p class="form-note">Điền lời nhắn để soạn email. Tin nhắn chỉ được gửi khi bạn bấm Gửi trong Gmail hoặc ứng dụng Mail. Bạn cũng có thể sao chép nội dung để gửi qua Telegram.</p></div><form id="contact-form" class="reveal" novalidate><div class="form-row"><div class="field"><label for="name">Họ tên</label><input id="name" name="name" autocomplete="name" placeholder="Tên của bạn" maxlength="100" required aria-describedby="name-error"><span class="field-error" id="name-error"></span></div><div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" placeholder="ban@example.com" maxlength="254" required aria-describedby="email-error"><span class="field-error" id="email-error"></span></div></div><div class="field"><label for="message">Nội dung</label><textarea id="message" name="message" rows="5" placeholder="Bạn muốn chia sẻ điều gì?" minlength="10" maxlength="1000" required aria-describedby="message-error"></textarea><span class="field-error" id="message-error"></span></div><div class="mail-actions"><button class="button primary" type="submit" name="delivery" value="gmail">Soạn trong Gmail <span aria-hidden="true">✉</span></button><button class="button secondary" type="submit" name="delivery" value="mail">Mở ứng dụng Mail</button><button class="button secondary" type="submit" name="delivery" value="copy">Sao chép lời nhắn</button></div><div class="form-feedback" id="form-feedback" role="status" hidden></div></form></div></section>
     <section class="closing-scene container" aria-labelledby="closing-title">
       <div class="closing-lines" aria-hidden="true"></div><p class="eyebrow">CẢM ƠN VÌ ĐÃ GHÉ QUA</p>
       <h2 id="closing-title">Một lời chào.<br><span class="gradient-text">Một kết nối mới.</span></h2>
@@ -124,9 +179,10 @@ int main(void) {
       <button class="closing-explore" type="button" data-open-explorer>Khám phá thêm <span aria-hidden="true">⌘</span></button>
     </section>
   </main>
-  <footer class="footer container"><a href="#home" class="brand"><span class="brand-mark">&lt;/&gt;</span><span class="brand-wordmark"><strong>Ngân Tú<span class="brand-dot">.</span></strong><small>CODE · LIFE · MUSIC</small></span></a><div><p>© 2026 Ngân Tú</p><small>Made with HTML, CSS &amp; JavaScript</small></div><div class="footer-socials"><a data-social="telegram" href="https://t.me/neverdierrr" aria-label="Telegram">✈</a><a data-social="facebook" href="https://www.facebook.com/bolantokk" aria-label="Facebook">f</a><a data-social="tiktok" href="https://www.tiktok.com/@nt31055" aria-label="TikTok">♪</a><a data-social="github" href="https://github.com/nt3105" aria-label="GitHub">⑂</a><a data-social="email" href="mailto:kienngantu3105@gmail.com" aria-label="Email">@</a></div></footer>
+  <footer class="footer container"><a href="#home" class="brand"><span class="brand-mark">&lt;/&gt;</span><span class="brand-wordmark"><strong>Ngân Tú<span class="brand-dot">.</span></strong><small>CODE · LIFE · MUSIC</small></span></a><div><p>© 2026 Ngân Tú</p><small>Made with HTML, CSS &amp; JavaScript</small><a class="footer-intro" href="intro-3d-demo.html">Xem lại intro ↗</a></div><div class="footer-socials"><a data-social="telegram" href="https://t.me/neverdierrr" aria-label="Telegram">✈</a><a data-social="facebook" href="https://www.facebook.com/bolantokk" aria-label="Facebook">f</a><a data-social="tiktok" href="https://www.tiktok.com/@nt31055" aria-label="TikTok">♪</a><a data-social="github" href="https://github.com/nt3105" aria-label="GitHub">⑂</a><a data-social="email" href="mailto:kienngantu3105@gmail.com" aria-label="Email">@</a></div></footer>
   <button class="back-top" id="back-top" aria-label="Quay lại đầu trang" hidden>↑</button>
   <div class="toast" id="toast" role="status" hidden><span id="toast-message"></span><button aria-label="Đóng thông báo" id="toast-close">×</button></div>
+  <dialog id="share-dialog" class="share-dialog" aria-labelledby="share-heading"><div class="share-heading"><h2 id="share-heading">Chia sẻ không gian này</h2><button id="share-close" type="button" aria-label="Đóng chia sẻ">×</button></div><p>Gửi một đường link, thêm một kết nối.</p><img src="images/share-qr.png" alt="Mã QR mở website Ngân Tú" width="250" height="250" loading="lazy"><label for="share-url">Liên kết website</label><input id="share-url" type="url" readonly value="https://nt3105.github.io/"><div class="share-actions"><button type="button" id="copy-share">Sao chép link</button><button type="button" id="native-share" hidden>Chia sẻ qua ứng dụng</button><a href="images/share-qr.png" download="ngan-tu-qr.png">Tải ảnh QR</a></div><p id="share-status" role="status"></p></dialog>
   <dialog class="explorer" id="explorer" aria-labelledby="explorer-title">
     <div class="explorer-head"><div><p class="eyebrow">YOUR NEXT STOP</p><h2 id="explorer-title">Bạn muốn khám phá gì?</h2></div><button type="button" id="explorer-close" aria-label="Đóng điều hướng nhanh">×</button></div>
     <label class="explorer-search"><span aria-hidden="true">⌕</span><input id="explorer-query" type="search" placeholder="Tìm dự án, âm nhạc, ảnh…" autocomplete="off" aria-label="Tìm mục trong website"></label>
@@ -141,15 +197,16 @@ int main(void) {
       </div>
       <div class="snake-scores"><span>ĐIỂM <b id="snake-score">0</b></span><span>KỶ LỤC <b id="snake-best">0</b></span></div>
       <button type="button" id="snake-ntjr" class="ntjr-orb" aria-expanded="false" aria-controls="ntjr" aria-label="Mở NTJR MENU">
-        <span class="ntjr-orb-float">
-          <i class="ntjr-orb-dot" aria-hidden="true"></i>
-          <span class="ntjr-orb-copy ntjr-orb-copy-off"><b>MỞ</b><small>MENU</small></span>
-          <span class="ntjr-orb-copy ntjr-orb-copy-on"><b>ĐÓNG</b><small>MENU</small></span>
-        </span>
-      </button>
+  <span class="ntjr-orb-float">
+    <i class="ntjr-orb-dot" aria-hidden="true"></i>
+    <span class="ntjr-orb-copy ntjr-orb-copy-off"><b>MỞ</b><small>MENU</small></span>
+    <span class="ntjr-orb-copy ntjr-orb-copy-on"><b>ĐÓNG</b><small>MENU</small></span>
+  </span>
+</button>
       <button type="button" id="snake-sound" aria-pressed="true">Âm thanh</button>
       <button type="button" id="snake-close" aria-label="Đóng game">Đóng</button>
     </div>
+    <div class="snake-settings"><label for="snake-difficulty">Độ khó</label><select id="snake-difficulty"><option value="easy">Dễ</option><option value="normal" selected>Vừa</option><option value="hard">Khó</option></select><small id="difficulty-help">Đổi độ khó trước khi bắt đầu ván mới.</small></div>
     <div class="snake-layout">
       <div class="snake-stage">
         <canvas id="snake-board" width="480" height="480"></canvas>
@@ -167,42 +224,61 @@ int main(void) {
       <button type="button" id="snake-pause">Tạm dừng</button>
       <button type="button" id="snake-restart">Chơi lại</button>
     </div>
-    <aside class="ntjr" id="ntjr" hidden>
-      <div class="ntjr-head" id="ntjr-drag">
-        <span class="ntjr-chip" aria-hidden="true">NT</span>
-        <div><b>Ngân Tú Dev</b><small>Menu trò chơi</small></div>
-        <span class="ntjr-online">iOS</span>
-        <button type="button" id="ntjr-close" aria-label="Đóng menu">×</button>
+    <aside class="ntjr" id="ntjr" role="dialog" aria-modal="true" aria-label="Ngân Tú Dev — Menu trò chơi" hidden>
+  <div class="ntjr-head" id="ntjr-drag">
+    <span class="ntjr-chip" aria-hidden="true">NT</span>
+    <div><b>Ngân Tú Dev</b><small>Menu trò chơi</small></div>
+    <span class="ntjr-online">iOS</span>
+    <button type="button" id="ntjr-close" aria-label="Đóng menu">×</button>
+  </div>
+  <div class="ntjr-body">
+    <nav class="ntjr-side" aria-label="Mục menu">
+      <button type="button" data-ntjr-tab="mau" class="is-on"><i>✦</i>Mẫu</button>
+      <button type="button" data-ntjr-tab="auto"><i>▶</i>Tự động</button>
+      <button type="button" data-ntjr-tab="play"><i>◉</i>Chơi</button>
+      <button type="button" data-ntjr-tab="food"><i>●</i>Mồi</button>
+      <button type="button" data-ntjr-tab="score"><i>#</i>Điểm</button>
+    </nav>
+    <div class="ntjr-main">
+      <div class="ntjr-pane is-on" data-ntjr-pane="mau">
+        <p class="ntjr-group">Chọn mẫu</p>
+        <div class="ntjr-presets">
+          <button type="button" data-preset="normal">Thường</button>
+          <button type="button" data-preset="farm">Tự cày</button>
+          <button type="button" data-preset="speed">Chạy nhanh</button>
+          <button type="button" data-preset="god">Bất tử</button>
+          <button type="button" data-preset="chaos">Hỗn loạn</button>
+        </div>
       </div>
-      <div class="ntjr-presets">
-        <button type="button" data-preset="normal">Thường</button>
-        <button type="button" data-preset="farm">Tự cày</button>
-        <button type="button" data-preset="speed">Chạy nhanh</button>
-        <button type="button" data-preset="god">Bất tử</button>
-        <button type="button" data-preset="chaos">Hỗn loạn</button>
-      </div>
-      <div class="ntjr-scroll">
+      <div class="ntjr-pane" data-ntjr-pane="auto">
         <p class="ntjr-group">Tự động</p>
         <label class="ntjr-row"><span>Tự chơi</span><input id="mod-auto" type="checkbox"></label>
         <label class="ntjr-row"><span>Xem đường</span><input id="mod-path" type="checkbox"></label>
-        <p class="ntjr-group">Người chơi</p>
+      </div>
+      <div class="ntjr-pane" data-ntjr-pane="play">
+        <p class="ntjr-group">Chơi</p>
         <label class="ntjr-row"><span>Tốc độ <b id="speed-label">1x</b></span><input id="mod-speed" type="range" min="0" max="4" step="1" value="1"></label>
         <label class="ntjr-row"><span>Xuyên tường</span><input id="mod-wall" type="checkbox"></label>
         <label class="ntjr-row"><span>Xuyên thân</span><input id="mod-body" type="checkbox"></label>
         <label class="ntjr-row"><span>Chuyển động chậm</span><input id="mod-slow" type="checkbox"></label>
         <label class="ntjr-row"><span>Bất tử</span><input id="mod-god" type="checkbox"></label>
+        <label class="ntjr-row"><span>Vùng va chạm</span><input id="mod-hit" type="checkbox"></label>
+      </div>
+      <div class="ntjr-pane" data-ntjr-pane="food">
         <p class="ntjr-group">Mồi</p>
         <label class="ntjr-row"><span>Định vị mồi</span><input id="mod-locator" type="checkbox"></label>
         <label class="ntjr-row"><span>Hút mồi</span><input id="mod-magnet" type="checkbox"></label>
+        <label class="ntjr-row"><span>Hỗn loạn</span><input id="mod-chaos" type="checkbox"></label>
+      </div>
+      <div class="ntjr-pane" data-ntjr-pane="score">
         <p class="ntjr-group">Điểm</p>
         <label class="ntjr-row"><span>Nhân điểm</span><select id="mod-mult"><option value="1">x1</option><option value="2">x2</option><option value="5">x5</option></select></label>
-        <p class="ntjr-group">Vui</p>
-        <label class="ntjr-row"><span>Hỗn loạn</span><input id="mod-chaos" type="checkbox"></label>
-        <p class="ntjr-group">Dev</p>
-        <label class="ntjr-row"><span>Vùng va chạm</span><input id="mod-hit" type="checkbox"></label>
       </div>
-      <div class="ntjr-foot" id="ntjr-status">Sẵn sàng</div>
-    </aside>
+    </div>
+  </div>
+  <div class="ntjr-foot" id="ntjr-status">Sẵn sàng</div>
+</aside>
   </dialog>
+<noscript><style>.loader{display:none!important}.nav-links{display:flex!important;position:static!important;visibility:visible!important;opacity:1!important;flex-wrap:wrap}.menu-toggle{display:none!important}#contact-form,#donate-form{display:none}.nav{height:auto;flex-wrap:wrap;padding-block:12px}</style><p class="nojs-note">Bạn vẫn có thể đọc nội dung và mở liên kết. Bật JavaScript để chơi game, nghe nhạc và dùng biểu mẫu.</p></noscript>
 </body>
 </html>

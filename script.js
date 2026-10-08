@@ -1,18 +1,17 @@
 'use strict';
-// Mỗi lần mở/tải lại trang đều bắt đầu ở lời chào, không khôi phục vị trí cũ.
-try {
-  history.scrollRestoration = 'manual';
-  if (location.hash) history.replaceState(history.state, '', location.pathname + location.search);
-} catch { /* Một số chế độ mở file giới hạn History API. */ }
-function startAtHome() {
-  const root = document.documentElement;
-  const previous = root.style.scrollBehavior;
-  root.style.scrollBehavior = 'auto';
-  window.scrollTo(0, 0);
-  requestAnimationFrame(() => { root.style.scrollBehavior = previous; });
+// Respect section URLs and native browser scroll restoration.
+const initialSection = location.hash;
+function restoreInitialSection() {
+  if (!initialSection) return;
+  let id;
+  try { id = decodeURIComponent(initialSection.slice(1)); } catch { return; }
+  const target = document.getElementById(id);
+  if (target) target.scrollIntoView({ behavior: 'instant', block: 'start' });
 }
-startAtHome();
-window.addEventListener('pageshow', startAtHome);
+if (initialSection) {
+  requestAnimationFrame(() => requestAnimationFrame(restoreInitialSection));
+  window.addEventListener('load', restoreInitialSection, { once: true });
+}
 
 /* =====================================================
    SỬA LINK CỦA BẠN TẠI ĐÂY.
@@ -228,7 +227,7 @@ function setError(field, message) {
   document.querySelector(`#${field.id}-error`).textContent = message;
   field.setAttribute('aria-invalid', message ? 'true' : 'false');
 }
-form.addEventListener('submit', event => {
+form.addEventListener('submit', async event => {
   event.preventDefault();
   const name = form.elements.name;
   const email = form.elements.email;
@@ -240,6 +239,29 @@ form.addEventListener('submit', event => {
   if (invalid) { feedback.hidden = true; invalid.focus(); return; }
   const subject = 'Liên hệ Ngân Tú — ' + name.value.trim();
   const body = 'Họ tên: ' + name.value.trim() + '\nEmail liên hệ: ' + email.value.trim() + '\n\n' + message.value.trim();
+  if (event.submitter?.value === 'copy') {
+    const text = subject + '\n\n' + body;
+    try {
+      if (!navigator.clipboard) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(text);
+      feedback.textContent = 'Đã sao chép lời nhắn. Mở Telegram hoặc email và dán nội dung để gửi.';
+    } catch {
+      const copyField = document.createElement('textarea');
+      copyField.value = text;
+      copyField.readOnly = true;
+      copyField.setAttribute('aria-label', 'Lời nhắn để sao chép');
+      feedback.replaceChildren(copyField);
+      const note = document.createElement('p');
+      note.textContent = 'Trình duyệt chưa cho phép sao chép tự động. Chọn nội dung bên dưới để sao chép.';
+      feedback.prepend(note);
+      feedback.hidden = false;
+      copyField.focus();
+      copyField.select();
+      return;
+    }
+    feedback.hidden = false;
+    return;
+  }
   const recipient = SOCIAL_LINKS.email;
   const mailto = 'mailto:' + recipient + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   const gmail = 'https://mail.google.com/mail/?' + new URLSearchParams({view:'cm', fs:'1', to:recipient, su:subject, body}).toString();
@@ -299,9 +321,7 @@ let pendingQR = null;
 let qrTimeout = 0;
 let qrDebounce = 0;
 const moneyFormat = new Intl.NumberFormat('vi-VN');
-const warmQR = new Image();
-warmQR.src = originalQR;
-qrImage.loading = 'eager';
+qrImage.loading = 'lazy';
 qrImage.decoding = 'async';
 if (!qrImage.getAttribute('src')) qrImage.src = originalQR;
 function parseDonationAmount(raw) {
@@ -355,6 +375,9 @@ function requestAmountQR(amount) {
   candidate.referrerPolicy = 'no-referrer';
   function fail() {
     if (request !== qrRequest) return;
+    clearTimeout(qrTimeout);
+    candidate.onload = null;
+    candidate.onerror = null;
     pendingQR = null;
     qrImage.closest('figure').classList.remove('pending');
     generateButton.disabled = false;
@@ -390,9 +413,13 @@ function amountChanged() {
   amountError.textContent = '';
   amountInput.removeAttribute('aria-invalid');
   const amount = syncAmountButtons();
-  clearTimeout(qrDebounce);
+  // Editing the amount invalidates all outstanding responses and the old QR.
+  showDefaultQR();
   if (!amountInput.value.trim()) { showDefaultQR(); return; }
-  if (amount === null) return;
+  if (amount === null) {
+    qrCaption.textContent = 'Nhập số tiền hợp lệ từ 1.000đ đến 500.000.000đ để tạo QR theo số tiền.';
+    return;
+  }
   qrDebounce = setTimeout(() => requestAmountQR(amount), 320);
 }
 amountInput.addEventListener('input', amountChanged);
@@ -610,12 +637,13 @@ const musicPlaylist = [
 const introBgm = window.ntBgm instanceof HTMLAudioElement ? window.ntBgm : null;
 const musicAudio = introBgm || new Audio();
 if (!introBgm) {
-  musicAudio.preload = 'auto';
+  musicAudio.preload = 'metadata';
   musicAudio.volume = 0.35;
 }
 let musicIndex = Math.random() < 0.65 ? 0 : 1 + Math.floor(Math.random() * (musicPlaylist.length - 1));
 try {
-  const saved = Number(sessionStorage.getItem('nt-visit-track'));
+  const storedTrack = sessionStorage.getItem('nt-visit-track');
+  const saved = storedTrack === null ? NaN : Number(storedTrack);
   if (Number.isInteger(saved) && saved >= 0 && saved < musicPlaylist.length) musicIndex = saved;
   else {
     localStorage.setItem('nt-last-track', String(musicIndex));
@@ -754,7 +782,7 @@ async function playMusic() {
       musicAudio.muted = true;
       await musicAudio.play();
       musicAudio.muted = false;
-      musicAudio.volume = musicAudio.volume || 0.35;
+      // Keep the volume chosen by the listener, including zero.
       if (musicAudio.paused) await musicAudio.play();
     } else {
       await musicAudio.play();
@@ -762,8 +790,9 @@ async function playMusic() {
   } catch (error) {
     if (request !== musicRequest || error.name === 'AbortError') return;
     if (error.name === 'NotAllowedError') {
-      const unlock = () => playMusic();
-      window.addEventListener('pointerdown', unlock, { once: true });
+      musicAudio.muted = false;
+      musicStatus('Bấm nút phát để nghe nhạc');
+      musicButtons();
       return;
     }
     musicButtons();
@@ -863,7 +892,7 @@ else loadMusic(musicIndex);
 if (!musicAudio.paused && musicAudio.src) {
   musicButtons();
   musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length);
-} else playMusic();
+} else { musicButtons(); musicStatus('Bấm nút phát để nghe nhạc'); }
 
 
 // Quầng sáng toàn trang: chuột, bút cảm ứng và thao tác vuốt trên điện thoại.
@@ -1129,6 +1158,9 @@ shuffleButton.addEventListener('click', () => {
   const results = document.getElementById('explorer-results');
   const destinations = [
     ['✧', 'Về mình', 'Một chút về Ngân Tú', '#about'],
+    ['⌨', 'Góc code', 'Ví dụ C, Objective-C và Swift', '#code-corner'],
+    ['✎', 'Nhật ký', 'Hành trình học tập và cập nhật website', '#journal'],
+    ['★', 'Bảng điểm', 'Thành tích game rắn trên máy này', '#game-scores'],
     ['⌘', 'Dự án', 'Website cá nhân & game con sâu', '#projects'],
     ['♫', 'Âm nhạc', 'Mở playlist của mình', 'music'],
     ['▧', 'Khoảnh khắc', 'Bộ ảnh và kỷ niệm', '#memories'],
@@ -1183,3 +1215,12 @@ shuffleButton.addEventListener('click', () => {
   addEventListener('resize', progress); progress();
 })();
 
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Tab' || !menu.classList.contains('open')) return;
+  const items = [menuButton, ...menu.querySelectorAll('a[href]')];
+  const first = items[0], last = items[items.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+});
+window.addEventListener('offline', () => notify('Bạn đang ngoại tuyến. Nội dung đã tải vẫn xem được; liên kết và QR mới cần Internet.'));

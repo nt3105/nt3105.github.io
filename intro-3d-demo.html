@@ -4,11 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="favicon.svg">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="preload" as="image" href="images/moment-1-hero.jpg" fetchpriority="high">
 <link rel="preload" as="image" href="images/cover-preah-thorng.jpg">
-<link rel="preload" as="audio" href="audio/preah-thorng.mp3">
-<title>NGÂN TÚ DEV — 3D intro</title>
+<title>Ngân Tú — Code &amp; Game</title>
+<meta name="description" content="Lập trình, game và những dự án cá nhân của Ngân Tú.">
+<meta name="robots" content="noindex, follow">
+  <meta property="og:url" content="https://nt3105.github.io/">
+  <meta property="og:image" content="https://nt3105.github.io/images/social-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Ngân Tú — Code, Life &amp; Music">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ngân Tú — Code &amp; Game">
+  <meta name="twitter:description" content="Lập trình, game và những dự án cá nhân của Ngân Tú.">
+  <meta name="twitter:image" content="https://nt3105.github.io/images/social-preview.png">
+  <link rel="canonical" href="https://nt3105.github.io/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500&display=swap" rel="stylesheet">
@@ -230,6 +241,7 @@
 </head>
 <body>
   <div class="stage play" id="stage">
+    <a class="skip" href="index.html?intro=off" id="skip-intro">Bỏ qua intro ↗</a>
     <div class="sky"></div>
     <div class="grain"></div>
     <div class="vignette"></div>
@@ -256,12 +268,12 @@
   </div>
   <div class="handoff" id="handoff" hidden>
     <div class="card">
-      <p>3D INTRO</p>
-      <strong>Main portfolio</strong>
-      <em>Demo riêng. Website chính chưa bị đổi.</em>
+      <p>NGÂN TÚ</p>
+      <strong>Chưa tải được trang chính</strong>
+      <em id="intro-status" role="status">Kiểm tra kết nối rồi thử lại, hoặc mở trang chính trực tiếp.</em>
       <div class="actions">
-        <button class="ghost" id="replay" type="button">XEM LẠI</button>
-        <a class="ghost" href="index.html">MỞ WEBSITE HIỆN TẠI</a>
+        <button class="ghost" id="replay" type="button">THỬ LẠI</button>
+        <a class="ghost" href="index.html?intro=off">MỞ TRANG CHÍNH</a>
       </div>
     </div>
   </div>
@@ -269,6 +281,7 @@
   const stage = document.querySelector('#stage');
   const world = document.querySelector('#world');
   const handoff = document.querySelector('#handoff');
+  try { sessionStorage.setItem('nt-skip-intro', '1'); } catch {}
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const mark = '</' + '>';
@@ -306,23 +319,7 @@
         if (!frame) frame = requestAnimationFrame(paint);
       }
     }, { passive: true });
-    const followPhone = event => {
-      const ask = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
-      const listen = () => addEventListener('deviceorientation', orient => {
-        if (orient.gamma == null || orient.beta == null) return;
-        tx = Math.max(-.8, Math.min(.8, orient.gamma / 28));
-        ty = Math.max(-.8, Math.min(.8, -((orient.beta || 0) - 42) / 36));
-        if (!frame) frame = requestAnimationFrame(paint);
-      });
-      if (!ask) { listen(); return; }
-      if (event && event.cancelable) event.preventDefault();
-      DeviceOrientationEvent.requestPermission().then(state => { if (state === 'granted') listen(); }).catch(() => {});
-    };
-    if (!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) followPhone();
-    else {
-      addEventListener('touchend', followPhone, { once: true });
-      addEventListener('click', followPhone, { once: true });
-    }
+
   }
   const visitTracks = ['audio/preah-thorng.mp3', 'audio/high-show-v2.mp3', 'audio/kom-ro.mp3', 'audio/thien-duong-voi-nguoi-thuong.mp3', 'audio/yab-nih-yab.mp3', 'audio/soriya.mp3'];
   let visitTrack = Math.random() < 0.65 ? 0 : 1 + Math.floor(Math.random() * (visitTracks.length - 1));
@@ -331,8 +328,7 @@
     sessionStorage.setItem('nt-visit-track', String(visitTrack));
   } catch (error) {}
   const bgm = new Audio(visitTracks[visitTrack]);
-  bgm.preload = 'auto';
-  bgm.autoplay = true;
+  bgm.preload = 'none';
   bgm.playsInline = true;
   bgm.volume = 0.35;
   window.ntBgm = bgm;
@@ -347,8 +343,7 @@
       if (bgm.paused) return bgm.play();
     }).catch(() => {}).finally(() => { starting = false; });
   };
-  startBgm();
-  const bgmRetry = setInterval(() => { if (!bgm.paused) clearInterval(bgmRetry); else startBgm(); }, 400);
+  // Audio starts only after the visitor presses its play button.
   const heroImg = new Image();
   heroImg.className = 'optional-image loaded';
   heroImg.alt = 'Ảnh chân dung Ngân Tú';
@@ -359,62 +354,88 @@
     heroImg.onerror = () => resolve();
     heroImg.src = 'images/moment-1-hero.jpg';
   });
-  const warm = src => { const img = new Image(); img.decoding = 'async'; img.src = src; };
-  warm('images/moment-1-card.jpg');
-  warm('images/moment-2-card.jpg');
-  warm('images/moment-3-card.jpg');
-  warm('images/moment-4-card.jpg');
   const pageBase = location.pathname.replace(/[^/]*$/, '');
-  const siteHtml = fetch(pageBase + 'index.html').then(response => response.text());
+  let siteHtml;
+  function loadMain() {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    return fetch(pageBase + 'index.html', { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error('HTTP ' + response.status); return response.text(); })
+      .then(html => ({ html }), error => ({ error }))
+      .finally(() => clearTimeout(timeout));
+  }
+  siteHtml = loadMain();
   function addStyle(href) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = href;
-      link.onload = resolve;
-      link.onerror = resolve;
+      link.rel = 'stylesheet'; link.href = href;
+      const timer = setTimeout(() => reject(new Error('Style timeout')), 12000);
+      link.onload = () => { clearTimeout(timer); resolve(); };
+      link.onerror = () => { clearTimeout(timer); reject(new Error('Style unavailable')); };
       document.head.append(link);
     });
   }
   function addScript(src) {
-    return new Promise(resolve => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = resolve;
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script'); script.src = src;
+      const timer = setTimeout(() => reject(new Error('Script timeout')), 12000);
+      script.onload = () => { clearTimeout(timer); resolve(); };
+      script.onerror = () => { clearTimeout(timer); reject(new Error('Script unavailable')); };
       document.body.append(script);
     });
   }
+  let leaving = false;
   async function leave() {
-    if (stage.classList.contains('is-leaving')) return;
+    if (leaving) return;
+    leaving = true;
     stage.classList.add('is-leaving');
-    startBgm();
-    const html = await siteHtml;
-    await Promise.all([heroReady, new Promise(resolve => setTimeout(resolve, 100))]);
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    document.title = doc.title;
-    await Promise.all(['style.css', 'enhance.css'].map(addStyle));
-    document.documentElement.classList.add('from-intro');
-    document.getElementById('intro-css')?.remove();
-    stage.remove();
-    document.body.style.overflow = '';
-    const nodes = document.createDocumentFragment();
-    [...doc.body.children].forEach(node => {
-      if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
-    });
-    document.body.append(nodes);
-    const hero = document.querySelector('.avatar .optional-image');
-    if (hero && heroImg.naturalWidth) hero.replaceWith(heroImg);
-    else if (hero) { hero.hidden = false; hero.classList.add('loaded'); }
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    document.documentElement.classList.add('is-in');
-    clearInterval(bgmRetry);
-    for (const src of ['script.js', 'enhance.js', 'snake.js']) await addScript(src);
-    startBgm();
-    try { history.replaceState(null, '', pageBase + 'index.html'); } catch (error) {}
+    try {
+      const result = await siteHtml;
+      if (result.error) throw result.error;
+      const doc = new DOMParser().parseFromString(result.html, 'text/html');
+      if (!doc.querySelector('#main')) throw new Error('Invalid main page');
+      await Promise.all(['style.css', 'enhance.css', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css'].map(addStyle));
+      document.title = doc.title;
+      // Keep share metadata and canonical URL identical on both entry paths.
+      doc.head.querySelectorAll('meta[name="description"], meta[property^="og:"], meta[name^="twitter:"], link[rel="canonical"]').forEach(node => {
+        const selector = node.tagName === 'LINK' ? 'link[rel="canonical"]' :
+          node.hasAttribute('property') ? 'meta[property="' + node.getAttribute('property') + '"]' :
+          'meta[name="' + node.getAttribute('name') + '"]';
+        document.head.querySelectorAll(selector).forEach(old => old.remove());
+        document.head.append(document.importNode(node, true));
+      });
+      document.head.querySelector('meta[name="robots"]')?.remove();
+      document.documentElement.classList.add('from-intro', 'is-in');
+      document.getElementById('intro-css')?.remove();
+      stage.remove(); handoff.remove();
+      cancelAnimationFrame(frame);
+      document.body.style.overflow = '';
+      const nodes = document.createDocumentFragment();
+      [...doc.body.children].forEach(node => {
+        if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
+      });
+      document.body.append(nodes);
+      for (const src of ['script.js', 'enhance.js', 'journal-data.js', 'features.js', 'snake.js', 'ios-effects.js']) await addScript(src);
+      try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch {}
+    } catch (error) {
+      if (!stage.isConnected) { location.replace(pageBase + 'index.html?intro=off'); return; }
+      stage.classList.remove('is-leaving');
+      stage.hidden = true;
+      handoff.hidden = false;
+      leaving = false;
+      cancelAnimationFrame(frame);
+      document.getElementById('replay').focus();
+    }
   }
-  document.querySelector('#loadbar').addEventListener('animationend', leave);
-  if (reduce) setTimeout(leave, 900);
+  document.getElementById('replay').addEventListener('click', () => {
+    siteHtml = loadMain(); handoff.hidden = true; stage.hidden = false; leave();
+  });
+  document.getElementById('skip-intro').addEventListener('click', event => { event.preventDefault(); leave(); });
+  document.querySelector('#loadbar').addEventListener('animationend', leave, { once: true });
+  // Animation events may be suppressed; this also works in reduced motion.
+  setTimeout(leave, reduce ? 300 : 4500);
+
 </script>
+<noscript><style>#stage{display:none}.handoff{display:grid!important}</style></noscript>
 </body>
 </html>
