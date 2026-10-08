@@ -38,6 +38,27 @@
   let chaosHue = 270;
   let chaosBoost = 1;
   let soundOn = true;
+  const SCORE_MAX = 1000;
+  const SCORE_MARKS = [
+    [100, '100 điểm. Ván này bắt đầu ổn.'],
+    [300, '300 điểm. Đang vào nhịp.'],
+    [500, '500 điểm. Đã qua nửa đường.'],
+    [800, '800 điểm. Sắp tới full.']
+  ];
+  let toldScore = new Set();
+  let accountLocked = false;
+  function ping(message) {
+    const toast = document.querySelector('#toast');
+    const messageEl = document.querySelector('#toast-message');
+    if (!toast || !messageEl) return;
+    messageEl.textContent = message;
+    toast.hidden = false;
+    clearTimeout(ping.timer);
+    ping.timer = setTimeout(() => { toast.hidden = true; }, 4200);
+  }
+  function usingHack(flag) {
+    return flag.god || flag.auto || flag.chaos || flag.wall || flag.body || flag.magnet || Number(flag.mult) > 1;
+  }
   let audio;
   const mods = () => ({
     auto: document.querySelector('#mod-auto').checked,
@@ -149,6 +170,8 @@
     score = 0;
     bonus = null;
     chaosBoost = 1;
+    toldScore = new Set();
+    accountLocked = false;
     food = spawnAt(false);
     scoreEl.textContent = '0';
     path = [];
@@ -165,6 +188,7 @@
     if (flag.auto) bits.push('AUTO PILOT ACTIVE');
     ntjrStatus.textContent = bits[0] || 'Sẵn sàng';
     speedLabel.textContent = flag.speed + 'x';
+    if (!accountLocked && mode === 'play') noteScore(flag);
     if (flag.locator && food && snake[0]) {
       const dist = Math.abs(food.x - snake[0].x) + Math.abs(food.y - snake[0].y);
       const arrow = Math.abs(food.x - snake[0].x) >= Math.abs(food.y - snake[0].y)
@@ -193,6 +217,40 @@
     setStatus('GAME OVER');
     showOverlay('GAME OVER', 'Chơi lại', 'Score: ' + score + '    Best: ' + best);
   }
+  function lockAccount() {
+    if (accountLocked) return;
+    accountLocked = true;
+    mode = 'over';
+    beep(90, 0.28, 0.06);
+    ping('Tài khoản bạn bị khóa');
+    setStatus('BỊ KHÓA');
+    showOverlay('BỊ KHÓA', 'Chơi lại', 'Tài khoản bạn bị khóa');
+  }
+  function noteScore(flag) {
+    if (accountLocked || mode === 'over') return;
+    if (usingHack(flag) && score >= 800) {
+      lockAccount();
+      return;
+    }
+    for (const [mark, text] of SCORE_MARKS) {
+      if (score >= mark && !toldScore.has(mark)) {
+        toldScore.add(mark);
+        ping(text);
+      }
+    }
+    if (score >= SCORE_MAX && !toldScore.has(SCORE_MAX)) {
+      toldScore.add(SCORE_MAX);
+      mode = 'over';
+      if (score > best) {
+        best = score;
+        localStorage.setItem(BEST_KEY, String(best));
+        bestEl.textContent = String(best);
+      }
+      ping('1000 điểm. Full điểm, ván này sạch.');
+      setStatus('FULL ĐIỂM');
+      showOverlay('FULL ĐIỂM', 'Chơi lại', 'Score: 1000    Best: ' + best);
+    }
+  }
   function tick() {
     const flag = mods();
     if (flag.auto) {
@@ -213,10 +271,11 @@
     let bonusHit = bonus && cell.x === bonus.x && cell.y === bonus.y;
     if (!ate && !bonusHit) snake.pop();
     if (ate || bonusHit) {
-      const gain = (ate ? 1 : 3) * flag.mult * (flag.god ? 2 : 1) * (flag.chaos && chaosBoost > 1 ? 2 : 1);
-      score += gain;
+      const gain = (ate ? 10 : 25) * flag.mult * (flag.god ? 2 : 1) * (flag.chaos && chaosBoost > 1 ? 2 : 1);
+      score = Math.min(SCORE_MAX, score + gain);
       scoreEl.textContent = String(score);
       beep(ate ? 620 : 780, 0.08, 0.04);
+      noteScore(flag);
       if (ate) food = spawnAt(flag.magnet);
       if (bonusHit) bonus = null;
     }
@@ -359,7 +418,7 @@
   }
   function stepMs() {
     const flag = mods();
-    const base = Math.max(68, 156 - Math.min(score, 40) * 2);
+    const base = Math.max(68, 156 - Math.min(score / 10, 40) * 2);
     return base / flag.speed / (flag.slow ? 0.45 : 1) / chaosBoost;
   }
   function frame(now) {
