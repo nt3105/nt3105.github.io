@@ -48,27 +48,6 @@
   $('#copy-code').addEventListener('click', () => copy(samples[selected].code, $('#code-status'), $('#code-copy-fallback')));
   selectCode('c');
 
-  const journal = Array.isArray(window.NT_JOURNAL) ? window.NT_JOURNAL : [];
-  function renderJournal(filter = 'all') {
-    const list = $('#journal-list'); list.replaceChildren();
-    journal.filter(entry => filter === 'all' || entry.tag === filter).forEach(entry => {
-      const card = document.createElement('article'); card.className = 'journal-entry';
-      const meta = document.createElement('p'); meta.className = 'journal-meta';
-      const time = document.createElement('time');
-      if (/^\d{4}-\d{2}-\d{2}$/.test(entry.date || '')) { time.dateTime = entry.date; time.textContent = entry.date.split('-').reverse().join('/'); }
-      else time.textContent = 'Hiện tại';
-      const tag = document.createElement('span'); tag.textContent = entry.tag;
-      meta.append(time, tag);
-      const title = document.createElement('h3'); title.textContent = entry.title;
-      const text = document.createElement('p'); text.textContent = entry.text;
-      card.append(meta, title, text); list.append(card);
-    });
-    $('#journal-empty').hidden = list.childElementCount > 0;
-    document.querySelectorAll('[data-journal-filter]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.journalFilter === filter)));
-  }
-  document.querySelectorAll('[data-journal-filter]').forEach(button => button.addEventListener('click', () => renderJournal(button.dataset.journalFilter)));
-  renderJournal();
-
   const shareDialog = $('#share-dialog');
   const shareUrl = document.querySelector('link[rel="canonical"]').href;
   let shareOpener;

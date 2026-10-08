@@ -415,7 +415,7 @@
         if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
       });
       document.body.append(nodes);
-      for (const src of ['script.js', 'enhance.js', 'journal-data.js', 'features.js', 'snake.js', 'ios-effects.js']) await addScript(src);
+      for (const src of ['script.js', 'enhance.js', 'features.js', 'snake.js', 'ios-effects.js']) await addScript(src);
       try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch {}
     } catch (error) {
       if (!stage.isConnected) { location.replace(pageBase + 'index.html?intro=off'); return; }

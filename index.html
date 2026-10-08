@@ -45,7 +45,6 @@
   <link rel="stylesheet" href="ios-effects.css">
   <script src="script.js" defer></script>
   <script src="enhance.js" defer></script>
-  <script src="journal-data.js" defer></script>
   <script src="features.js" defer></script>
   <script src="snake.js" defer></script>
   <script src="ios-effects.js" defer></script>
@@ -82,7 +81,6 @@
         <div class="hero-actions"><a class="button primary" href="#projects">Xem dự án <span aria-hidden="true">▦</span></a><a class="button secondary" href="#contact">Liên hệ với tôi</a></div>
         <div class="site-tools launch-grid" aria-label="Tiện ích website">
           <a class="launch-card" href="#code-corner" style="--tile-rgb:125,211,252"><span class="launch-icon" aria-hidden="true">&lt;/&gt;</span><span class="launch-copy"><strong>Góc code</strong><small>Đọc, thử và khám phá</small></span><span class="launch-arrow" aria-hidden="true">↗</span></a>
-          <a class="launch-card" href="#journal" style="--tile-rgb:196,181,253"><span class="launch-icon" aria-hidden="true">✎</span><span class="launch-copy"><strong>Nhật ký</strong><small>Từng bước trên hành trình</small></span><span class="launch-arrow" aria-hidden="true">↗</span></a>
           <a class="launch-card" href="#game-scores" style="--tile-rgb:134,239,172"><span class="launch-icon" aria-hidden="true">★</span><span class="launch-copy"><strong>Bảng thành tích</strong><small>Thử phá kỷ lục của bạn</small></span><span class="launch-arrow" aria-hidden="true">↗</span></a>
           <button class="launch-card" type="button" data-share-web style="--tile-rgb:253,186,116"><span class="launch-icon" aria-hidden="true">↗</span><span class="launch-copy"><strong>Chia sẻ</strong><small>Gửi một kết nối mới</small></span><span class="launch-arrow" aria-hidden="true">＋</span></button>
         </div>
@@ -158,11 +156,6 @@ int main(void) {
     printf("Xin chao, minh la Ngan Tu!\n");
     return 0;
 }</code></pre><p id="code-note">Ví dụ C cơ bản.</p><p id="code-status" role="status"></p><textarea id="code-copy-fallback" aria-label="Code để sao chép thủ công" readonly hidden></textarea></div></div>
-</section>
-<section class="section container" id="journal" aria-labelledby="journal-heading">
-  <div class="section-heading split-heading"><div><p class="eyebrow">JOURNAL / GHI LẠI TỪNG BƯỚC</p><h2 id="journal-heading">Nhật ký học tập<span class="accent">.</span></h2></div><p>Chuyện học code và những thay đổi nhỏ trong không gian này.</p></div>
-  <div class="journal-filters" role="group" aria-label="Lọc nhật ký"><button type="button" data-journal-filter="all" aria-pressed="true">Tất cả</button><button type="button" data-journal-filter="Học tập" aria-pressed="false">Học tập</button><button type="button" data-journal-filter="Website" aria-pressed="false">Website</button></div>
-  <div id="journal-list" class="journal-list"></div><p id="journal-empty" role="status" hidden>Chưa có bài trong mục này.</p><noscript><p>Bật JavaScript để xem nhật ký học tập.</p></noscript>
 </section>
 <section class="section container" id="game-scores" aria-labelledby="scores-heading">
   <div class="section-heading split-heading"><div><p class="eyebrow">SNAKE / THỬ PHÁ KỶ LỤC</p><h2 id="scores-heading">Bảng thành tích<span class="accent">.</span></h2></div><a class="button primary small" data-open-snake href="#game-scores">Chơi một ván ↗</a></div>
