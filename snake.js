@@ -163,7 +163,7 @@
     if (flag.god) bits.push('GOD MODE ACTIVE');
     if (flag.chaos) bits.push('CHAOS ACTIVE');
     if (flag.auto) bits.push('AUTO PILOT ACTIVE');
-    ntjrStatus.textContent = bits[0] || 'SYSTEM READY';
+    ntjrStatus.textContent = bits[0] || 'Sẵn sàng';
     speedLabel.textContent = flag.speed + 'x';
     if (flag.locator && food && snake[0]) {
       const dist = Math.abs(food.x - snake[0].x) + Math.abs(food.y - snake[0].y);
