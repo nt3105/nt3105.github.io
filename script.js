@@ -42,9 +42,12 @@ let toastTimer;
 function notify(message) {
   document.querySelector('#toast-message').textContent = message;
   toast.hidden = false;
+  toast.classList.remove('is-in');
+  requestAnimationFrame(() => toast.classList.add('is-in'));
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.hidden = true; }, 6500);
+  toastTimer = setTimeout(() => { toast.hidden = true; toast.classList.remove('is-in'); }, 2800);
 }
+window.ntNotify = notify;
 document.querySelector('#toast-close').addEventListener('click', () => { toast.hidden = true; });
 
 // Chỉ mở liên kết web hợp lệ.
@@ -491,7 +494,7 @@ if (memoryLinks.length && typeof HTMLDialogElement !== 'undefined') {
     photo.src = link.href;
     photo.alt = link.querySelector('img').alt;
     viewer.querySelector('.viewer-original').href = link.href;
-    viewer.querySelector('.viewer-count').textContent = `Ảnh ${photoIndex + 1} / ${memoryLinks.length}`;
+    viewer.querySelector('.viewer-count').textContent = `${link.querySelector('img').alt || 'Khoảnh khắc'} · ${photoIndex + 1}/${memoryLinks.length}`;
   }
   memoryLinks.forEach((link, index) => link.addEventListener('click', event => {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -519,6 +522,21 @@ if (memoryLinks.length && typeof HTMLDialogElement !== 'undefined') {
     document.body.style.overflow = previousOverflow;
     opener?.focus();
   });
+  let photoSwipe = null;
+  viewer.addEventListener('pointerdown', event => {
+    if (event.target.closest('button, a')) return;
+    photoSwipe = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  });
+  viewer.addEventListener('pointerup', event => {
+    if (!photoSwipe || photoSwipe.id !== event.pointerId) return;
+    const dx = event.clientX - photoSwipe.x;
+    const dy = event.clientY - photoSwipe.y;
+    photoSwipe = null;
+    if (Math.abs(dx) < 48 && Math.abs(dy) < 64) return;
+    if (dy > 72 && Math.abs(dy) > Math.abs(dx)) viewer.close();
+    else if (Math.abs(dx) > Math.abs(dy)) showPhoto(photoIndex + (dx < 0 ? 1 : -1));
+  });
+  viewer.addEventListener('pointercancel', () => { photoSwipe = null; });
 }
 
 // Bảng đổi màu nhấn, không gửi dữ liệu ra ngoài.
@@ -661,7 +679,7 @@ musicWidget.className = 'music-widget compact';
 musicWidget.setAttribute('aria-label', 'Trình phát nhạc');
 musicWidget.innerHTML = `
  <button class="hamster-mascot" type="button" aria-label="Bấm vào để chỉnh nhạc" aria-expanded="false" aria-controls="music-shell"><span class="hamster-dance" aria-hidden="true"></span><span class="hamster-tip">Bấm vào để chỉnh nhạc</span></button>
- <div class="music-mini"><div class="music-mini-label"><strong></strong><span>Nhạc cùng Ngân Tú</span></div><div class="music-mini-actions"><button class="mini-play" type="button">Bật nhạc</button><button class="music-expand" type="button" aria-label="Mở trình phát nhạc" aria-expanded="false" aria-controls="music-shell"><span class="go" aria-hidden="true"></span></button></div></div>
+ <div class="music-mini"><img class="ios-mini-cover" alt="" width="44" height="44"><div class="music-mini-label"><strong></strong><span>Nhạc cùng Ngân Tú</span></div><div class="music-mini-actions"><button class="mini-play" type="button">Bật nhạc</button><button class="music-expand" type="button" aria-label="Mở trình phát nhạc" aria-expanded="false" aria-controls="music-shell"><span class="go" aria-hidden="true"></span></button></div></div>
  <div class="music-shell" id="music-shell" hidden>
   <div class="music-head"><span>NGÂN TÚ / MUSIC</span><div><button class="music-close" type="button" aria-label="Đóng menu nhạc">×</button></div></div>
   <div class="music-track"><div class="music-cover" aria-hidden="true"><div class="music-disc"></div><img class="music-cover-image" alt="" hidden></div><div class="music-info"><h3 class="music-title"></h3><p class="music-artist"></p></div></div>
@@ -762,6 +780,8 @@ function loadMusic(index, keepTime) {
   musicEl('.music-cover').dataset.cover = String(musicIndex);
   musicCoverImage.hidden = false;
   musicCoverImage.src = track.cover;
+  const miniCover = musicEl('.ios-mini-cover');
+  if (miniCover) miniCover.src = track.cover;
   musicWidget.querySelectorAll('.playlist-track').forEach((button, index) => {
     button.setAttribute('aria-pressed', String(index === musicIndex));
   });
@@ -800,11 +820,10 @@ async function playMusic() {
   }
 }
 function toggleMusic() {
-  if (musicAudio.paused) { autoKick = false; musicByUser = true; playMusic(); }
-  else { autoKick = false; musicByUser = false; musicRequest++; musicAudio.pause(); musicStatus('Đã tạm dừng'); }
+  if (musicAudio.paused) { musicByUser = true; playMusic(); }
+  else { phoneAuto = false; musicByUser = false; musicRequest++; musicAudio.pause(); musicStatus('Đã tạm dừng'); }
 }
 function stopMusic() {
-  autoKick = false;
   musicByUser = false;
   musicRequest++;
   musicAudio.pause();
@@ -892,26 +911,22 @@ musicAudio.addEventListener('ended', () => { loadMusic(nextMusicIndex()); playMu
 musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không tải được bài · Hãy thử chuyển bài'); });
 if (introBgm) loadMusic(musicIndex, true);
 else loadMusic(musicIndex);
-let autoKick = true;
-function bootMusic() {
-  if (!musicAudio.paused) {
-    autoKick = false;
-    musicByUser = true;
-    musicButtons();
-    musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length);
-    return;
-  }
+musicButtons();
+const phoneMusic = matchMedia('(max-width: 820px), (pointer: coarse)').matches;
+let phoneAuto = phoneMusic;
+function startPhoneMusic() {
+  if (!phoneAuto || !musicAudio.paused) return;
   musicByUser = true;
   playMusic();
 }
-bootMusic();
-function nudgeMusic() {
-  if (!autoKick || !musicAudio.paused) return;
-  bootMusic();
+if (phoneMusic) {
+  startPhoneMusic();
+  ['pointerdown', 'touchstart'].forEach(type => window.addEventListener(type, startPhoneMusic, { passive: true }));
+  musicAudio.addEventListener('playing', () => { phoneAuto = false; }, { once: true });
+} else {
+  if (!musicAudio.paused) musicAudio.pause();
+  musicStatus('Bấm nút phát để nghe nhạc');
 }
-['pointerdown', 'touchstart', 'keydown'].forEach(type => window.addEventListener(type, nudgeMusic, { passive: true }));
-window.addEventListener('scroll', nudgeMusic, { passive: true });
-musicAudio.addEventListener('playing', () => { autoKick = false; }, { once: true });
 
 
 // Quầng sáng toàn trang: chuột, bút cảm ứng và thao tác vuốt trên điện thoại.
@@ -1024,6 +1039,13 @@ function makeWidgetDraggable(widget) {
     return clampMusic(left, top, rect);
   }
   function dockHamster() {
+    if (matchMedia('(max-width: 820px)').matches && widget.classList.contains('compact')) {
+      widget.style.left = 'auto';
+      widget.style.right = '12px';
+      widget.style.top = 'auto';
+      widget.style.bottom = 'max(16px, env(safe-area-inset-bottom))';
+      return;
+    }
     const anchor = document.querySelector('.style-toggle') || document.querySelector('.style-controls');
     const hamster = widget.querySelector('.hamster-mascot');
     if (!anchor || !hamster) return;

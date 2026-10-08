@@ -404,7 +404,7 @@ html, body { overflow-x: clip; }
   inset: 0;
   background: url('images/hamster-sprite.png') 0 0 / calc(54 * var(--ham)) var(--ham) no-repeat;
   animation: hamsterSteps 2.16s steps(54, end) infinite;
-  animation-play-state: paused;
+  animation-play-state: running;
 }
 .music-widget.is-playing .hamster-dance { animation-play-state: running; }
 @keyframes hamsterSteps {
@@ -595,11 +595,34 @@ html[data-fx="calm"] .tilt-card { transform: none; }
   }
   .nav-links a,
   .nav-links .nav-contact {
-    min-height: 36px;
+    min-height: 44px;
     margin: 0;
-    padding: 6px 12px;
-    font-size: 14px;
+    padding: 8px 14px;
+    font-size: 15px;
     border-radius: 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .header,
+  .header.menu-open { z-index: 80; }
+  .nav { position: relative; }
+  .nav-links.open {
+    position: absolute;
+    z-index: 81;
+    left: 0;
+    right: 0;
+    width: auto;
+    flex-direction: column;
+    align-items: stretch;
+    background: #0c1220;
+  }
+  .hero { padding-top: calc(124px + env(safe-area-inset-top)); }
+  body.menu-lock::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 40;
   }
   .header.menu-open ~ .music-widget,
   body.menu-lock .music-widget,

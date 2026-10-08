@@ -14,7 +14,8 @@
 .journal-entry,.score-card,.code-workbench{position:relative;isolation:isolate}
 .launch-card::after,.journal-entry::before,.score-card::before,.code-workbench::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(260px circle at var(--glass-x,50%) var(--glass-y,50%),rgba(var(--first-rgb,126,232,238),.075),transparent 75%);opacity:var(--glass-visible,0);transition:opacity .24s;z-index:1}
 html:not([data-fx=calm]) :is(.share-dialog,.explorer,.photo-viewer)[open]{animation:ios-present .38s var(--ios-spring) both;transform-origin:50% 65%}
-html:not([data-fx=calm]) #ntjr.ios-game-menu[open]{animation:ios-menu-present .4s var(--ios-ease) both}
+html:not([data-fx=calm]) #ntjr:not([hidden]){animation:ios-menu-present .4s var(--ios-ease) both}
+#ntjr[hidden]{pointer-events:none}
 html:not([data-fx=calm]) .style-panel.is-open{animation:ios-present .28s var(--ios-ease) both;transform-origin:10% 100%}
 @keyframes ios-present{from{opacity:0;scale:.94;translate:0 15px}to{opacity:1;scale:1;translate:0 0}}
 @keyframes ios-menu-present{from{opacity:0;translate:0 20px;scale:.975}to{opacity:1;translate:0 0;scale:1}}
@@ -28,7 +29,7 @@ html:not([data-fx=calm]) :is(.share-dialog,.explorer,.photo-viewer,#ntjr)[open]:
 #ntjr .ntjr-row input[type=checkbox]:checked:active::after{transform:translateX(16px)}
 .ios-content-in{animation:ios-content-in .24s var(--ios-ease) both}
 @keyframes ios-content-in{from{opacity:.45;translate:0 5px}to{opacity:1;translate:0 0}}
-@media(max-width:600px){html:not([data-fx=calm]) #ntjr.ios-game-menu[open]{animation:ios-sheet-present .42s var(--ios-ease) both}@keyframes ios-sheet-present{from{opacity:.7;translate:0 70px}to{opacity:1;translate:0 0}}}
+@media(max-width:600px){html:not([data-fx=calm]) #ntjr:not([hidden]){animation:ios-sheet-present .42s var(--ios-ease) both}@keyframes ios-sheet-present{from{opacity:.7;translate:0 70px}to{opacity:1;translate:0 0;scale:1}}}
 @media(pointer:coarse){.launch-card::after,.journal-entry::before,.score-card::before,.code-workbench::before{display:none}.header,.header.scrolled{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
 html[data-fx=calm] .ios-tactile:active{scale:1}
 html[data-fx=calm] .ios-tap-wave{display:none}

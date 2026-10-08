@@ -333,21 +333,7 @@
   bgm.playsInline = true;
   bgm.volume = 0.35;
   window.ntBgm = bgm;
-  let starting = false;
-  const startBgm = () => {
-    if (!bgm.paused || starting) return;
-    starting = true;
-    bgm.muted = true;
-    bgm.play().then(() => {
-      bgm.muted = false;
-      bgm.volume = 0.35;
-      if (bgm.paused) return bgm.play();
-    }).catch(() => {}).finally(() => { starting = false; });
-  };
-  startBgm();
-  const kickBgm = () => { if (bgm.paused) startBgm(); };
-  ['pointerdown', 'touchstart', 'keydown'].forEach(type => addEventListener(type, kickBgm, { passive: true }));
-  addEventListener('scroll', kickBgm, { passive: true });
+  const startBgm = () => {};
   const heroImg = new Image();
   heroImg.className = 'optional-image loaded';
   heroImg.alt = 'Ảnh chân dung Ngân Tú';
@@ -398,7 +384,7 @@
       if (result.error) throw result.error;
       const doc = new DOMParser().parseFromString(result.html, 'text/html');
       if (!doc.querySelector('#main')) throw new Error('Invalid main page');
-      await Promise.all(['style.css', 'enhance.css', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css'].map(addStyle));
+      await Promise.all(['style.css', 'enhance.css', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
       document.title = doc.title;
       // Keep share metadata and canonical URL identical on both entry paths.
       doc.head.querySelectorAll('meta[name="description"], meta[property^="og:"], meta[name^="twitter:"], link[rel="canonical"]').forEach(node => {
@@ -419,7 +405,7 @@
         if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
       });
       document.body.append(nodes);
-      for (const src of ['script.js', 'enhance.js', 'features.js', 'snake.js', 'ios-effects.js']) await addScript(src);
+      for (const src of ['script.js', 'enhance.js', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js']) await addScript(src);
       try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch {}
     } catch (error) {
       if (!stage.isConnected) { location.replace(pageBase + 'index.html?intro=off'); return; }
