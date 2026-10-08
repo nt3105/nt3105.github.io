@@ -379,43 +379,10 @@
     if (leaving) return;
     leaving = true;
     stage.classList.add('is-leaving');
-    try {
-      const result = await siteHtml;
-      if (result.error) throw result.error;
-      const doc = new DOMParser().parseFromString(result.html, 'text/html');
-      if (!doc.querySelector('#main')) throw new Error('Invalid main page');
-      await Promise.all(['style.css', 'enhance.css', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
-      document.title = doc.title;
-      // Keep share metadata and canonical URL identical on both entry paths.
-      doc.head.querySelectorAll('meta[name="description"], meta[property^="og:"], meta[name^="twitter:"], link[rel="canonical"]').forEach(node => {
-        const selector = node.tagName === 'LINK' ? 'link[rel="canonical"]' :
-          node.hasAttribute('property') ? 'meta[property="' + node.getAttribute('property') + '"]' :
-          'meta[name="' + node.getAttribute('name') + '"]';
-        document.head.querySelectorAll(selector).forEach(old => old.remove());
-        document.head.append(document.importNode(node, true));
-      });
-      document.head.querySelector('meta[name="robots"]')?.remove();
-      document.documentElement.classList.add('from-intro', 'is-in');
-      document.getElementById('intro-css')?.remove();
-      stage.remove(); handoff.remove();
-      cancelAnimationFrame(frame);
-      document.body.style.overflow = '';
-      const nodes = document.createDocumentFragment();
-      [...doc.body.children].forEach(node => {
-        if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
-      });
-      document.body.append(nodes);
-      for (const src of ['script.js', 'enhance.js', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js']) await addScript(src);
-      try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch {}
-    } catch (error) {
-      if (!stage.isConnected) { location.replace(pageBase + 'index.html?intro=off'); return; }
-      stage.classList.remove('is-leaving');
-      stage.hidden = true;
-      handoff.hidden = false;
-      leaving = false;
-      cancelAnimationFrame(frame);
-      document.getElementById('replay').focus();
-    }
+    try { await siteHtml; } catch (error) {}
+    try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
+    const next = (pageBase || './') + location.search + location.hash;
+    setTimeout(() => location.replace(next), reduce ? 40 : 120);
   }
   document.getElementById('replay').addEventListener('click', () => {
     siteHtml = loadMain(); handoff.hidden = true; stage.hidden = false; leave();
