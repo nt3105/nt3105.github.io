@@ -3,6 +3,13 @@
 <head>
   <script>
     try {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') {
+        if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+        scrollTo(0, 0);
+        addEventListener('pageshow', () => scrollTo(0, 0));
+      }
       const params = new URLSearchParams(location.search);
       const skip = params.get('intro') === 'off' || !!location.hash ||
         matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData;

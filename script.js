@@ -1,6 +1,9 @@
 'use strict';
-// Respect section URLs and native browser scroll restoration.
-const initialSection = location.hash;
+// Tải lại trang thì về đầu, không giữ chỗ đang xem.
+const reloaded = performance.getEntriesByType('navigation')[0]?.type === 'reload';
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+if (reloaded) window.scrollTo(0, 0);
+const initialSection = reloaded ? '' : location.hash;
 function restoreInitialSection() {
   if (!initialSection) return;
   let id;
