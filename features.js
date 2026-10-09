@@ -4,14 +4,26 @@
   const $ = selector => document.querySelector(selector);
   const read = (key, fallback) => { try { const value = localStorage.getItem(key); return value === null ? fallback : JSON.parse(value); } catch { return fallback; } };
   const save = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } };
+  const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  const checkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 9.2 17 19 7"></path></svg>';
+  const copyButton = $('#copy-code');
+  let copyTimer = 0;
+  function showCopyLabel(copied) {
+    if (!copyButton) return;
+    copyButton.classList.toggle('is-copied', copied);
+    copyButton.innerHTML = copied ? checkIcon + 'Đã sao chép' : copyIcon + 'Sao chép code';
+  }
+  showCopyLabel(false);
   async function copy(text, status, fallback) {
     try {
       if (!navigator.clipboard) throw new Error('Unavailable');
       await navigator.clipboard.writeText(text);
-      status.textContent = 'Đã sao chép.';
+      if (status && status.id !== 'code-status') status.textContent = 'Đã sao chép.';
+      return true;
     } catch {
-      status.textContent = 'Chọn nội dung bên dưới rồi sao chép thủ công.';
+      if (status) status.textContent = 'Chọn nội dung bên dưới rồi sao chép thủ công.';
       if (fallback) { fallback.hidden = false; fallback.value = text; fallback.focus(); fallback.select(); }
+      return false;
     }
   }
 
@@ -30,6 +42,7 @@
     $('#code-file').textContent = sample.file;
     $('#code-note').textContent = sample.info;
     $('#code-status').textContent = '';
+    showCopyLabel(false);
     const output = $('#code-output');
     if (output) { output.hidden = true; output.textContent = ''; }
     $('#code-copy-fallback').hidden = true;
@@ -47,18 +60,20 @@
       if (next !== undefined) { event.preventDefault(); selectCode(tabs[next].dataset.codeLanguage, true); }
     });
   });
-  $('#copy-code').addEventListener('click', () => copy(samples[selected].code, $('#code-status'), $('#code-copy-fallback')));
+  $('#copy-code').addEventListener('click', async () => {
+    const ok = await copy(samples[selected].code, $('#code-status'), $('#code-copy-fallback'));
+    if (!ok) return;
+    showCopyLabel(true);
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => showCopyLabel(false), 1600);
+  });
   const runButton = $('#run-code');
   if (runButton) {
     runButton.addEventListener('click', () => {
       const output = $('#code-output');
       const sample = samples[selected];
       output.hidden = false;
-      output.textContent = '$ ' + sample.file + '\nđang chạy…';
-      window.setTimeout(() => {
-        output.textContent = '$ ' + sample.file + '\n' + sample.output + '\n\nĐã chạy xong.';
-        $('#code-status').textContent = 'Đã chạy xong.';
-      }, 320);
+      output.textContent = 'Xin chào, mình là Ngân Tú!';
     });
   }
   selectCode('c');

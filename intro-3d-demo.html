@@ -333,7 +333,17 @@
   bgm.playsInline = true;
   bgm.volume = 0.35;
   window.ntBgm = bgm;
-  const startBgm = () => {};
+  const startBgm = () => {
+    if (!bgm.paused) return;
+    bgm.muted = true;
+    bgm.play().then(() => {
+      bgm.muted = false;
+      bgm.volume = 0.35;
+      if (bgm.paused) return bgm.play();
+    }).catch(() => {});
+  };
+  startBgm();
+  ['pointerdown', 'touchstart', 'touchend', 'click'].forEach(type => addEventListener(type, startBgm, { capture: true, passive: true }));
   const heroImg = new Image();
   heroImg.className = 'optional-image loaded';
   heroImg.alt = 'Ảnh chân dung Ngân Tú';
@@ -378,11 +388,32 @@
   async function leave() {
     if (leaving) return;
     leaving = true;
+    startBgm();
     stage.classList.add('is-leaving');
-    try { await siteHtml; } catch (error) {}
-    try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
-    const next = (pageBase || './') + location.search + location.hash;
-    setTimeout(() => location.replace(next), reduce ? 40 : 120);
+    try {
+      const result = await siteHtml;
+      if (result.error) throw result.error;
+      const doc = new DOMParser().parseFromString(result.html, 'text/html');
+      if (!doc.querySelector('#main')) throw new Error('Invalid main page');
+      await Promise.all(['style.css', 'enhance.css', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
+      document.getElementById('intro-css')?.remove();
+      stage.remove();
+      handoff.remove();
+      cancelAnimationFrame(frame);
+      document.body.style.overflow = '';
+      const nodes = document.createDocumentFragment();
+      [...doc.body.children].forEach(node => {
+        if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
+      });
+      document.body.append(nodes);
+      for (const src of ['script.js', 'enhance.js', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js']) await addScript(src);
+      try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
+      try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch (error) {}
+      startBgm();
+    } catch (error) {
+      try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (e) {}
+      location.replace((pageBase || './') + location.search + location.hash);
+    }
   }
   document.getElementById('replay').addEventListener('click', () => {
     siteHtml = loadMain(); handoff.hidden = true; stage.hidden = false; leave();

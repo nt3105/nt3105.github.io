@@ -919,7 +919,7 @@ function startPhoneMusic() {
 }
 if (phoneMusic) {
   startPhoneMusic();
-  ['pointerdown', 'touchstart'].forEach(type => window.addEventListener(type, startPhoneMusic, { passive: true }));
+  ['pointerdown', 'touchstart', 'touchend', 'click'].forEach(type => window.addEventListener(type, startPhoneMusic, { capture: true, passive: true }));
   musicAudio.addEventListener('playing', () => { phoneAuto = false; }, { once: true });
 } else {
   if (!musicAudio.paused) musicAudio.pause();
