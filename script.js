@@ -797,19 +797,12 @@ async function playMusic() {
   const request = ++musicRequest;
   musicStatus('Đang mở nhạc…');
   try {
-    if (musicAudio.paused) {
-      musicAudio.muted = true;
-      await musicAudio.play();
-      musicAudio.muted = false;
-      // Keep the volume chosen by the listener, including zero.
-      if (musicAudio.paused) await musicAudio.play();
-    } else {
-      await musicAudio.play();
-    }
+    musicAudio.muted = false;
+    if (!musicAudio.volume) musicAudio.volume = 0.35;
+    await musicAudio.play();
   } catch (error) {
     if (request !== musicRequest || error.name === 'AbortError') return;
     if (error.name === 'NotAllowedError') {
-      musicAudio.muted = false;
       musicStatus('Bấm nút phát để nghe nhạc');
       musicButtons();
       return;
@@ -910,21 +903,17 @@ musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không
 if (introBgm) loadMusic(musicIndex, true);
 else loadMusic(musicIndex);
 musicButtons();
-const phoneMusic = matchMedia('(max-width: 820px), (pointer: coarse)').matches;
-let phoneAuto = phoneMusic;
+let phoneAuto = true;
+let musicStarting = false;
 function startPhoneMusic() {
-  if (!phoneAuto || !musicAudio.paused) return;
+  if (!phoneAuto || (!musicAudio.paused && !musicAudio.muted) || musicStarting) return;
+  musicStarting = true;
   musicByUser = true;
-  playMusic();
+  playMusic().finally(() => { musicStarting = false; });
 }
-if (phoneMusic) {
-  startPhoneMusic();
-  ['pointerdown', 'touchstart', 'touchend', 'click'].forEach(type => window.addEventListener(type, startPhoneMusic, { capture: true, passive: true }));
-  musicAudio.addEventListener('playing', () => { phoneAuto = false; }, { once: true });
-} else {
-  if (!musicAudio.paused) musicAudio.pause();
-  musicStatus('Bấm nút phát để nghe nhạc');
-}
+startPhoneMusic();
+['pointerdown', 'touchstart', 'touchend', 'touchmove', 'click', 'scroll', 'wheel'].forEach(type => window.addEventListener(type, startPhoneMusic, { capture: true, passive: true }));
+musicAudio.addEventListener('playing', () => { phoneAuto = false; }, { once: true });
 
 
 // Quầng sáng toàn trang: chuột, bút cảm ứng và thao tác vuốt trên điện thoại.

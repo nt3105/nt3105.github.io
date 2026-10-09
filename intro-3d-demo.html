@@ -333,17 +333,18 @@
   bgm.playsInline = true;
   bgm.volume = 0.35;
   window.ntBgm = bgm;
+  let bgmStarting = false;
   const startBgm = () => {
-    if (!bgm.paused) return;
-    bgm.muted = true;
-    bgm.play().then(() => {
-      bgm.muted = false;
-      bgm.volume = 0.35;
-      if (bgm.paused) return bgm.play();
-    }).catch(() => {});
+    if ((!bgm.paused && !bgm.muted) || bgmStarting) return;
+    bgmStarting = true;
+    bgm.muted = false;
+    bgm.volume = 0.35;
+    const attempt = bgm.play();
+    if (attempt) attempt.finally(() => { bgmStarting = false; }).catch(() => {});
+    else bgmStarting = false;
   };
   startBgm();
-  ['pointerdown', 'touchstart', 'touchend', 'click'].forEach(type => addEventListener(type, startBgm, { capture: true, passive: true }));
+  ['pointerdown', 'touchstart', 'touchend', 'touchmove', 'click', 'scroll', 'wheel'].forEach(type => addEventListener(type, startBgm, { capture: true, passive: true }));
   const heroImg = new Image();
   heroImg.className = 'optional-image loaded';
   heroImg.alt = 'Ảnh chân dung Ngân Tú';
