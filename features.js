@@ -30,7 +30,7 @@
   const samples = {
     c: { label: 'C', file: 'hello.c', info: 'Chương trình C cơ bản. Lưu thành hello.c và biên dịch bằng trình biên dịch C.', output: 'Xin chao, minh la Ngan Tu!', code: '#include <stdio.h>\n\nint main(void) {\n    printf("Xin chao, minh la Ngan Tu!\\n");\n    return 0;\n}\n' },
     objc: { label: 'Objective-C', file: 'main.m', info: 'Ví dụ dùng Foundation. Chạy trong dự án Command Line Tool của Xcode trên macOS.', output: 'Xin chào, mình là Ngân Tú!', code: '#import <Foundation/Foundation.h>\n\nint main(int argc, const char *argv[]) {\n    @autoreleasepool {\n        NSString *name = @"Ngân Tú";\n        NSLog(@"Xin chào, mình là %@!", name);\n    }\n    return 0;\n}\n' },
-    swift: { label: 'Swift', file: 'Hello.swift', info: 'Ví dụ Swift cơ bản. Chạy bằng Swift hoặc trong Xcode Playground.', output: 'Xin chào, mình là Ngân Tú!\nĐang khám phá: C\nĐang khám phá: Objective-C\nĐang khám phá: Swift', code: 'let name = "Ngân Tú"\nlet languages = ["C", "Objective-C", "Swift"]\n\nprint("Xin chào, mình là \\(name)!")\n\nfor language in languages {\n    print("Đang khám phá: \\(language)")\n}\n' }
+    swift: { label: 'Swift', file: 'Hello.swift', info: 'Ví dụ Swift cơ bản. Chạy bằng Swift hoặc trong Xcode Playground.', output: 'Xin chào, mình là Ngân Tú!', code: 'let name = "Ngân Tú"\n\nprint("Xin chào, mình là \\(name)!")\n' }
   };
   const tabs = [...document.querySelectorAll('[data-code-language]')];
   let selected = 'c';
