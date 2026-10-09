@@ -1037,13 +1037,6 @@ function makeWidgetDraggable(widget) {
     return clampMusic(left, top, rect);
   }
   function dockHamster() {
-    if (matchMedia('(max-width: 820px)').matches && widget.classList.contains('compact')) {
-      widget.style.left = 'auto';
-      widget.style.right = '12px';
-      widget.style.top = 'auto';
-      widget.style.bottom = 'max(16px, env(safe-area-inset-bottom))';
-      return;
-    }
     const anchor = document.querySelector('.style-toggle') || document.querySelector('.style-controls');
     const hamster = widget.querySelector('.hamster-mascot');
     if (!anchor || !hamster) return;
