@@ -42,10 +42,8 @@ let toastTimer;
 function notify(message) {
   document.querySelector('#toast-message').textContent = message;
   toast.hidden = false;
-  toast.classList.remove('is-in');
-  requestAnimationFrame(() => toast.classList.add('is-in'));
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.hidden = true; toast.classList.remove('is-in'); }, 2800);
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 6500);
 }
 window.ntNotify = notify;
 document.querySelector('#toast-close').addEventListener('click', () => { toast.hidden = true; });
