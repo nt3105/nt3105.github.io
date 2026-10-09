@@ -32,3 +32,11 @@
 .share-dialog{width:min(480px,calc(100vw - 28px));max-height:calc(100dvh - 28px);overflow:auto;border:1px solid var(--border);border-radius:24px;background:var(--surface);color:var(--text);padding:26px}.share-dialog::backdrop{background:#080b14b8;backdrop-filter:blur(8px)}.share-heading{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}.share-heading h2{font-size:1.5rem;letter-spacing:-.5px}.share-heading button{min-width:44px;min-height:44px;border:1px solid var(--border);background:transparent;color:inherit;border-radius:12px;font-size:1.5rem}.share-dialog>img{display:block;width:min(250px,100%);height:auto;margin:20px auto;padding:8px;background:white;border-radius:16px}.share-dialog>label{display:block;font-size:.8rem;margin-bottom:8px}.share-dialog>input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit}.share-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}#share-status{font-size:.85rem;margin:16px 0 0}
 @media(max-width:900px){.journal-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.journal-list{grid-template-columns:1fr}.journal-entry,.score-card{padding:20px}.code-workbench pre{font-size:13px;padding:16px}.code-toolbar{padding:12px 16px}.code-workbench p{padding-inline:16px}.site-tools{gap:6px}.site-tools :is(a,button){font-size:.75rem;padding:8px 10px}.score-filters{gap:10px}.score-filters label{flex:1 1 0;min-width:0}.share-dialog{padding:20px}.snake-settings{gap:8px}.snake-settings small{flex-basis:100%}.leaderboard :is(th,td){padding:12px 4px;font-size:.85rem}}
+.social-icon{display:grid;place-items:center;width:34px;height:34px;font-size:0}
+.social-icon svg,.footer-socials svg{width:26px;height:26px;display:block}
+.footer-socials svg{width:16px;height:16px}
+.social-card[data-social="telegram"] .social-icon,.footer-socials a[data-social="telegram"]{color:#7ad7ff}
+.social-card[data-social="facebook"] .social-icon,.footer-socials a[data-social="facebook"]{color:#9eb6ff}
+.social-card[data-social="tiktok"] .social-icon,.footer-socials a[data-social="tiktok"]{color:#f3e9ff}
+.social-card[data-social="github"] .social-icon,.footer-socials a[data-social="github"]{color:#d5deea}
+.social-card[data-social="email"] .social-icon,.footer-socials a[data-social="email"]{color:#d7b0ff}
