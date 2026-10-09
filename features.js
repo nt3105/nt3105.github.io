@@ -106,7 +106,8 @@
     const rows = scores.filter(row => (level === 'all' || row.difficulty === level) && (mode === 'all' || row.assisted === (mode === 'assisted'))).sort((a,b) => b.score - a.score || b.date.localeCompare(a.date)).slice(0, 10);
     rows.forEach((row,index) => {
       const tr = document.createElement('tr');
-      [String(index+1), String(row.score), new Date(row.date).toLocaleDateString('vi-VN')].forEach(value => { const td = document.createElement('td'); td.textContent = value; tr.append(td); });
+      const when = new Date(row.date).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      [String(index + 1), String(row.score), when].forEach(value => { const td = document.createElement('td'); td.textContent = value; tr.append(td); });
       scoreTable.append(tr);
     });
     $('#leaderboard-empty').hidden = rows.length > 0;
