@@ -408,7 +408,7 @@ html, body { overflow-x: clip; }
   inset: 0;
   background: url('images/hamster-sprite.png') 0 0 / calc(54 * var(--ham)) var(--ham) no-repeat;
   animation: hamsterSteps 2.16s steps(54, end) infinite;
-  animation-play-state: running;
+  animation-play-state: paused;
 }
 .music-widget.is-playing .hamster-dance { animation-play-state: running; }
 @keyframes hamsterSteps {
