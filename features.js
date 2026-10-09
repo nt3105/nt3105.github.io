@@ -101,9 +101,9 @@
   const scoreTable = $('#leaderboard-body');
   function renderScores() {
     scoreTable.replaceChildren();
-    const filter = $('#leaderboard-level').value;
-    const assisted = $('#leaderboard-mode').value === 'assisted';
-    const rows = scores.filter(row => row.difficulty === filter && row.assisted === assisted).sort((a,b) => b.score - a.score || b.date.localeCompare(a.date)).slice(0,5);
+    const level = $('#leaderboard-level').value;
+    const mode = $('#leaderboard-mode').value;
+    const rows = scores.filter(row => (level === 'all' || row.difficulty === level) && (mode === 'all' || row.assisted === (mode === 'assisted'))).sort((a,b) => b.score - a.score || b.date.localeCompare(a.date)).slice(0, 10);
     rows.forEach((row,index) => {
       const tr = document.createElement('tr');
       [String(index+1), String(row.score), new Date(row.date).toLocaleDateString('vi-VN')].forEach(value => { const td = document.createElement('td'); td.textContent = value; tr.append(td); });
@@ -115,14 +115,12 @@
   $('#leaderboard-mode').addEventListener('change', renderScores);
   document.addEventListener('nt-snake-result', event => {
     const row = event.detail;
-    if (!row || !Number.isSafeInteger(row.score) || row.score < 0 || !levels[row.difficulty]) return;
-    scores.push({ score: row.score, difficulty: row.difficulty, assisted: !!row.assisted, date: new Date().toISOString() });
-    // Retain up to five results for each difficulty and each mode.
-    scores = Object.keys(levels).flatMap(level => [false,true].flatMap(assisted => scores.filter(item => item.difficulty === level && item.assisted === assisted).sort((a,b) => b.score-a.score || b.date.localeCompare(a.date)).slice(0,5)));
+    const score = Math.round(Number(row && row.score));
+    if (!row || !Number.isSafeInteger(score) || score < 0 || !levels[row.difficulty]) return;
+    scores.push({ score, difficulty: row.difficulty, assisted: !!row.assisted, date: new Date().toISOString() });
+    scores = Object.keys(levels).flatMap(level => [false, true].flatMap(assisted => scores.filter(item => item.difficulty === level && item.assisted === assisted).sort((a,b) => b.score - a.score || b.date.localeCompare(a.date)).slice(0, 10)));
     const saved = save(SCORE_KEY, scores);
-    $('#score-storage-note').textContent = saved ? 'Điểm lưu trên trình duyệt này. Chỉ ghi nhận ván đã kết thúc.' : 'Trình duyệt đang chặn lưu dữ liệu. Điểm chỉ giữ trong lần mở trang này.';
-    $('#leaderboard-level').value = row.difficulty;
-    $('#leaderboard-mode').value = row.assisted ? 'assisted' : 'normal';
+    $('#score-storage-note').textContent = saved ? 'Đã lưu điểm trên máy này. Mở lại trang vẫn còn.' : 'Trình duyệt đang chặn lưu dữ liệu. Điểm chỉ giữ trong lần mở trang này.';
     renderScores();
   });
   renderScores();

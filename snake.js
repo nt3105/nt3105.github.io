@@ -87,6 +87,7 @@
     cancelAnimationFrame(raf); raf = 0;
     if (!ntjr.hidden) setMenuOpen(false);
     difficultySelect.disabled = false;
+    document.dispatchEvent(new CustomEvent('nt-snake-result', { detail: { score: Math.round(score), difficulty: roundDifficulty, assisted: roundAssisted || hasAssistance() } }));
     ping('Tài khoản của bạn đã bị khóa');
     setStatus('THÔNG BÁO');
     showOverlay('THÔNG BÁO', 'Chơi lại', 'Tài khoản của bạn đã bị khóa');
@@ -229,7 +230,7 @@
     if (mode !== 'play' || accountLocked) return;
     mode = 'over';
     difficultySelect.disabled = false;
-    document.dispatchEvent(new CustomEvent('nt-snake-result', { detail: { score, difficulty: roundDifficulty, assisted: roundAssisted || hasAssistance() } }));
+    document.dispatchEvent(new CustomEvent('nt-snake-result', { detail: { score: Math.round(score), difficulty: roundDifficulty, assisted: roundAssisted || hasAssistance() } }));
     beep(140, 0.22, 0.05);
     if (score > best) {
       best = score;
