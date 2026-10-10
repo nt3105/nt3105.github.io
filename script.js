@@ -103,6 +103,35 @@ document.querySelectorAll('.optional-image').forEach(img => {
 const menuButton = document.querySelector('.menu-toggle');
 const menu = document.querySelector('#nav-links');
 const header = document.querySelector('#header');
+function pinMobileChrome() {
+  const phone = window.matchMedia('(max-width: 760px)').matches;
+  const bar = document.getElementById('header');
+  const links = document.getElementById('nav-links');
+  if (!bar || !links) return;
+  if (!phone) return;
+  bar.style.setProperty('position', 'fixed', 'important');
+  bar.style.setProperty('top', '8px', 'important');
+  bar.style.setProperty('left', '8px', 'important');
+  bar.style.setProperty('right', '8px', 'important');
+  bar.style.setProperty('bottom', 'auto', 'important');
+  bar.style.setProperty('width', 'auto', 'important');
+  bar.style.setProperty('margin', '0', 'important');
+  bar.style.setProperty('transform', 'none', 'important');
+  bar.style.setProperty('translate', 'none', 'important');
+  if (links.classList.contains('open')) {
+    links.style.setProperty('display', 'flex', 'important');
+    links.style.setProperty('position', 'fixed', 'important');
+    links.style.setProperty('top', '74px', 'important');
+    links.style.setProperty('left', '8px', 'important');
+    links.style.setProperty('right', '8px', 'important');
+    links.style.setProperty('translate', 'none', 'important');
+    links.style.setProperty('transform', 'none', 'important');
+    links.style.setProperty('opacity', '1', 'important');
+    links.style.setProperty('visibility', 'visible', 'important');
+  } else {
+    links.style.setProperty('display', 'none', 'important');
+  }
+}
 function closeMenu() {
   menu.classList.remove('open');
   header.classList.remove('menu-open');
@@ -111,6 +140,7 @@ function closeMenu() {
   document.body.classList.remove('menu-lock');
   document.documentElement.classList.remove('menu-lock');
   document.body.style.top = '';
+  pinMobileChrome();
 }
 menuButton.addEventListener('click', () => {
   const open = menuButton.getAttribute('aria-expanded') !== 'true';
@@ -120,6 +150,7 @@ menuButton.addEventListener('click', () => {
   menuButton.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu');
   document.body.classList.toggle('menu-lock', open);
   document.documentElement.classList.toggle('menu-lock', open);
+  pinMobileChrome();
   if (!open) closeMenu();
 });
 menu.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
@@ -133,6 +164,11 @@ document.addEventListener('keydown', event => {
 });
 document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
 window.matchMedia('(min-width: 761px)').addEventListener('change', closeMenu);
+pinMobileChrome();
+window.addEventListener('pageshow', pinMobileChrome);
+window.addEventListener('orientationchange', () => setTimeout(pinMobileChrome, 60));
+window.visualViewport?.addEventListener('resize', pinMobileChrome);
+window.visualViewport?.addEventListener('scroll', pinMobileChrome);
 
 // Scroll nhẹ: gom cập nhật vào một frame, không chạy hiệu ứng nặng.
 const backTop = document.querySelector('#back-top');

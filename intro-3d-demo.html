@@ -398,6 +398,8 @@
       if (!doc.querySelector('#main')) throw new Error('Invalid main page');
       await Promise.all(['style.css', 'enhance.css', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
       document.getElementById('intro-css')?.remove();
+      const fix = doc.getElementById('nav-fix');
+      if (fix && !document.getElementById('nav-fix')) document.head.append(document.importNode(fix, true));
       stage.remove();
       handoff.remove();
       cancelAnimationFrame(frame);
