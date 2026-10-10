@@ -310,8 +310,8 @@
     note.className = 'motion-note';
     note.setAttribute('role', 'status');
     note.innerHTML = needsAsk
-      ? '<p class="motion-kicker">CHUYỂN ĐỘNG</p><p class="motion-title">Cho phép điện thoại mở hiệu ứng</p><p class="motion-copy">Khi bạn nghiêng hoặc lắc nhẹ máy. Không gian sẽ nghiêng theo.</p><div class="motion-actions"><button type="button" class="motion-allow">Bật hiệu ứng</button><button type="button" class="motion-skip">Để sau</button></div>'
-      : '<p class="motion-kicker">CHUYỂN ĐỘNG</p><p class="motion-title">Nghiêng hoặc lắc nhẹ máy</p><p class="motion-copy">Hiệu ứng 3D đang chạy theo điện thoại của bạn.</p>';
+      ? '<p class="motion-title">Nghiêng máy để mở hiệu ứng</p><div class="motion-actions"><button type="button" class="motion-allow">Bật hiệu ứng</button><button type="button" class="motion-skip">Để sau</button></div>'
+      : '<p class="motion-title">Nghiêng hoặc lắc nhẹ máy — hiệu ứng đang chạy</p>';
     document.body.append(note);
     requestAnimationFrame(() => note.classList.add('is-in'));
 
@@ -335,18 +335,20 @@
       if (askOrient) jobs.push(DeviceOrientationEvent.requestPermission());
       if (askMotion) jobs.push(DeviceMotionEvent.requestPermission());
       Promise.all(jobs).then(states => {
+        const title = note.querySelector('.motion-title');
         if (!states.includes('granted')) {
-          note.querySelector('.motion-copy').textContent = 'Trình duyệt chưa cho phép. Bạn có thể bật lại trong phần cài đặt của Safari.';
+          if (title) title.textContent = 'Chưa được phép — bật trong Cài đặt';
           return;
         }
         startOrientation();
         note.classList.add('is-on');
-        note.querySelector('.motion-title').textContent = 'Đã bật';
-        note.querySelector('.motion-copy').textContent = 'Nghiêng hoặc lắc nhẹ điện thoại. Hiệu ứng sẽ nghiêng theo phía máy.';
-        note.querySelector('.motion-actions').hidden = true;
-        setTimeout(close, 2400);
+        if (title) title.textContent = 'Đã bật — nghiêng nhẹ máy';
+        const actions = note.querySelector('.motion-actions');
+        if (actions) actions.hidden = true;
+        setTimeout(close, 1400);
       }).catch(() => {
-        note.querySelector('.motion-copy').textContent = 'Chạm lại nút Bật hiệu ứng để hiện câu hỏi cho phép.';
+        const title = note.querySelector('.motion-title');
+        if (title) title.textContent = 'Chạm lại để hiện câu hỏi cho phép';
       });
     });
   }

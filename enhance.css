@@ -484,7 +484,32 @@ html, body { overflow-x: clip; }
   border: 2px solid #070b16;
 }
 .back-top {
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  overflow: hidden;
+  line-height: 1;
+  font-size: 15px;
+  z-index: 40;
   box-shadow: 0 10px 24px rgba(0, 0, 0, .35), 0 0 18px rgba(var(--glow-rgb), .2);
+}
+.back-top[hidden] { display: none !important; }
+.back-top::before { border-radius: 50%; }
+.back-top small {
+  position: static;
+  display: block;
+  margin: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  color: #d7fff8;
 }
 
 .touch-press { transform: scale(.985); }
@@ -601,11 +626,18 @@ html[data-fx="calm"] .tilt-card { transform: none; }
   .nav-links .nav-contact {
     min-height: 44px;
     margin: 0;
-    padding: 8px 14px;
+    padding: 8px 16px;
     font-size: 15px;
     border-radius: 10px;
     position: relative;
     z-index: 1;
+    color: #e8eefc;
+    opacity: 1;
+  }
+  .nav-links a.active::after,
+  #nav-links.open a.active::after {
+    content: none;
+    display: none;
   }
   .header,
   .header.menu-open { z-index: 80; }
@@ -1091,4 +1123,34 @@ html.page-hidden *::after {
 }
 @media (prefers-reduced-motion: reduce) {
   .js-reveal .skill-ios.is-visible .skill-icon { animation: none; }
+}
+
+/* Motion prompt stays under the top bar so it does not cover the page. */
+@media (max-width: 760px) {
+  .motion-note,
+  .motion-note.is-in {
+    top: 74px;
+    bottom: auto;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    transform: none;
+    z-index: 180;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .motion-kicker, .motion-copy { display: none; }
+  .motion-title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: .84rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .motion-actions { margin: 0; flex: none; }
+  .motion-allow, .motion-skip { min-height: 32px; padding: 0 10px; }
 }

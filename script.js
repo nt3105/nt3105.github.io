@@ -108,30 +108,26 @@ function closeMenu() {
   header.classList.remove('menu-open');
   menuButton.setAttribute('aria-expanded', 'false');
   menuButton.setAttribute('aria-label', 'Mở menu');
-  if (!document.body.classList.contains('menu-lock')) return;
-  const y = menuScrollY;
-  const root = document.documentElement;
-  root.style.scrollBehavior = 'auto';
   document.body.classList.remove('menu-lock');
+  document.documentElement.classList.remove('menu-lock');
   document.body.style.top = '';
-  window.scrollTo(0, y);
-  root.style.scrollBehavior = '';
 }
-let menuScrollY = 0;
 menuButton.addEventListener('click', () => {
   const open = menuButton.getAttribute('aria-expanded') !== 'true';
-  if (open) {
-    menuScrollY = window.scrollY;
-    document.body.classList.add('menu-lock');
-    document.body.style.top = `-${menuScrollY}px`;
-  }
   menu.classList.toggle('open', open);
   header.classList.toggle('menu-open', open);
   menuButton.setAttribute('aria-expanded', String(open));
   menuButton.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu');
+  document.body.classList.toggle('menu-lock', open);
+  document.documentElement.classList.toggle('menu-lock', open);
   if (!open) closeMenu();
 });
 menu.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+document.addEventListener('touchmove', event => {
+  if (!document.body.classList.contains('menu-lock')) return;
+  if (menu.contains(event.target)) return;
+  event.preventDefault();
+}, { passive: false });
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && menu.classList.contains('open')) { closeMenu(); menuButton.focus(); }
 });
@@ -145,8 +141,13 @@ let scrollQueued = false;
 function updateScroll() {
   header.classList.toggle('scrolled', window.scrollY > 24);
   backTop.hidden = window.scrollY < 600;
+  const marker = Math.min(220, Math.round(window.innerHeight * 0.34));
   let current = 'home';
-  sections.forEach(section => { if (section.getBoundingClientRect().top <= 170) current = section.id; });
+  for (const section of sections) {
+    const box = section.getBoundingClientRect();
+    if (box.top <= marker && box.bottom > marker + 8) { current = section.id; break; }
+    if (box.top <= marker) current = section.id;
+  }
   menu.querySelectorAll('a').forEach(link => {
     const active = link.getAttribute('href') === `#${current}`;
     link.classList.toggle('active', active);

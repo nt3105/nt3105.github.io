@@ -60,7 +60,7 @@
       .header.scrolled,
       .header.menu-open {
         position: fixed !important;
-        top: max(8px, env(safe-area-inset-top)) !important;
+        top: 8px !important;
         left: 8px !important;
         right: 8px !important;
         bottom: auto !important;
@@ -166,10 +166,10 @@
       }
       #nav-links.open {
         display: flex !important;
-        position: absolute !important;
-        top: calc(100% + 8px) !important;
-        left: 0 !important;
-        right: 0 !important;
+        position: fixed !important;
+        top: 74px !important;
+        left: 8px !important;
+        right: 8px !important;
         width: auto !important;
         max-height: min(70vh, 420px) !important;
         opacity: 1 !important;
@@ -178,8 +178,44 @@
         transform: none !important;
         pointer-events: auto !important;
         flex-direction: column !important;
+        align-items: stretch !important;
         z-index: 201 !important;
+        overflow: auto !important;
+        background: #0b1020 !important;
+        scrollbar-width: none;
       }
+      #nav-links.open::-webkit-scrollbar { width: 0; height: 0; display: none; }
+      #nav-links.open a,
+      #nav-links.open .nav-contact {
+        justify-content: flex-start !important;
+        width: auto !important;
+        color: #e8eefc !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        background-clip: border-box !important;
+        -webkit-text-fill-color: currentColor !important;
+      }
+      #nav-links.open a.active {
+        color: #dffbff !important;
+        background: rgba(120, 230, 238, .16) !important;
+        border-color: rgba(120, 230, 238, .34) !important;
+        box-shadow: none !important;
+      }
+      #nav-links.open a.active::after {
+        content: none !important;
+        display: none !important;
+      }
+      /* Opening the menu must not yank the page (Facebook in-app browser
+         treats a fixed body as the anchor for the fixed header). */
+      body.menu-lock {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: auto !important;
+        overflow: hidden !important;
+      }
+      html.menu-lock { overflow: hidden !important; }
     }
   </style>
   <script src="script.js" defer></script>
@@ -422,7 +458,7 @@ int main(void) {
         var header = document.getElementById('header');
         if (!header) return;
         header.style.setProperty('position', 'fixed', 'important');
-        header.style.setProperty('top', 'max(8px, env(safe-area-inset-top))', 'important');
+        header.style.setProperty('top', '8px', 'important');
         header.style.setProperty('left', '8px', 'important');
         header.style.setProperty('right', '8px', 'important');
         header.style.setProperty('bottom', 'auto', 'important');
