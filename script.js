@@ -1005,6 +1005,97 @@ if ('IntersectionObserver' in window && !reducedMotion) {
   });
 }
 
+// Extra reveal on upward re-entry only. The first/downward reveals above stay unchanged.
+(() => {
+  if (window.ntScrollUpBound || !('IntersectionObserver' in window) || !Element.prototype.animate) return;
+  window.ntScrollUpBound = true;
+  const root = document.documentElement;
+  const media = matchMedia('(prefers-reduced-motion: reduce)');
+  const events = new AbortController();
+  const states = new Map();
+  const animations = new Set();
+  let lastY = Math.max(0, window.scrollY);
+  let direction = 0;
+  const calm = () => media.matches || root.dataset.fx === 'calm';
+  const stopAnimations = () => {
+    animations.forEach(animation => animation.cancel());
+    animations.clear();
+  };
+  const updateDirection = () => {
+    const y = Math.max(0, window.scrollY);
+    const delta = y - lastY;
+    if (Math.abs(delta) < 2) return;
+    const next = delta < 0 ? -1 : 1;
+    if (next > 0 && direction < 0) stopAnimations();
+    direction = next;
+    lastY = y;
+  };
+  const hasRevealed = element => element.classList.contains('scroll-text')
+    ? element.classList.contains('text-in-view') : element.classList.contains('visible');
+
+  // Use the existing outer shell, never the inner card transform used by tilt.
+  // A parent containing animated text is excluded to avoid doubling the movement.
+  document.querySelectorAll('main .scroll-text, main .reveal').forEach(element => {
+    if (!element.classList.contains('scroll-text') && element.querySelector('.scroll-text')) return;
+    states.set(element, { armed: false });
+  });
+  const exitObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) return;
+      const state = states.get(entry.target);
+      if (!state) return;
+      // Rearm only after the entire element is above the viewport plus a 48px buffer.
+      state.armed = hasRevealed(entry.target) && entry.boundingClientRect.bottom < (entry.rootBounds?.top ?? -48);
+    });
+  }, { rootMargin: '48px 0px 48px 0px', threshold: 0 });
+  const headerBottom = document.getElementById('header')?.getBoundingClientRect().bottom || 0;
+  const revealTop = Math.max(0, Math.min(headerBottom + 8, window.innerHeight * .3));
+  const enterObserver = new IntersectionObserver(entries => {
+    updateDirection();
+    let order = 0;
+    entries.filter(entry => entry.isIntersecting)
+      .sort((a, b) => b.boundingClientRect.bottom - a.boundingClientRect.bottom)
+      .forEach(entry => {
+        const element = entry.target;
+        const state = states.get(element);
+        if (!state?.armed) return;
+        state.armed = false;
+        if (direction !== -1 || calm() || document.hidden || !hasRevealed(element)) return;
+        if (element.contains(document.activeElement) || document.querySelector('.menu-toggle[aria-expanded="true"]')) return;
+        const animation = element.animate([
+          { opacity: 0, transform: 'translate3d(0,-20px,0)' },
+          { opacity: 1, transform: 'translate3d(0,0,0)' }
+        ], {
+          duration: 680,
+          delay: Math.min(order++, 3) * 45,
+          easing: 'cubic-bezier(.16,1,.3,1)',
+          fill: 'backwards'
+        });
+        animation.id = 'nt-scroll-up';
+        animations.add(animation);
+        const forget = () => animations.delete(animation);
+        animation.onfinish = forget;
+        animation.oncancel = forget;
+      });
+  }, { rootMargin: `-${revealTop}px 0px 0px 0px`, threshold: 0 });
+  states.forEach((state, element) => { exitObserver.observe(element); enterObserver.observe(element); });
+  window.addEventListener('scroll', updateDirection, { passive: true, signal: events.signal });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopAnimations();
+  }, { signal: events.signal });
+  media.addEventListener('change', stopAnimations, { signal: events.signal });
+  const preferenceObserver = new MutationObserver(() => { if (calm()) stopAnimations(); });
+  preferenceObserver.observe(root, { attributes: true, attributeFilter: ['data-fx'] });
+  window.addEventListener('pagehide', event => {
+    stopAnimations();
+    if (event.persisted) return;
+    exitObserver.disconnect();
+    enterObserver.disconnect();
+    preferenceObserver.disconnect();
+    events.abort();
+  }, { signal: events.signal });
+})();
+
 // Kéo các tiện ích bằng tay nắm; không cản nút bấm, thanh tua hoặc cuộn trang.
 function makeWidgetDraggable(widget) {
   let drag = null;
@@ -1286,3 +1377,4 @@ document.addEventListener('keydown', event => {
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 });
 window.addEventListener('offline', () => notify('Bạn đang ngoại tuyến. Nội dung đã tải vẫn xem được; liên kết và QR mới cần Internet.'));
+

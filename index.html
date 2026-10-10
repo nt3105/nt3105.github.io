@@ -18,6 +18,7 @@
         sessionStorage.setItem('nt-skip-intro', '1');
         const introParams = new URLSearchParams(location.search);
         introParams.set('nt-motion', '2');
+        introParams.set('nt-scroll', '1');
         location.replace('intro-3d-demo.html?' + introParams.toString());
       }
     } catch (e) { /* Le contenu principal reste accessible sans stockage. */ }
@@ -247,7 +248,7 @@
       html.menu-lock { overflow: hidden !important; }
     }
   </style>
-  <script src="script.js" defer></script>
+  <script src="script.js?v=scroll-up-1" defer></script>
   <script src="enhance.js?v=motion-glass-2" defer></script>
   <script src="features.js" defer></script>
   <script src="snake.js" defer></script>
