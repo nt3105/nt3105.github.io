@@ -51,6 +51,137 @@
   <link rel="stylesheet" href="design.css">
   <link rel="stylesheet" href="ios-effects.css">
   <link rel="stylesheet" href="ios-preview.css">
+  <style id="nav-fix">
+    /* Mobile: keep the brand + 2-bar button in the top bar on the first paint.
+       Closed links must be display:none (not an opacity transition) or iOS /
+       Facebook in-app browser leaves the menu stuck open until reload. */
+    @media (max-width: 760px) {
+      .header,
+      .header.scrolled,
+      .header.menu-open {
+        position: fixed !important;
+        top: max(8px, env(safe-area-inset-top)) !important;
+        left: 8px !important;
+        right: 8px !important;
+        bottom: auto !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        transform: none !important;
+        translate: none !important;
+        z-index: 200 !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(8, 12, 22, .94) !important;
+      }
+      .header .nav {
+        position: relative !important;
+        display: flex !important;
+        flex-flow: row nowrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        height: 58px !important;
+        min-height: 58px !important;
+        max-height: 58px !important;
+        gap: 10px !important;
+      }
+      .header .brand {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        min-width: 0 !important;
+        max-width: calc(100% - 56px) !important;
+        overflow: hidden !important;
+        flex: 0 1 auto !important;
+      }
+      .header .brand-wordmark {
+        min-width: 0 !important;
+        overflow: hidden !important;
+      }
+      .header .brand-wordmark strong {
+        display: block !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        filter: none !important;
+        background: none !important;
+        -webkit-background-clip: border-box !important;
+        background-clip: border-box !important;
+        color: #f4f1ea !important;
+        -webkit-text-fill-color: #f4f1ea !important;
+      }
+      .header .brand-dot {
+        color: #c4b5fd !important;
+        -webkit-text-fill-color: #c4b5fd !important;
+      }
+      .header .brand-wordmark small {
+        display: block !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        letter-spacing: .12em !important;
+      }
+      .menu-toggle {
+        display: inline-flex !important;
+        position: relative !important;
+        flex: none !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 2 !important;
+      }
+      .menu-toggle span {
+        display: block !important;
+        position: static !important;
+        width: 18px !important;
+        height: 2px !important;
+        margin: 0 !important;
+        border-radius: 2px !important;
+        background: #e8eefc !important;
+        opacity: 1 !important;
+        float: none !important;
+      }
+      .menu-toggle:not([aria-expanded="true"]) span {
+        transform: none !important;
+      }
+      .menu-toggle[aria-expanded="true"] span:first-child {
+        transform: translateY(4px) rotate(45deg) !important;
+      }
+      .menu-toggle[aria-expanded="true"] span:last-child {
+        transform: translateY(-4px) rotate(-45deg) !important;
+      }
+      #nav-links:not(.open) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+      #nav-links.open {
+        display: flex !important;
+        position: absolute !important;
+        top: calc(100% + 8px) !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: auto !important;
+        max-height: min(70vh, 420px) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        translate: none !important;
+        transform: none !important;
+        pointer-events: auto !important;
+        flex-direction: column !important;
+        z-index: 201 !important;
+      }
+    }
+  </style>
   <script src="script.js" defer></script>
   <script src="enhance.js" defer></script>
   <script src="features.js" defer></script>
@@ -283,5 +414,31 @@ int main(void) {
 </aside>
   </dialog>
 <noscript><style>.loader{display:none!important}.nav-links{display:flex!important;position:static!important;visibility:visible!important;opacity:1!important;flex-wrap:wrap}.menu-toggle{display:none!important}#contact-form,#donate-form{display:none}.nav{height:auto;flex-wrap:wrap;padding-block:12px}</style><p class="nojs-note">Bạn vẫn có thể đọc nội dung và mở liên kết. Bật JavaScript để chơi game, nghe nhạc và dùng biểu mẫu.</p></noscript>
+  <script>
+    (function () {
+      var phone = window.matchMedia('(max-width: 760px)');
+      function pin() {
+        if (!phone.matches) return;
+        var header = document.getElementById('header');
+        if (!header) return;
+        header.style.setProperty('position', 'fixed', 'important');
+        header.style.setProperty('top', 'max(8px, env(safe-area-inset-top))', 'important');
+        header.style.setProperty('left', '8px', 'important');
+        header.style.setProperty('right', '8px', 'important');
+        header.style.setProperty('bottom', 'auto', 'important');
+        header.style.setProperty('width', 'auto', 'important');
+        header.style.setProperty('height', 'auto', 'important');
+        header.style.setProperty('margin', '0', 'important');
+        header.style.setProperty('transform', 'none', 'important');
+        header.style.setProperty('translate', 'none', 'important');
+        void header.offsetHeight;
+      }
+      pin();
+      window.addEventListener('pageshow', pin);
+      window.addEventListener('orientationchange', function () { setTimeout(pin, 60); });
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', pin);
+      phone.addEventListener('change', pin);
+    })();
+  </script>
 </body>
 </html>
