@@ -444,12 +444,22 @@
       window.addEventListener('deviceorientation', orient, options);
       window.addEventListener('deviceorientationabsolute', orient, options);
       window.addEventListener('devicemotion', motion, options);
+      // Only count time while the page is visible: mobile app switching pauses sensors.
+      const armSensorTimeout = () => {
+        clearTimeout(sensorTimer);
+        if (phase !== 'waiting' || document.hidden) return;
+        sensorTimer = setTimeout(() => {
+          if (phase === 'waiting' && !document.hidden) fail(false);
+        }, 6000);
+      };
+      document.addEventListener('visibilitychange', armSensorTimeout, options);
       stopProbe = () => {
+        document.removeEventListener('visibilitychange', armSensorTimeout);
         window.removeEventListener('deviceorientation', orient);
         window.removeEventListener('deviceorientationabsolute', orient);
         window.removeEventListener('devicemotion', motion);
       };
-      sensorTimer = setTimeout(() => { if (phase === 'waiting') fail(false); }, 6000);
+      armSensorTimeout();
     };
     enable.addEventListener('click', () => {
       if (phase !== 'shown') return;
@@ -603,7 +613,10 @@
     if (document.hidden) resetTilts();
   });
   reduce.addEventListener('change', resetTilts);
-  window.addEventListener('pagehide', () => tiltEvents.abort(), { once: true });
+  window.addEventListener('pagehide', event => {
+    // A cached document resumes with its existing listeners on Back/Forward.
+    if (!event.persisted) tiltEvents.abort();
+  });
 
   if (fine.matches && !reduce.matches) {
     document.querySelectorAll('.button, .explore-trigger, .closing-explore').forEach(button => {

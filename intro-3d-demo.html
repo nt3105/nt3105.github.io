@@ -410,7 +410,7 @@
       });
       document.body.append(nodes);
       window.ntMainLoading = true;
-      for (const src of ['script.js', 'enhance.js?v=motion-glass-1', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js']) await addScript(src);
+      for (const src of ['script.js', 'enhance.js?v=motion-glass-2', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js']) await addScript(src);
       try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
       try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch (error) {}
       startBgm();

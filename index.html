@@ -17,7 +17,7 @@
       if (!skip && location.protocol !== 'file:' && sessionStorage.getItem('nt-skip-intro') !== '1') {
         sessionStorage.setItem('nt-skip-intro', '1');
         const introParams = new URLSearchParams(location.search);
-        introParams.set('nt-motion', '1');
+        introParams.set('nt-motion', '2');
         location.replace('intro-3d-demo.html?' + introParams.toString());
       }
     } catch (e) { /* Le contenu principal reste accessible sans stockage. */ }
@@ -248,7 +248,7 @@
     }
   </style>
   <script src="script.js" defer></script>
-  <script src="enhance.js?v=motion-glass-1" defer></script>
+  <script src="enhance.js?v=motion-glass-2" defer></script>
   <script src="features.js" defer></script>
   <script src="snake.js" defer></script>
   <script src="ios-effects.js" defer></script>
