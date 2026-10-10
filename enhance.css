@@ -1081,40 +1081,6 @@ html.page-hidden *::after {
   font-weight: 800;
 }
 
-.motion-note {
-  position: fixed;
-  left: 50%;
-  bottom: calc(150px + env(safe-area-inset-bottom));
-  z-index: 80;
-  width: min(340px, calc(100vw - 28px));
-  padding: 16px 16px 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(120, 230, 238, .38);
-  background: rgba(8, 12, 24, .92);
-  color: #eef3ff;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
-  transform: translateX(-50%) translateY(12px);
-  opacity: 0;
-  transition: opacity .28s ease, transform .28s ease;
-  font-family: Inter, "Segoe UI", sans-serif;
-}
-.motion-note.is-in { opacity: 1; transform: translateX(-50%) translateY(0); }
-.motion-kicker { margin: 0 0 6px; color: #78e6ee; letter-spacing: .18em; font-size: .62rem; }
-.motion-title { margin: 0; font-size: 1.02rem; font-weight: 620; letter-spacing: -.02em; }
-.motion-copy { margin: 6px 0 0; color: #b7c0d4; font-size: .84rem; line-height: 1.45; }
-.motion-actions { display: flex; gap: 8px; margin-top: 12px; }
-.motion-allow, .motion-skip {
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  font: 600 .78rem/1 Inter, "Segoe UI", sans-serif;
-}
-.motion-allow { border: 0; background: #78e6ee; color: #071016; }
-.motion-skip { border: 1px solid rgba(210, 220, 235, .28); background: transparent; color: #d5dcea; }
-.motion-note.is-on { border-color: rgba(125, 255, 168, .45); }
-
-
-
 /* Current menu compatibility and small-screen layout. */
 #snake-dock #ntjr{width:min(460px,calc(100vw - 24px));height:auto;max-height:min(75dvh,calc(100dvh - 24px));border-radius:28px;background:rgba(28,28,30,.96);-webkit-backdrop-filter:blur(28px) saturate(1.4)}
 #snake-dock #ntjr .ntjr-body{min-height:0;overflow:hidden;flex:1}
@@ -1157,32 +1123,119 @@ html.page-hidden *::after {
   .js-reveal .skill-ios.is-visible .skill-icon { animation: none; }
 }
 
-/* Motion prompt stays under the top bar so it does not cover the page. */
+/* Floating motion invitation. Scoped to keep the site's menus and cards untouched. */
+.nt-motion-notice {
+  --nt-motion-top: 84px;
+  position: fixed;
+  z-index: 79;
+  top: max(var(--nt-motion-top), calc(env(safe-area-inset-top, 0px) + 12px));
+  right: max(18px, env(safe-area-inset-right, 0px));
+  width: min(400px, calc(100% - 32px));
+  max-height: calc(100dvh - max(var(--nt-motion-top), env(safe-area-inset-top, 0px)) - 20px - env(safe-area-inset-bottom, 0px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: 28px;
+  color: #f8f8ff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px) scale(.97);
+  transform-origin: 50% 0;
+  transition: opacity .32s ease, transform .55s cubic-bezier(.22,1.18,.36,1), visibility .32s;
+  pointer-events: none;
+  box-shadow: 0 18px 52px #03071355, 0 3px 12px #0002;
+}
+.nt-motion-notice.is-in { opacity: 1; visibility: visible; transform: translateY(0) scale(1); pointer-events: auto; }
+.nt-motion-notice.is-obscured { opacity: 0; visibility: hidden; pointer-events: none; }
+.nt-motion-notice [hidden] { display: none !important; }
+.nt-motion-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid #e5f2ff42;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #ffffff19, #cceeff08 45%, #c5b2ff19), #182034;
+  box-shadow: inset 0 1px 0 #ffffff50, inset 0 -1px 0 #ffffff0c;
+}
+.nt-motion-glass::before {
+  content: "";
+  position: absolute;
+  inset: -50px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 30% 0, #bdfaff23, transparent 65%), radial-gradient(ellipse at 95% 90%, #bfa7ff1f, transparent 60%);
+  transform: translate(var(--nt-light-x, 0px), var(--nt-light-y, 0px));
+}
+.nt-motion-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 #f3ffff75, inset 1px 0 0 #e0eaff26;
+  opacity: .5;
+}
+.nt-motion-notice.is-in .nt-motion-glass::after { animation: nt-motion-edge .8s ease-out; }
+.nt-motion-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.nt-motion-brand { display: flex; align-items: center; gap: 7px; color: #d0d9ec; font-size: 9px; font-weight: 650; letter-spacing: 1.4px; }
+.nt-motion-brand i { width: 6px; height: 6px; border-radius: 50%; background: linear-gradient(135deg, #9cf1e5, #bda8ff); }
+.nt-motion-device { border: 1px solid #ffffff22; border-radius: 99px; padding: 4px 8px; background: #ffffff08; color: #d9e6fa; font-size: 9px; line-height: 1.5; letter-spacing: .5px; }
+.nt-motion-content { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 14px; }
+.nt-motion-copy h2 { margin: 0 0 7px; color: #f8f8ff; font-size: 18px; font-weight: 650; line-height: 1.25; letter-spacing: -.5px; }
+.nt-motion-copy p { margin: 0; color: #c9d2e5; font-size: 13px; line-height: 1.55; }
+.nt-motion-art { position: relative; height: 84px; display: grid; place-items: center; perspective: 400px; }
+.nt-motion-phone { position: relative; width: 43px; height: 75px; padding: 3px; border: 1px solid #ffffffaa; border-radius: 12px; background: linear-gradient(145deg, #f5fbff, #d9e9f3 42%, #aaabd8 74%, #edf5ff); box-shadow: inset 0 0 0 1px #5b67804a, 4px 8px 16px #03050a60; transform: rotateY(-19deg) rotateX(9deg); }
+.nt-motion-notice.is-in .nt-motion-phone { animation: nt-motion-phone 2.8s ease-in-out 2; }
+.nt-motion-phone::before { content: ""; position: absolute; z-index: 2; top: 4px; left: 50%; transform: translateX(-50%); width: 15px; height: 5px; border-radius: 9px; background: #222536; }
+.nt-motion-phone::after { content: ""; position: absolute; inset: 2px; border-radius: 10px; background: linear-gradient(110deg, transparent 22%, #fff8 37%, transparent 52%); opacity: .48; }
+.nt-motion-screen { height: 100%; border-radius: 9px; background: radial-gradient(circle at 50% 30%, #b5e8f7, #8198d8 50%, #6a66a6); display: flex; align-items: end; justify-content: center; padding-bottom: 9px; }
+.nt-motion-screen b { font-size: 9px; letter-spacing: -1px; color: #fff; }
+.nt-motion-monitor { position: absolute; inset: 12px 0 16px; padding: 8px; display: flex; gap: 3px; border: 1px solid #f2ffff65; border-radius: 12px; background: linear-gradient(135deg, #b8faff35, #bdb1ff12); box-shadow: inset 0 1px #ffffff77, 0 8px 18px #03081240; transform: rotateY(-20deg) rotateZ(-8deg); }
+.nt-motion-monitor i { width: 3px; height: 3px; border-radius: 50%; background: #d8f7f7; }
+.nt-motion-cursor { position: absolute; width: 44px; height: 54px; right: -5px; bottom: 2px; filter: drop-shadow(2px 5px 3px #080c1838); }
+.nt-motion-actions { display: flex; gap: 9px; margin-top: 18px; }
+.nt-motion-actions button { position: relative; overflow: hidden; min-height: 46px; padding: 9px 16px; border-radius: 15px; font: 600 13px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; touch-action: manipulation; transition: transform .16s cubic-bezier(.16,1,.3,1); }
+.nt-motion-actions button:active { transform: scale(.97); }
+.nt-motion-actions button:focus-visible { outline: 2px solid #9af1ef; outline-offset: 3px; }
+.nt-motion-actions button::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; background: linear-gradient(115deg, transparent, #ffffff45, transparent); transition: opacity .2s; }
+.nt-motion-actions button:hover::after, .nt-motion-actions button:active::after { opacity: 1; }
+.nt-motion-enable { flex: 1; border: 1px solid #f3f4ff99; background: linear-gradient(110deg, #d7fffc, #ddd9ff 60%, #eee4ff); color: #17182a; box-shadow: inset 0 1px #fff, 0 4px 14px #bfd7ff18; }
+.nt-motion-enable:disabled { opacity: .75; }
+.nt-motion-later { min-width: 92px; border: 1px solid #ffffff30; background: #ffffff0a; color: #edf0fc; }
+.nt-motion-status { margin: 0; color: #cbd6e8; font-size: 11px; line-height: 1.5; }
+.nt-motion-status:not(:empty) { margin-top: 12px; }
+@keyframes nt-motion-phone { 0%,100% { transform: rotateY(-19deg) rotateX(9deg); } 50% { transform: rotateY(-9deg) rotateX(5deg) translateY(-2px); } }
+@keyframes nt-motion-edge { from { opacity: 1; } to { opacity: .5; } }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nt-motion-glass { background: linear-gradient(135deg, #ffffff1c, #cceeff08 45%, #c5b2ff1c), #101727df; -webkit-backdrop-filter: blur(20px) saturate(1.35); backdrop-filter: blur(20px) saturate(1.35); }
+}
 @media (max-width: 760px) {
-  .motion-note,
-  .motion-note.is-in {
-    top: 74px;
-    bottom: auto;
-    left: 10px;
-    right: 10px;
-    width: auto;
-    transform: none;
-    z-index: 180;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-  }
-  .motion-kicker, .motion-copy { display: none; }
-  .motion-title {
-    flex: 1;
-    min-width: 0;
-    margin: 0;
-    font-size: .84rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .motion-actions { margin: 0; flex: none; }
-  .motion-allow, .motion-skip { min-height: 32px; padding: 0 10px; }
+  .nt-motion-notice { right: max(14px, env(safe-area-inset-right, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); width: auto; max-width: 420px; margin-inline: auto; }
+  .nt-motion-glass { padding: 16px; }
+  .nt-motion-copy h2 { font-size: 17px; }
+}
+@media (max-width: 360px) {
+  .nt-motion-content { grid-template-columns: 46px minmax(0, 1fr); gap: 11px; }
+  .nt-motion-copy h2 { font-size: 16px; }
+  .nt-motion-copy p { font-size: 12px; }
+  .nt-motion-actions button { padding-inline: 12px; }
+}
+@media (prefers-color-scheme: light) {
+  .nt-motion-glass { background: linear-gradient(135deg, #ffffffe6, #edf7fff0 45%, #eee8fff2); border-color: #ffffffd9; }
+  .nt-motion-brand, .nt-motion-device { color: #44536f; }
+  .nt-motion-device { border-color: #65799e30; background: #ffffff70; }
+  .nt-motion-copy h2 { color: #18253c; }
+  .nt-motion-copy p, .nt-motion-status { color: #45536b; }
+  .nt-motion-enable { border-color: #758ab54a; }
+  .nt-motion-later { color: #34425c; background: #ffffff70; border-color: #7383a538; }
+  .nt-motion-actions button:focus-visible { outline-color: #305aa4; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .nt-motion-glass { -webkit-backdrop-filter: none; backdrop-filter: none; background-color: #182034; }
+}
+html[data-fx="calm"] .nt-motion-notice, html[data-fx="calm"] .nt-motion-notice * { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .nt-motion-notice, .nt-motion-notice *, .nt-motion-notice *::after { animation: none !important; transition: none !important; }
+  .nt-motion-notice, .nt-motion-actions button:active { transform: none; }
 }

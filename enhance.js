@@ -299,58 +299,205 @@
     window.addEventListener('devicemotion', onMotion, listen);
   }
 
+  // One notification per document, including the DOMParser intro handoff.
   function bootPhoneTilt() {
-    if (fine.matches) return;
-    const askOrient = window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function';
-    const askMotion = window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function';
-    const needsAsk = Boolean(askOrient || askMotion);
-    if (!needsAsk) startOrientation();
-
-    const note = document.createElement('div');
-    note.className = 'motion-note';
-    note.setAttribute('role', 'status');
-    note.innerHTML = needsAsk
-      ? '<p class="motion-title">Nghiêng máy để mở hiệu ứng</p><div class="motion-actions"><button type="button" class="motion-allow">Bật hiệu ứng</button><button type="button" class="motion-skip">Để sau</button></div>'
-      : '<p class="motion-title">Nghiêng hoặc lắc nhẹ máy — hiệu ứng đang chạy</p>';
-    document.body.append(note);
-    requestAnimationFrame(() => note.classList.add('is-in'));
-
-    const close = () => {
-      note.classList.remove('is-in');
-      setTimeout(() => note.remove(), 320);
-    };
+    if (window.ntMotionNoticeBooted || !document.getElementById('main')) return;
+    window.ntMotionNoticeBooted = true;
+    const key = 'nt-motion-choice-v1';
+    const remember = value => { try { sessionStorage.setItem(key, value); } catch {} };
+    let saved;
+    try { saved = sessionStorage.getItem(key); } catch {}
+    const ua = navigator.userAgent || '';
+    const platform = navigator.userAgentData?.platform || navigator.platform || '';
+    const device = /Android/i.test(ua + platform) ? 'Android'
+      : /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(platform) && navigator.maxTouchPoints > 1) ? 'iOS'
+      : /Mobi|Tablet/i.test(ua) ? 'Điện thoại' : 'PC';
+    const desktop = device === 'PC';
+    const orientationAPI = window.DeviceOrientationEvent;
+    const motionAPI = window.DeviceMotionEvent;
+    const supported = window.isSecureContext && Boolean(orientationAPI || motionAPI);
+    const asks = [orientationAPI, motionAPI].filter(api => typeof api?.requestPermission === 'function');
     const chose = () => window.dispatchEvent(new Event('nt-motion-choice'));
-    if (!needsAsk) {
+    if (saved) {
+      // Adding listeners never requests permission. The browser retains control.
+      if (saved === 'enabled' && !desktop && supported) startOrientation();
       chose();
-      setTimeout(close, 3200);
       return;
     }
-    note.querySelector('.motion-skip').addEventListener('click', () => {
+
+    const note = document.createElement('section');
+    note.id = 'nt-motion-notice';
+    note.className = 'nt-motion-notice';
+    note.dataset.device = desktop ? 'pc' : 'mobile';
+    note.setAttribute('aria-label', 'Khám phá hiệu ứng 3D');
+    note.innerHTML = `
+      <div class="nt-motion-glass">
+        <div class="nt-motion-top"><span class="nt-motion-brand"><i></i> NGÂN TÚ DEV</span><span class="nt-motion-device">THIẾT BỊ · ${device}</span></div>
+        <div class="nt-motion-content">
+          <div class="nt-motion-art" aria-hidden="true">${desktop
+            ? '<div class="nt-motion-monitor"><i></i><i></i><i></i></div><svg class="nt-motion-cursor" viewBox="0 0 64 78"><path d="M9 6L55 42 35 45 26 65Z" fill="#d4f4ff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M30 46L42 67" stroke="#bdb5f9" stroke-width="8" stroke-linecap="round"/></svg>'
+            : '<div class="nt-motion-phone"><div class="nt-motion-screen"><b>&lt;/&gt;</b></div></div>'}</div>
+          <div class="nt-motion-copy"><h2>${desktop ? 'Khám phá chiều sâu 3D' : 'Khám phá chuyển động 3D'}</h2><p>${desktop
+            ? 'Di chuyển chuột để cảm nhận ánh sáng và hiệu ứng 3D theo từng chuyển động.'
+            : `Nghiêng ${device === 'iOS' ? 'thiết bị iOS' : device === 'Android' ? 'điện thoại Android' : 'điện thoại'} để cảm nhận hiệu ứng tương tác sống động.`}</p></div>
+        </div>
+        <div class="nt-motion-actions"><button type="button" class="nt-motion-enable">${desktop ? 'Khám phá ngay' : 'Bật hiệu ứng'}</button><button type="button" class="nt-motion-later">Để sau</button></div>
+        <p class="nt-motion-status" role="status" aria-live="polite" aria-atomic="true"></p>
+      </div>`;
+    const title = note.querySelector('h2');
+    const copy = note.querySelector('.nt-motion-copy p');
+    const status = note.querySelector('.nt-motion-status');
+    const enable = note.querySelector('.nt-motion-enable');
+    const later = note.querySelector('.nt-motion-later');
+    const glass = note.querySelector('.nt-motion-glass');
+    const header = document.getElementById('header');
+    const menu = document.querySelector('.menu-toggle');
+    const events = new AbortController();
+    const options = { passive: true, signal: events.signal };
+    let phase = 'shown', sensorTimer = 0, finishTimer = 0, paintFrame = 0;
+    let stopProbe = () => {}, decision = '', light = { x: 0, y: 0 };
+    const place = () => {
+      const bottom = header?.getBoundingClientRect().bottom || 64;
+      note.style.setProperty('--nt-motion-top', Math.max(12, bottom + 12) + 'px');
+    };
+    const syncMenu = () => {
+      const open = menu?.getAttribute('aria-expanded') === 'true' || header?.classList.contains('menu-open');
+      note.classList.toggle('is-obscured', Boolean(open));
+      note.inert = Boolean(open);
+      note.setAttribute('aria-hidden', String(Boolean(open)));
+    };
+    const observer = new MutationObserver(syncMenu);
+    if (menu) observer.observe(menu, { attributes: true, attributeFilter: ['aria-expanded'] });
+    if (header) observer.observe(header, { attributes: true, attributeFilter: ['class'] });
+    const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(place) : null;
+    if (header) resize?.observe(header);
+    window.addEventListener('resize', place, options);
+    window.visualViewport?.addEventListener('resize', place, options);
+    const close = choice => {
+      if (phase === 'closed') return;
+      if (choice) remember(decision || choice);
       chose();
-      close();
-    });
-    note.querySelector('.motion-allow').addEventListener('click', () => {
-      chose();
-      const jobs = [];
-      if (askOrient) jobs.push(DeviceOrientationEvent.requestPermission());
-      if (askMotion) jobs.push(DeviceMotionEvent.requestPermission());
-      Promise.all(jobs).then(states => {
-        const title = note.querySelector('.motion-title');
-        if (!states.includes('granted')) {
-          if (title) title.textContent = 'Chưa được phép — bật trong Cài đặt';
-          return;
+      phase = 'closed';
+      clearTimeout(sensorTimer); clearTimeout(finishTimer); stopProbe();
+      cancelAnimationFrame(paintFrame);
+      observer.disconnect(); resize?.disconnect(); events.abort();
+      if (note.contains(document.activeElement)) {
+        // Move keyboard focus to an existing page control before removing the card.
+        const target = menu && getComputedStyle(menu).display !== 'none' ? menu : header?.querySelector('a');
+        target?.focus({ preventScroll: true });
+      }
+      note.inert = true;
+      note.setAttribute('aria-hidden', 'true');
+      note.classList.remove('is-in');
+      setTimeout(() => note.remove(), reduce.matches ? 0 : 360);
+    };
+    const fail = denied => {
+      if (phase === 'closed') return;
+      phase = 'unavailable'; decision = denied ? 'denied' : 'no-data'; remember(decision);
+      clearTimeout(sensorTimer); stopProbe();
+      title.textContent = denied ? 'Chưa được phép dùng cảm biến' : 'Chưa nhận được chuyển động';
+      copy.textContent = denied
+        ? 'Bạn vẫn có thể xem trang bình thường. Kiểm tra quyền chuyển động trong trình duyệt khi muốn bật lại.'
+        : 'Thiết bị hoặc trình duyệt chưa gửi dữ liệu. Nếu đang dùng Facebook, hãy mở trang bằng Safari hoặc Chrome.';
+      status.textContent = 'Không tự hỏi lại trong phiên này.';
+      enable.hidden = true; later.textContent = 'Đã hiểu';
+    };
+    const paint = () => {
+      paintFrame = 0;
+      if (calm() || document.hidden || note.inert) return;
+      glass.style.setProperty('--nt-light-x', light.x.toFixed(1) + 'px');
+      glass.style.setProperty('--nt-light-y', light.y.toFixed(1) + 'px');
+    };
+    const reflect = (x, y) => {
+      light = { x, y };
+      if (!paintFrame) paintFrame = requestAnimationFrame(paint);
+    };
+    note.addEventListener('pointermove', event => {
+      if (!fine.matches || event.pointerType === 'touch' || calm()) return;
+      const rect = note.getBoundingClientRect();
+      reflect((event.clientX - rect.left - rect.width / 2) * .2, (event.clientY - rect.top - rect.height / 2) * .2);
+    }, options);
+    note.addEventListener('pointerleave', () => reflect(0, 0), options);
+    const waitForSensor = () => {
+      if (phase === 'closed') return;
+      phase = 'waiting';
+      enable.disabled = true; enable.textContent = 'Đang kiểm tra…';
+      status.textContent = 'Nghiêng nhẹ máy để thử cảm biến.';
+      const receive = (beta, gamma) => {
+        if (!Number.isFinite(beta) || !Number.isFinite(gamma) || document.hidden) return;
+        if (phase === 'waiting') {
+          clearTimeout(sensorTimer);
+          phase = 'active'; decision = 'enabled'; remember(decision);
+          startOrientation();
+          title.textContent = 'Hiệu ứng đã bật';
+          status.textContent = 'Đã nhận được dữ liệu chuyển động.';
+          enable.hidden = true; later.textContent = 'Đã hiểu';
+          finishTimer = setTimeout(() => close('enabled'), 2400);
         }
-        startOrientation();
-        note.classList.add('is-on');
-        if (title) title.textContent = 'Đã bật — nghiêng nhẹ máy';
-        const actions = note.querySelector('.motion-actions');
-        if (actions) actions.hidden = true;
-        setTimeout(close, 1400);
-      }).catch(() => {
-        const title = note.querySelector('.motion-title');
-        if (title) title.textContent = 'Chạm lại để hiện câu hỏi cho phép';
+        if (phase === 'active') reflect(clamp(gamma, -20, 20), clamp(beta - 45, -14, 14));
+      };
+      const orient = event => receive(event.beta, event.gamma);
+      const motion = event => {
+        const g = event.accelerationIncludingGravity;
+        if (g && Number.isFinite(g.x) && Number.isFinite(g.y)) receive(45 - g.y * 4, g.x * 5);
+      };
+      window.addEventListener('deviceorientation', orient, options);
+      window.addEventListener('deviceorientationabsolute', orient, options);
+      window.addEventListener('devicemotion', motion, options);
+      stopProbe = () => {
+        window.removeEventListener('deviceorientation', orient);
+        window.removeEventListener('deviceorientationabsolute', orient);
+        window.removeEventListener('devicemotion', motion);
+      };
+      sensorTimer = setTimeout(() => { if (phase === 'waiting') fail(false); }, 6000);
+    };
+    enable.addEventListener('click', () => {
+      if (phase !== 'shown') return;
+      if (desktop) {
+        decision = 'pointer'; remember(decision);
+        close('pointer');
+        return;
+      }
+      phase = 'requesting'; enable.disabled = true;
+      enable.textContent = 'Đang kiểm tra…';
+      // No await, timer or promise callback before these native calls: retain iOS user activation.
+      const jobs = asks.map(api => {
+        try { return Promise.resolve(api.requestPermission()); }
+        catch (error) { return Promise.reject(error); }
       });
-    });
+      chose();
+      if (!jobs.length) { waitForSensor(); return; }
+      Promise.allSettled(jobs).then(results => {
+        if (phase === 'closed') return;
+        if (results.some(result => result.status === 'fulfilled' && result.value === 'granted')) waitForSensor();
+        else fail(true);
+      });
+    }, { signal: events.signal });
+    later.addEventListener('click', () => close('later'), { signal: events.signal });
+    note.addEventListener('keydown', event => { if (event.key === 'Escape') close('later'); }, { signal: events.signal });
+    if (calm()) {
+      enable.hidden = true; later.textContent = 'Đã hiểu';
+      status.textContent = 'Chế độ giảm chuyển động đang bật. Website giữ nguyên tùy chọn của bạn.';
+    } else if (!desktop && !supported) {
+      title.textContent = 'Chuyển động chưa khả dụng';
+      copy.textContent = 'Trình duyệt này chưa cung cấp cảm biến. Thử mở trang bằng Safari hoặc Chrome qua HTTPS.';
+      enable.hidden = true; later.textContent = 'Đã hiểu';
+    } else if (!desktop && !asks.length) {
+      status.textContent = 'Không cần xin quyền · Bấm để bật hiệu ứng.';
+    }
+    document.body.append(note);
+    place(); syncMenu();
+    requestAnimationFrame(() => { if (phase !== 'closed') note.classList.add('is-in'); });
+  }
+
+  function scheduleMotionNotice() {
+    if (window.ntMainLoading) {
+      window.addEventListener('nt-main-ready', bootPhoneTilt, { once: true });
+    } else if (document.readyState !== 'complete') {
+      document.addEventListener('DOMContentLoaded', bootPhoneTilt, { once: true });
+    } else {
+      requestAnimationFrame(bootPhoneTilt);
+    }
   }
 
   document.querySelectorAll('.tilt-card').forEach(card => {
@@ -448,7 +595,7 @@
     window.addEventListener('pointercancel', endTouch, listen);
   }
 
-  bootPhoneTilt();
+  scheduleMotionNotice();
 
   window.addEventListener('blur', resetTilts);
   document.addEventListener('visibilitychange', () => {
@@ -476,3 +623,4 @@
   }
 
 })();
+
