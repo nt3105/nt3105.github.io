@@ -290,3 +290,5 @@ input,textarea,.accent-options button{background:var(--theme-bg)}
 .hero-visual.depth-card.tilt-return .orbit-symbol,.hero-visual.depth-card.tilt-return .floating-label,.hero-visual.depth-card.tilt-return .tiny-label,.hero-visual.depth-card.tilt-return .orbit{transition:translate .42s cubic-bezier(.16,1,.3,1)}
 @media(pointer:coarse){.depth-shine{display:none}.hero-visual.depth-card:after{left:12%;right:12%;bottom:6%}}
 @media(prefers-reduced-motion:reduce){.depth-shine{display:none}.hero-visual.depth-card .orbit-symbol,.hero-visual.depth-card .floating-label,.hero-visual.depth-card .tiny-label,.hero-visual.depth-card .orbit{translate:none;transition:none}}
+
+#donate-form.amount-form{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}

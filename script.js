@@ -471,8 +471,8 @@ document.querySelectorAll('[data-amount]').forEach(button => {
     amountChanged();
   });
 });
-donationForm.addEventListener('submit', event => {
-  event.preventDefault();
+function submitDonationAmount(event) {
+  if (event) event.preventDefault();
   clearTimeout(qrDebounce);
   const amount = parseDonationAmount(amountInput.value);
   if (amount === null) {
@@ -485,6 +485,12 @@ donationForm.addEventListener('submit', event => {
   amountInput.removeAttribute('aria-invalid');
   amountInput.value = moneyFormat.format(amount);
   requestAmountQR(amount);
+}
+generateButton.addEventListener('click', submitDonationAmount);
+amountInput.addEventListener('keydown', event => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  submitDonationAmount();
 });
 
 // Thanh tiến độ cuộn: chỉ cập nhật một lần trong mỗi khung hình.
