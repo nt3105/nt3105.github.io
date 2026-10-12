@@ -698,10 +698,9 @@ const musicPlaylist = [
 ];
 const introBgm = window.ntBgm instanceof HTMLAudioElement ? window.ntBgm : null;
 const musicAudio = introBgm || new Audio();
-if (!introBgm) {
-  musicAudio.preload = 'metadata';
-  musicAudio.volume = 0.35;
-}
+const defaultVolume = 0.5;
+if (!introBgm) musicAudio.preload = 'metadata';
+musicAudio.volume = defaultVolume;
 let musicIndex = Math.random() < 0.65 ? 0 : 1 + Math.floor(Math.random() * (musicPlaylist.length - 1));
 try {
   const storedTrack = sessionStorage.getItem('nt-visit-track');
@@ -731,7 +730,7 @@ musicWidget.innerHTML = `
   <input class="music-seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Tua bài hát" disabled>
   <div class="music-times"><span class="music-current">0:00</span><span class="music-duration">0:00</span></div>
   <div class="music-controls"><button class="music-prev" type="button" aria-label="Bài trước">❮</button><button class="music-play" type="button">Bật nhạc</button><button class="music-next" type="button" aria-label="Bài tiếp theo">❯</button></div>
-  <div class="music-volume"><label for="music-volume">Âm lượng</label><input id="music-volume" type="range" min="0" max="1" step="0.01" value="0.35"></div>
+  <div class="music-volume"><label for="music-volume">Âm lượng</label><input id="music-volume" type="range" min="0" max="1" step="0.01" value="0.5"></div>
   <div class="playlist-heading"><span>Danh sách phát</span><span>${String(musicPlaylist.length).padStart(2, '0')} BÀI</span></div><div class="music-playlist" role="group" aria-label="Chọn bài hát"></div>
   <div class="music-footer"><span>Tự chuyển bài · Lặp danh sách</span><button class="music-off" type="button">Tắt nhạc</button></div>
  </div>`;
@@ -844,7 +843,7 @@ async function playMusic() {
   musicStatus('Đang mở nhạc…');
   try {
     musicAudio.muted = false;
-    if (!musicAudio.volume) musicAudio.volume = 0.35;
+    if (!musicAudio.volume) musicAudio.volume = defaultVolume;
     await musicAudio.play();
   } catch (error) {
     if (request !== musicRequest || error.name === 'AbortError') return;
@@ -934,9 +933,38 @@ function hideHamsterHint() {
 window.addEventListener('pointerup', hideHamsterHint);
 window.addEventListener('pointercancel', hideHamsterHint);
 musicWidget.addEventListener('keydown', event => { if (event.key === 'Escape' && !musicEl('.music-shell').hidden) compactMusic(true); });
-musicEl('#music-volume').addEventListener('input', event => { musicAudio.volume = Number(event.target.value); });
-musicEl('.music-seek').addEventListener('input', event => {
+function bindPhoneRange(input, onValue) {
+  const valueAt = clientX => {
+    const rect = input.getBoundingClientRect();
+    const span = Number(input.max) - Number(input.min) || 1;
+    const ratio = rect.width ? Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) : 0;
+    return Number(input.min) + ratio * span;
+  };
+  const apply = clientX => {
+    if (input.disabled) return;
+    const value = valueAt(clientX);
+    input.value = String(value);
+    onValue(value);
+  };
+  const track = event => {
+    if (event.touches.length !== 1) return;
+    event.preventDefault();
+    event.stopPropagation();
+    apply(event.touches[0].clientX);
+  };
+  input.addEventListener('touchstart', track, { passive: false });
+  input.addEventListener('touchmove', track, { passive: false });
+}
+const volumeInput = musicEl('#music-volume');
+volumeInput.value = String(defaultVolume);
+volumeInput.addEventListener('input', event => { musicAudio.volume = Number(event.target.value); });
+bindPhoneRange(volumeInput, value => { musicAudio.volume = value; });
+const seekInput = musicEl('.music-seek');
+seekInput.addEventListener('input', event => {
   if (Number.isFinite(musicAudio.duration)) musicAudio.currentTime = musicAudio.duration * Number(event.target.value) / 100;
+});
+bindPhoneRange(seekInput, value => {
+  if (Number.isFinite(musicAudio.duration)) musicAudio.currentTime = musicAudio.duration * value / 100;
 });
 musicAudio.addEventListener('loadedmetadata', syncMusicClock);
 musicAudio.addEventListener('durationchange', syncMusicClock);

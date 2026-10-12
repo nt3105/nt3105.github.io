@@ -469,6 +469,7 @@ html, body { overflow-x: clip; }
 .music-widget input,
 .music-widget a,
 .music-widget label { cursor: pointer; touch-action: manipulation; }
+.music-widget input[type="range"] { touch-action: none; min-height: 44px; }
 
 .global-pointer-glow {
   width: 520px;

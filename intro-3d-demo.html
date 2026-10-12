@@ -331,14 +331,14 @@
   const bgm = new Audio(visitTracks[visitTrack]);
   bgm.preload = 'none';
   bgm.playsInline = true;
-  bgm.volume = 0.35;
+  bgm.volume = 0.5;
   window.ntBgm = bgm;
   let bgmStarting = false;
   const startBgm = () => {
     if ((!bgm.paused && !bgm.muted) || bgmStarting) return;
     bgmStarting = true;
     bgm.muted = false;
-    bgm.volume = 0.35;
+    bgm.volume = 0.5;
     const attempt = bgm.play();
     if (attempt) attempt.finally(() => { bgmStarting = false; }).catch(() => {});
     else bgmStarting = false;
@@ -396,7 +396,7 @@
       if (result.error) throw result.error;
       const doc = new DOMParser().parseFromString(result.html, 'text/html');
       if (!doc.querySelector('#main')) throw new Error('Invalid main page');
-      await Promise.all(['style.css', 'enhance.css?v=motion-glass-1', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
+      await Promise.all(['style.css', 'enhance.css?v=volume-touch-1', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
       document.getElementById('intro-css')?.remove();
       const fix = doc.getElementById('nav-fix');
       if (fix && !document.getElementById('nav-fix')) document.head.append(document.importNode(fix, true));
