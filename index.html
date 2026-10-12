@@ -19,6 +19,7 @@
         const introParams = new URLSearchParams(location.search);
         introParams.set('nt-motion', '2');
         introParams.set('nt-scroll', '1');
+        introParams.set('nt-nav', '1');
         location.replace('intro-3d-demo.html?' + introParams.toString());
       }
     } catch (e) { /* Le contenu principal reste accessible sans stockage. */ }
