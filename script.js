@@ -108,7 +108,12 @@ function pinMobileChrome() {
   const bar = document.getElementById('header');
   const links = document.getElementById('nav-links');
   if (!bar || !links) return;
-  if (!phone) return;
+  if (!phone) {
+    // Undo only the mobile pinning properties when returning to desktop.
+    ['position', 'top', 'left', 'right', 'bottom', 'width', 'height', 'margin', 'transform', 'translate'].forEach(property => bar.style.removeProperty(property));
+    ['display', 'position', 'top', 'left', 'right', 'translate', 'transform', 'opacity', 'visibility'].forEach(property => links.style.removeProperty(property));
+    return;
+  }
   bar.style.setProperty('position', 'fixed', 'important');
   bar.style.setProperty('top', '8px', 'important');
   bar.style.setProperty('left', '8px', 'important');
