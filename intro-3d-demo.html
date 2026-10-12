@@ -397,7 +397,7 @@
       if (result.error) throw result.error;
       const doc = new DOMParser().parseFromString(result.html, 'text/html');
       if (!doc.querySelector('#main')) throw new Error('Invalid main page');
-      await Promise.all(['style.css', 'enhance.css?v=volume-touch-1', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css', 'liquid-nav.css?v=soft-1'].map(addStyle));
+      await Promise.all(['style.css', 'enhance.css?v=volume-touch-1', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
       document.getElementById('intro-css')?.remove();
       const fix = doc.getElementById('nav-fix');
       if (fix && !document.getElementById('nav-fix')) document.head.append(document.importNode(fix, true));
@@ -411,7 +411,7 @@
       });
       document.body.append(nodes);
       window.ntMainLoading = true;
-      for (const src of ['script.js?v=liquid-nav-1', 'enhance.js?v=motion-glass-2', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js', 'liquid-nav.js?v=soft-1']) await addScript(src);
+      for (const src of ['script.js?v=scroll-up-1', 'enhance.js?v=motion-glass-2', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js']) await addScript(src);
       try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
       try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch (error) {}
       startBgm();

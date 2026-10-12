@@ -19,7 +19,6 @@
         const introParams = new URLSearchParams(location.search);
         introParams.set('nt-motion', '2');
         introParams.set('nt-scroll', '1');
-        introParams.set('nt-nav', '1');
         location.replace('intro-3d-demo.html?' + introParams.toString());
       }
     } catch (e) { /* Le contenu principal reste accessible sans stockage. */ }
@@ -250,14 +249,12 @@
       html.menu-lock { overflow: hidden !important; }
     }
   </style>
-  <link rel="stylesheet" href="liquid-nav.css?v=soft-1">
-  <script src="script.js?v=liquid-nav-1" defer></script>
+  <script src="script.js?v=volume-touch-1" defer></script>
   <script src="enhance.js?v=motion-glass-2" defer></script>
   <script src="features.js" defer></script>
   <script src="snake.js" defer></script>
   <script src="ios-effects.js" defer></script>
   <script src="ios-preview.js" defer></script>
-  <script src="liquid-nav.js?v=soft-1" defer></script>
   <script>
     try {
       if (sessionStorage.getItem('nt-from-intro') === '1') {
