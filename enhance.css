@@ -1240,3 +1240,13 @@ html[data-fx="calm"] .nt-motion-notice, html[data-fx="calm"] .nt-motion-notice *
   .nt-motion-notice, .nt-motion-notice *, .nt-motion-notice *::after { animation: none !important; transition: none !important; }
   .nt-motion-notice, .nt-motion-actions button:active { transform: none; }
 }
+html[data-depth="off"] .scene-mesh,
+html[data-depth="off"] .scene-grid,
+html[data-depth="off"] .hero-copy {
+  transform: none;
+}
+html[data-depth="off"] .orb-a,
+html[data-depth="off"] .orb-b,
+html[data-depth="off"] .orb-c {
+  translate: none;
+}

@@ -47,6 +47,7 @@
   let magnetTick = 0;
   let chaosHue = 270;
   let chaosBoost = 1;
+  let chaosTimer = 0;
   let soundOn = true;
   let audio;
   const mods = () => ({
@@ -190,6 +191,8 @@
     lockAt = 2000 + Math.floor(Math.random() * 18001);
     bonus = null;
     chaosBoost = 1;
+    chaosTimer = 0;
+    chaosHue = 270;
     food = spawnAt(false);
     scoreEl.textContent = '0';
     path = [];
@@ -490,11 +493,20 @@
   function placeMenu() {
     ['left', 'top', 'right', 'transform'].forEach(key => ntjr.style.removeProperty(key));
   }
+  let resumeAfterMenu = false;
   function setMenuOpen(open) {
+    if (open) {
+      resumeAfterMenu = mode === 'play';
+      if (resumeAfterMenu) pauseGame();
+    }
     ntjr.hidden = !open;
     ntjrBtn.setAttribute('aria-expanded', String(open));
     ntjrBtn.setAttribute('aria-label', open ? 'NTJR MENU đang mở' : 'Mở NTJR MENU');
     if (open) placeMenu();
+    else if (resumeAfterMenu) {
+      resumeAfterMenu = false;
+      if (mode === 'pause') startGame();
+    }
   }
   const orbKey = 'ngan-tu-ntjr-orb';
   let orbX = 16;

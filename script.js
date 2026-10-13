@@ -108,7 +108,11 @@ function pinMobileChrome() {
   const bar = document.getElementById('header');
   const links = document.getElementById('nav-links');
   if (!bar || !links) return;
-  if (!phone) return;
+  if (!phone) {
+    ['position', 'top', 'left', 'right', 'bottom', 'width', 'margin', 'transform', 'translate'].forEach(key => bar.style.removeProperty(key));
+    ['display', 'position', 'top', 'left', 'right', 'bottom', 'width', 'translate', 'transform', 'opacity', 'visibility'].forEach(key => links.style.removeProperty(key));
+    return;
+  }
   bar.style.setProperty('position', 'fixed', 'important');
   bar.style.setProperty('top', '8px', 'important');
   bar.style.setProperty('left', '8px', 'important');
@@ -637,19 +641,20 @@ function applyTheme(colors, choice = 'custom') {
 function setAccent(choice) {
   if (!themePresets[choice]) return;
   applyTheme(themePresets[choice], choice);
-  try { localStorage.removeItem('ngan-tu-custom-colors'); } catch {}
+  try { localStorage.removeItem('ngan-tu-custom-colors'); localStorage.setItem('ngan-tu-accent', choice); } catch {}
 }
-const accentNames = Object.keys(themePresets);
-let visitAccent = accentNames[Math.floor(Math.random() * accentNames.length)];
-try {
-  const last = localStorage.getItem('ngan-tu-accent');
-  if (accentNames.length > 1 && last === visitAccent) {
-    const rest = accentNames.filter(name => name !== last);
-    visitAccent = rest[Math.floor(Math.random() * rest.length)];
-  }
-  localStorage.setItem('ngan-tu-accent', visitAccent);
-} catch {}
-setAccent(visitAccent);
+function pickVisitAccent() {
+  try {
+    const custom = JSON.parse(localStorage.getItem('ngan-tu-custom-colors') || 'null');
+    if (Array.isArray(custom) && custom.length === 3 && custom.every(color => /^#[0-9a-f]{6}$/i.test(color))) return { custom };
+    const saved = localStorage.getItem('ngan-tu-accent');
+    if (themePresets[saved]) return { choice: saved };
+  } catch {}
+  return { choice: 'violet' };
+}
+const visitAccent = pickVisitAccent();
+if (visitAccent.custom) applyTheme(visitAccent.custom, 'custom');
+else setAccent(visitAccent.choice);
 colorInputs.forEach(input => input.addEventListener('input', () => {
   const colors = colorInputs.map(field => field.value);
   applyTheme(colors);
@@ -841,6 +846,8 @@ let musicByUser = false;
 async function playMusic() {
   const request = ++musicRequest;
   musicStatus('Đang mở nhạc…');
+  window.ntUserHeldMusic = false;
+  phoneAuto = false;
   try {
     musicAudio.muted = false;
     if (!musicAudio.volume) musicAudio.volume = defaultVolume;
@@ -857,10 +864,12 @@ async function playMusic() {
 }
 function toggleMusic() {
   if (musicAudio.paused) { musicByUser = true; playMusic(); }
-  else { phoneAuto = false; musicByUser = false; musicRequest++; musicAudio.pause(); musicStatus('Đã tạm dừng'); }
+  else { phoneAuto = false; window.ntUserHeldMusic = true; musicByUser = false; musicRequest++; musicAudio.pause(); musicStatus('Đã tạm dừng'); }
 }
 function stopMusic() {
   musicByUser = false;
+  phoneAuto = false;
+  window.ntUserHeldMusic = true;
   musicRequest++;
   musicAudio.pause();
   musicAudio.currentTime = 0;
@@ -972,15 +981,19 @@ musicAudio.addEventListener('timeupdate', syncMusicClock);
 musicAudio.addEventListener('playing', () => { musicButtons(); musicStatus('Đang phát · ' + (musicIndex + 1) + '/' + musicPlaylist.length); });
 musicAudio.addEventListener('pause', musicButtons);
 musicAudio.addEventListener('waiting', () => { if (!musicAudio.paused) musicStatus('Đang tải nhạc…'); });
-musicAudio.addEventListener('ended', () => { loadMusic(nextMusicIndex()); playMusic(); });
+musicAudio.addEventListener('ended', () => {
+  if (window.ntUserHeldMusic) return;
+  loadMusic(nextMusicIndex());
+  playMusic();
+});
 musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không tải được bài · Hãy thử chuyển bài'); });
 if (introBgm) loadMusic(musicIndex, true);
 else loadMusic(musicIndex);
 musicButtons();
-let phoneAuto = true;
+let phoneAuto = !window.ntUserHeldMusic;
 let musicStarting = false;
 function startPhoneMusic() {
-  if (!phoneAuto || (!musicAudio.paused && !musicAudio.muted) || musicStarting) return;
+  if (window.ntUserHeldMusic || !phoneAuto || (!musicAudio.paused && !musicAudio.muted) || musicStarting) return;
   musicStarting = true;
   musicByUser = true;
   playMusic().finally(() => { musicStarting = false; });
@@ -1005,6 +1018,7 @@ let glowX = innerWidth / 2;
 let glowY = innerHeight * .65;
 function hideGlobalGlow() { globalGlow.classList.remove('shown'); }
 function moveGlobalGlow(x, y) {
+  if (document.documentElement.dataset.depth === 'off') { hideGlobalGlow(); return; }
   if (!glowEnabled || glowMotion.matches || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   glowX = x;
   glowY = y;
@@ -1301,6 +1315,10 @@ function makeWidgetDraggable(widget) {
 }
 function positionColorPanel() {
   if (stylePanel.hidden) return;
+  if (window.matchMedia('(max-width: 820px)').matches) {
+    ['left', 'top', 'right', 'bottom', 'width'].forEach(key => stylePanel.style.removeProperty(key));
+    return;
+  }
   const anchor = styleControls.getBoundingClientRect();
   const panel = stylePanel.getBoundingClientRect();
   const width = window.visualViewport?.width || innerWidth;
@@ -1310,6 +1328,7 @@ function positionColorPanel() {
   stylePanel.style.top = Math.max(8, Math.min(top >= 8 ? top : anchor.bottom + 10, height - panel.height - 8)) + 'px';
 }
 styleToggle.addEventListener('click', positionColorPanel);
+window.addEventListener('resize', positionColorPanel);
 makeWidgetDraggable(musicWidget);
 
 

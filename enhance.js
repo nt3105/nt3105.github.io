@@ -10,6 +10,32 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const calm = () => root.dataset.fx === 'calm' || reduce.matches;
   let resetTilts = () => {};
+  let depthOn = false;
+  try {
+    const savedDepth = sessionStorage.getItem('nt-motion-choice-v1');
+    depthOn = savedDepth === 'pointer' || savedDepth === 'enabled';
+  } catch {}
+  root.dataset.depth = depthOn ? 'on' : 'off';
+  function setDepth(on) {
+    depthOn = Boolean(on);
+    root.dataset.depth = depthOn ? 'on' : 'off';
+    if (depthOn) return;
+    tx = 0; ty = 0; px = 0; py = 0;
+    root.style.setProperty('--px', '0');
+    root.style.setProperty('--py', '0');
+    root.style.setProperty('--mouse-x', '0px');
+    root.style.setProperty('--mouse-y', '0px');
+    document.querySelector('.global-pointer-glow')?.classList.remove('shown');
+    resetTilts();
+    document.querySelectorAll('.button, .explore-trigger, .closing-explore').forEach(button => {
+      button.style.setProperty('--mx', '0px');
+      button.style.setProperty('--my', '0px');
+    });
+    document.querySelectorAll('.launch-card, .journal-entry, .score-card, .code-workbench').forEach(card => {
+      card.style.removeProperty('--glass-visible');
+    });
+  }
+  window.ntSetDepth = setDepth;
 
   const panel = document.getElementById('style-panel');
   if (panel) {
@@ -40,7 +66,7 @@
   let frame = 0;
   function tick() {
     frame = 0;
-    if (document.hidden || calm() || !fine.matches) {
+    if (document.hidden || calm() || !fine.matches || !depthOn) {
       root.style.setProperty('--px', '0');
       root.style.setProperty('--py', '0');
       return;
@@ -299,6 +325,18 @@
     window.addEventListener('devicemotion', onMotion, listen);
   }
 
+  function stopOrientation() {
+    if (!orientOn) return;
+    orientOn = false;
+    window.removeEventListener('deviceorientation', onOrient);
+    window.removeEventListener('deviceorientationabsolute', onOrient);
+    window.removeEventListener('devicemotion', onMotion);
+    cancelAnimationFrame(orientFrame);
+    orientFrame = 0;
+    targetRx = targetRy = smoothRx = smoothRy = 0;
+    resetTilts();
+  }
+
   // One notification per document, including the DOMParser intro handoff.
   function bootPhoneTilt() {
     if (window.ntMotionNoticeBooted || !document.getElementById('main')) return;
@@ -319,11 +357,17 @@
     const asks = [orientationAPI, motionAPI].filter(api => typeof api?.requestPermission === 'function');
     const chose = () => window.dispatchEvent(new Event('nt-motion-choice'));
     if (saved) {
-      // Adding listeners never requests permission. The browser retains control.
-      if (saved === 'enabled' && !desktop && supported) startOrientation();
+      if (saved === 'pointer' || saved === 'enabled') {
+        setDepth(true);
+        if (saved === 'enabled' && !desktop && supported) startOrientation();
+      } else {
+        setDepth(false);
+        stopOrientation();
+      }
       chose();
       return;
     }
+    setDepth(false);
 
     const note = document.createElement('section');
     note.id = 'nt-motion-notice';
@@ -375,6 +419,11 @@
     window.visualViewport?.addEventListener('resize', place, options);
     const close = choice => {
       if (phase === 'closed') return;
+      const kept = decision || choice;
+      if (kept !== 'pointer' && kept !== 'enabled') {
+        setDepth(false);
+        stopOrientation();
+      }
       if (choice) remember(decision || choice);
       chose();
       phase = 'closed';
@@ -394,6 +443,8 @@
     const fail = denied => {
       if (phase === 'closed') return;
       phase = 'unavailable'; decision = denied ? 'denied' : 'no-data'; remember(decision);
+      setDepth(false);
+      stopOrientation();
       clearTimeout(sensorTimer); stopProbe();
       title.textContent = denied ? 'Chưa được phép dùng cảm biến' : 'Chưa nhận được chuyển động';
       copy.textContent = denied
@@ -428,6 +479,7 @@
         if (phase === 'waiting') {
           clearTimeout(sensorTimer);
           phase = 'active'; decision = 'enabled'; remember(decision);
+          setDepth(true);
           startOrientation();
           title.textContent = 'Hiệu ứng đã bật';
           status.textContent = 'Đã nhận được dữ liệu chuyển động.';
@@ -464,7 +516,9 @@
     enable.addEventListener('click', () => {
       if (phase !== 'shown') return;
       if (desktop) {
-        decision = 'pointer'; remember(decision);
+        decision = 'pointer';
+        remember(decision);
+        setDepth(true);
         close('pointer');
         return;
       }
@@ -543,7 +597,7 @@
 
   if (!reduce.matches && fine.matches) {
     window.addEventListener('pointermove', event => {
-      if (event.pointerType === 'touch' || calm()) return;
+      if (!depthOn || event.pointerType === 'touch' || calm()) return;
       const x = event.clientX;
       const y = event.clientY;
       tx = x / innerWidth - 0.5;
@@ -576,7 +630,7 @@
       touch = null;
     };
     window.addEventListener('pointerdown', event => {
-      if (event.pointerType !== 'touch' || calm() || scrolling) return;
+      if (!depthOn || event.pointerType !== 'touch' || calm() || scrolling) return;
       if (event.target.closest('.ntjr, .music-widget, .style-controls, .snake-dock, .header, button, a, input, textarea')) return;
       boxesDirty = true;
       const box = hitAt(event.clientX, event.clientY);
@@ -585,7 +639,7 @@
       touchBox = box;
     }, listen);
     window.addEventListener('pointermove', event => {
-      if (!touch || event.pointerId !== touch.id || calm() || scrolling) return;
+      if (!depthOn || !touch || event.pointerId !== touch.id || calm() || scrolling) return;
       const dx = event.clientX - touch.x;
       const dy = event.clientY - touch.y;
       if (!touch.locked) {
@@ -621,7 +675,7 @@
   if (fine.matches && !reduce.matches) {
     document.querySelectorAll('.button, .explore-trigger, .closing-explore').forEach(button => {
       button.addEventListener('pointermove', event => {
-        if (calm()) return;
+        if (!depthOn || calm()) return;
         const rect = button.getBoundingClientRect();
         const mx = ((event.clientX - rect.left) / rect.width - 0.5) * 6;
         const my = ((event.clientY - rect.top) / rect.height - 0.5) * 4;

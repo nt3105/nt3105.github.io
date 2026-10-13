@@ -49,7 +49,7 @@
   <link rel="preload" as="image" href="images/moment-1-hero.jpg" fetchpriority="high">
   <link rel="preload" as="image" href="images/cover-preah-thorng.jpg">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="enhance.css?v=volume-touch-1">
+  <link rel="stylesheet" href="enhance.css?v=depth-1">
   <link rel="stylesheet" href="polish.css">
   <link rel="stylesheet" href="features.css">
   <link rel="stylesheet" href="design.css">
@@ -249,11 +249,11 @@
       html.menu-lock { overflow: hidden !important; }
     }
   </style>
-  <script src="script.js?v=volume-touch-1" defer></script>
-  <script src="enhance.js?v=motion-glass-2" defer></script>
+  <script src="script.js?v=depth-1" defer></script>
+  <script src="enhance.js?v=depth-1" defer></script>
   <script src="features.js" defer></script>
-  <script src="snake.js" defer></script>
-  <script src="ios-effects.js" defer></script>
+  <script src="snake.js?v=depth-1" defer></script>
+  <script src="ios-effects.js?v=depth-1" defer></script>
   <script src="ios-preview.js" defer></script>
   <script>
     try {
@@ -485,9 +485,14 @@ int main(void) {
     (function () {
       var phone = window.matchMedia('(max-width: 760px)');
       function pin() {
-        if (!phone.matches) return;
         var header = document.getElementById('header');
         if (!header) return;
+        if (!phone.matches) {
+          ['position', 'top', 'left', 'right', 'bottom', 'width', 'height', 'margin', 'transform', 'translate'].forEach(function (key) {
+            header.style.removeProperty(key);
+          });
+          return;
+        }
         header.style.setProperty('position', 'fixed', 'important');
         header.style.setProperty('top', '8px', 'important');
         header.style.setProperty('left', '8px', 'important');

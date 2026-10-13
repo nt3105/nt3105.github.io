@@ -44,7 +44,9 @@
     card.style.setProperty('--glass-y', (y-box.top)+'px');
     card.style.setProperty('--glass-visible', '1');
   }
+  const depthOn = () => root.dataset.depth === 'on';
   document.addEventListener('pointermove', event => {
+    if (!depthOn()) { clearReflection(); return; }
     if (!fine.matches || calm() || event.pointerType === 'touch') return;
     const card = event.target.closest(reflective);
     if (!card) { clearReflection(); return; }

@@ -344,8 +344,13 @@
     if (attempt) attempt.finally(() => { bgmStarting = false; }).catch(() => {});
     else bgmStarting = false;
   };
+  const bgmEvents = ['pointerdown', 'touchstart', 'touchend', 'touchmove', 'click', 'scroll', 'wheel'];
+  const onBgmGesture = () => { if (!window.ntUserHeldMusic) startBgm(); };
   startBgm();
-  ['pointerdown', 'touchstart', 'touchend', 'touchmove', 'click', 'scroll', 'wheel'].forEach(type => addEventListener(type, startBgm, { capture: true, passive: true }));
+  bgmEvents.forEach(type => addEventListener(type, onBgmGesture, { capture: true, passive: true }));
+  const releaseIntroMusic = () => {
+    bgmEvents.forEach(type => removeEventListener(type, onBgmGesture, { capture: true }));
+  };
   const heroImg = new Image();
   heroImg.className = 'optional-image loaded';
   heroImg.alt = 'Ảnh chân dung Ngân Tú';
@@ -390,15 +395,18 @@
   async function leave() {
     if (leaving) return;
     leaving = true;
-    startBgm();
+    releaseIntroMusic();
     stage.classList.add('is-leaving');
     try {
       const result = await siteHtml;
       if (result.error) throw result.error;
       const doc = new DOMParser().parseFromString(result.html, 'text/html');
       if (!doc.querySelector('#main')) throw new Error('Invalid main page');
-      await Promise.all(['style.css', 'enhance.css?v=volume-touch-1', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
+      await Promise.all(['style.css', 'enhance.css?v=depth-1', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css', 'ios-preview.css'].map(addStyle));
       document.getElementById('intro-css')?.remove();
+      document.querySelector('meta[name="robots"]')?.remove();
+      const mainTitle = doc.querySelector('title');
+      if (mainTitle?.textContent) document.title = mainTitle.textContent;
       const fix = doc.getElementById('nav-fix');
       if (fix && !document.getElementById('nav-fix')) document.head.append(document.importNode(fix, true));
       stage.remove();
@@ -407,14 +415,14 @@
       document.body.style.overflow = '';
       const nodes = document.createDocumentFragment();
       [...doc.body.children].forEach(node => {
-        if (node.tagName !== 'SCRIPT') nodes.append(document.importNode(node, true));
+        if (node.tagName === 'SCRIPT' || node.tagName === 'NOSCRIPT') return;
+        nodes.append(document.importNode(node, true));
       });
       document.body.append(nodes);
       window.ntMainLoading = true;
-      for (const src of ['script.js?v=scroll-up-1', 'enhance.js?v=motion-glass-2', 'features.js', 'snake.js', 'ios-effects.js', 'ios-preview.js']) await addScript(src);
+      for (const src of ['script.js?v=depth-1', 'enhance.js?v=depth-1', 'features.js', 'snake.js?v=depth-1', 'ios-effects.js?v=depth-1', 'ios-preview.js']) await addScript(src);
       try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
       try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch (error) {}
-      startBgm();
       window.ntMainLoading = false;
       window.dispatchEvent(new Event('nt-main-ready'));
     } catch (error) {
