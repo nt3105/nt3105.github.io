@@ -40,6 +40,7 @@
     main { position: relative; width: min(36rem, 100%); }
     .brand { display: flex; align-items: center; gap: .75rem; margin: 0; color: var(--muted); font-size: .8rem; letter-spacing: .18em; text-transform: uppercase; }
     .mark { color: var(--cyan); font-family: ui-monospace, monospace; letter-spacing: 0; text-transform: none; }
+    .mark::before { content: "</>"; }
     h1 { margin: 2rem 0 0; font-size: clamp(4rem, 14vw, 7rem); font-weight: 500; letter-spacing: -.05em; line-height: .9; }
     .up { margin: 1rem 0 0; color: var(--muted); font-size: clamp(1.45rem, 4vw, 2rem); line-height: 1.3; }
     .soon {
@@ -64,7 +65,7 @@
 </head>
 <body>
   <main>
-    <p class="brand"><span class="mark"></></span> Ngân Tú</p>
+    <p class="brand"><span class="mark" aria-hidden="true"></span> Ngân Tú</p>
     <h1>Bảo trì</h1>
     <p class="up">Đang nâng cấp web.</p>
     <p class="soon"><span class="dot" aria-hidden="true"></span>Coming soon</p>
