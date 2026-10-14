@@ -329,9 +329,11 @@
     localStorage.setItem('nt-last-track', String(visitTrack));
     sessionStorage.setItem('nt-visit-track', String(visitTrack));
   } catch (error) {}
-  const bgm = new Audio(visitTracks[visitTrack]);
-  bgm.preload = 'none';
+  const bgm = new Audio();
+  bgm.preload = 'auto';
   bgm.playsInline = true;
+  bgm.setAttribute('playsinline', '');
+  bgm.src = visitTracks[visitTrack];
   bgm.volume = 0.5;
   window.ntBgm = bgm;
   let bgmStarting = false;
@@ -420,7 +422,7 @@
       });
       document.body.append(nodes);
       window.ntMainLoading = true;
-      for (const src of ['script.js?v=depth-1', 'enhance.js?v=depth-1', 'features.js', 'snake.js?v=depth-1', 'ios-effects.js?v=depth-1', 'ios-preview.js']) await addScript(src);
+      for (const src of ['script.js?v=clock-1', 'enhance.js?v=depth-1', 'features.js', 'snake.js?v=depth-1', 'ios-effects.js?v=depth-1', 'ios-preview.js']) await addScript(src);
       try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
       try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch (error) {}
       window.ntMainLoading = false;

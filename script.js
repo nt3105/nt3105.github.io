@@ -704,7 +704,9 @@ const musicPlaylist = [
 const introBgm = window.ntBgm instanceof HTMLAudioElement ? window.ntBgm : null;
 const musicAudio = introBgm || new Audio();
 const defaultVolume = 0.5;
-if (!introBgm) musicAudio.preload = 'metadata';
+musicAudio.preload = 'auto';
+musicAudio.playsInline = true;
+musicAudio.setAttribute('playsinline', '');
 musicAudio.volume = defaultVolume;
 let musicIndex = Math.random() < 0.65 ? 0 : 1 + Math.floor(Math.random() * (musicPlaylist.length - 1));
 try {
@@ -789,8 +791,9 @@ musicPlaylist.forEach((track, index) => {
 const musicCoverImage = musicEl('.music-cover-image');
 musicCoverImage.addEventListener('error', () => { musicCoverImage.hidden = true; });
 function musicTime(seconds) {
-  if (!Number.isFinite(seconds)) return '0:00';
-  return Math.floor(seconds / 60) + ':' + String(Math.floor(seconds % 60)).padStart(2, '0');
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const whole = Math.floor(seconds);
+  return Math.floor(whole / 60) + ':' + String(whole % 60).padStart(2, '0');
 }
 function musicStatus(message) {
   musicEl('.music-status').textContent = message;
@@ -807,14 +810,104 @@ function musicButtons() {
   musicEl('.mini-play').textContent = playing ? 'Dừng' : 'Bật nhạc';
   musicEl('.mini-play').setAttribute('aria-label', playing ? 'Tạm dừng nhạc' : 'Phát nhạc');
 }
-function syncMusicClock() {
+let probedDuration = 0;
+const probedDurations = new Map();
+function findAscii(bytes, text, from = 0) {
+  const start = Math.max(0, from);
+  for (let i = start; i <= bytes.length - text.length; i++) {
+    let matched = true;
+    for (let j = 0; j < text.length; j++) {
+      if (bytes[i + j] !== text.charCodeAt(j)) { matched = false; break; }
+    }
+    if (matched) return i;
+  }
+  return -1;
+}
+function readU32(bytes, offset) {
+  return ((bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3]) >>> 0;
+}
+function mp3DurationFromHeader(bytes, totalBytes) {
+  let offset = 0;
+  if (bytes.length > 10 && bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+    offset = 10 + (((bytes[6] & 0x7f) << 21) | ((bytes[7] & 0x7f) << 14) | ((bytes[8] & 0x7f) << 7) | (bytes[9] & 0x7f));
+  }
+  let sampleRate = 44100;
+  let bitrate = 0;
+  if (offset + 3 < bytes.length && bytes[offset] === 0xff && (bytes[offset + 1] & 0xe0) === 0xe0) {
+    const mpeg1 = ((bytes[offset + 1] >> 3) & 3) === 3;
+    const layer3 = ((bytes[offset + 1] >> 1) & 3) === 1;
+    const brIndex = (bytes[offset + 2] >> 4) & 0xf;
+    const srIndex = (bytes[offset + 2] >> 2) & 3;
+    const brTable = mpeg1 && layer3
+      ? [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0]
+      : [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0];
+    const srTable = mpeg1 ? [44100, 48000, 32000] : [22050, 24000, 16000];
+    bitrate = (brTable[brIndex] || 0) * 1000;
+    sampleRate = srTable[srIndex] || sampleRate;
+  }
+  const tagAt = Math.max(findAscii(bytes, 'Xing', offset), findAscii(bytes, 'Info', offset));
+  if (tagAt >= 0 && tagAt + 16 <= bytes.length) {
+    const flags = readU32(bytes, tagAt + 4);
+    if ((flags & 1) && tagAt + 12 <= bytes.length) {
+      const frames = readU32(bytes, tagAt + 8);
+      if (frames > 0 && sampleRate) return frames * 1152 / sampleRate;
+    }
+  }
+  if (bitrate > 0 && totalBytes > 0) return totalBytes * 8 / bitrate;
+  return 0;
+}
+function knownDuration() {
   const duration = musicAudio.duration;
-  const ready = Number.isFinite(duration) && duration > 0;
+  if (Number.isFinite(duration) && duration > 0) return duration;
+  return probedDuration || 0;
+}
+function rememberDuration(src, seconds) {
+  if (!(seconds > 1)) return;
+  probedDurations.set(src, seconds);
+  if (musicPlaylist[musicIndex] && musicAudio.src.endsWith(musicPlaylist[musicIndex].src) && src.endsWith(musicPlaylist[musicIndex].src)) {
+    probedDuration = seconds;
+    syncMusicClock();
+  }
+}
+function probeTrackDuration(src) {
+  const absolute = new URL(src, location.href).href;
+  if (probedDurations.has(absolute)) return Promise.resolve(probedDurations.get(absolute));
+  return fetch(absolute, { headers: { Range: 'bytes=0-65535' } })
+    .then(response => Promise.all([
+      response.arrayBuffer(),
+      response.headers.get('content-range') || '',
+      Number(response.headers.get('content-length')) || 0
+    ]))
+    .then(([buffer, range, length]) => {
+      const total = Number((range.match(/\/(\d+)\s*$/) || [])[1]) || length;
+      const seconds = mp3DurationFromHeader(new Uint8Array(buffer), total);
+      if (seconds > 1) probedDurations.set(absolute, seconds);
+      return seconds;
+    })
+    .catch(() => 0);
+}
+function armMusicLoad() {
+  musicAudio.preload = 'auto';
+  musicAudio.playsInline = true;
+  if (!musicAudio.isConnected) {
+    musicAudio.hidden = true;
+    musicAudio.setAttribute('aria-hidden', 'true');
+    document.body.append(musicAudio);
+  }
+  const waiting = musicAudio.paused && musicAudio.readyState < 1 && musicAudio.networkState !== HTMLMediaElement.NETWORK_LOADING;
+  if (waiting) {
+    try { musicAudio.load(); } catch (error) {}
+  }
+}
+function syncMusicClock() {
+  const duration = knownDuration();
+  const ready = duration > 0;
   const seek = musicEl('.music-seek');
   musicEl('.music-duration').textContent = musicTime(ready ? duration : 0);
-  musicEl('.music-current').textContent = musicTime(musicAudio.currentTime || 0);
+  const current = musicAudio.currentTime;
+  musicEl('.music-current').textContent = musicTime(Number.isFinite(current) ? current : 0);
   seek.disabled = !ready;
-  if (ready && document.activeElement !== seek) seek.value = String(musicAudio.currentTime / duration * 100);
+  if (ready && document.activeElement !== seek) seek.value = String(Math.min(100, (current || 0) / duration * 100));
 }
 function loadMusic(index, keepTime) {
   musicRequest++;
@@ -838,20 +931,24 @@ function loadMusic(index, keepTime) {
     musicEl('.music-seek').disabled = true;
     musicEl('.music-current').textContent = '0:00';
     musicEl('.music-duration').textContent = '0:00';
+    probedDuration = 0;
   }
   syncMusicClock();
   musicButtons();
+  armMusicLoad();
+  const trackSrc = track.src;
+  probeTrackDuration(trackSrc).then(seconds => rememberDuration(trackSrc, seconds));
 }
 let musicByUser = false;
 async function playMusic() {
   const request = ++musicRequest;
   musicStatus('Đang mở nhạc…');
   window.ntUserHeldMusic = false;
-  phoneAuto = false;
   try {
     musicAudio.muted = false;
     if (!musicAudio.volume) musicAudio.volume = defaultVolume;
     await musicAudio.play();
+    phoneAuto = false;
   } catch (error) {
     if (request !== musicRequest || error.name === 'AbortError') return;
     if (error.name === 'NotAllowedError') {
@@ -860,6 +957,7 @@ async function playMusic() {
       return;
     }
     musicButtons();
+    musicStatus('Không tải được bài · Hãy thử chuyển bài');
   }
 }
 function toggleMusic() {
@@ -970,10 +1068,12 @@ volumeInput.addEventListener('input', event => { musicAudio.volume = Number(even
 bindPhoneRange(volumeInput, value => { musicAudio.volume = value; });
 const seekInput = musicEl('.music-seek');
 seekInput.addEventListener('input', event => {
-  if (Number.isFinite(musicAudio.duration)) musicAudio.currentTime = musicAudio.duration * Number(event.target.value) / 100;
+  const duration = knownDuration();
+  if (duration > 0) musicAudio.currentTime = duration * Number(event.target.value) / 100;
 });
 bindPhoneRange(seekInput, value => {
-  if (Number.isFinite(musicAudio.duration)) musicAudio.currentTime = musicAudio.duration * value / 100;
+  const duration = knownDuration();
+  if (duration > 0) musicAudio.currentTime = duration * value / 100;
 });
 musicAudio.addEventListener('loadedmetadata', syncMusicClock);
 musicAudio.addEventListener('durationchange', syncMusicClock);
@@ -992,14 +1092,17 @@ else loadMusic(musicIndex);
 musicButtons();
 let phoneAuto = !window.ntUserHeldMusic;
 let musicStarting = false;
-function startPhoneMusic() {
-  if (window.ntUserHeldMusic || !phoneAuto || (!musicAudio.paused && !musicAudio.muted) || musicStarting) return;
+const musicGestureSelector = '.music-play, .mini-play, .music-off, .music-prev, .music-next, .playlist-track';
+function startPhoneMusic(event) {
+  if (window.ntUserHeldMusic || !phoneAuto || musicStarting) return;
+  if (!musicAudio.paused && !musicAudio.muted) return;
+  if (event && event.target && event.target.closest && event.target.closest(musicGestureSelector)) return;
   musicStarting = true;
   musicByUser = true;
   playMusic().finally(() => { musicStarting = false; });
 }
 startPhoneMusic();
-['pointerdown', 'touchstart', 'touchend', 'touchmove', 'click', 'scroll', 'wheel'].forEach(type => window.addEventListener(type, startPhoneMusic, { capture: true, passive: true }));
+['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click', 'keydown'].forEach(type => window.addEventListener(type, startPhoneMusic, { capture: true, passive: true }));
 musicAudio.addEventListener('playing', () => { phoneAuto = false; }, { once: true });
 
 
