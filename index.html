@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Ngân Tú — Đang bảo trì</title>
-  <meta name="description" content="Đang bảo trì. Coming soon.">
+  <title>Ngân Tú — Bảo trì</title>
+  <meta name="description" content="Bảo trì. Đang nâng cấp web. Coming soon.">
   <meta name="theme-color" content="#080b14">
   <meta name="robots" content="noindex">
-  <meta property="og:title" content="Ngân Tú — Đang bảo trì">
-  <meta property="og:description" content="Đang bảo trì. Coming soon.">
+  <meta property="og:title" content="Ngân Tú — Bảo trì">
+  <meta property="og:description" content="Bảo trì. Đang nâng cấp web. Coming soon.">
   <meta property="og:url" content="https://nt3105.github.io/">
   <meta property="og:image" content="https://nt3105.github.io/images/social-preview.png">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -37,23 +37,37 @@
       background: radial-gradient(circle, rgba(120, 230, 238, .16), transparent 68%);
       pointer-events: none;
     }
-    main { width: min(36rem, 100%); }
-    .mark { margin: 0; font-family: ui-monospace, monospace; color: var(--cyan); font-size: .95rem; }
-    .mark::before { content: "</>"; }
-    .who { margin: 1.5rem 0 0; color: var(--muted); font-size: .8rem; letter-spacing: .18em; text-transform: uppercase; }
-    h1 { margin: 1rem 0 0; font-size: clamp(3.4rem, 12vw, 6rem); font-weight: 500; letter-spacing: -.045em; line-height: .92; }
-    h1 span { color: var(--cyan); }
-    .rule { width: 3rem; height: 1px; margin: 1.6rem 0 0; background: var(--cyan); }
-    .when { margin: 2rem 0 0; color: var(--cyan); font-size: .95rem; letter-spacing: .18em; text-transform: uppercase; }
+    main { position: relative; width: min(36rem, 100%); }
+    .brand { display: flex; align-items: center; gap: .75rem; margin: 0; color: var(--muted); font-size: .8rem; letter-spacing: .18em; text-transform: uppercase; }
+    .mark { color: var(--cyan); font-family: ui-monospace, monospace; letter-spacing: 0; text-transform: none; }
+    h1 { margin: 2rem 0 0; font-size: clamp(4rem, 14vw, 7rem); font-weight: 500; letter-spacing: -.05em; line-height: .9; }
+    .up { margin: 1rem 0 0; color: var(--muted); font-size: clamp(1.45rem, 4vw, 2rem); line-height: 1.3; }
+    .soon {
+      display: inline-flex;
+      align-items: center;
+      gap: .7rem;
+      margin: 2rem 0 0;
+      padding: .7rem 1rem .7rem .85rem;
+      border: 1px solid rgba(120, 230, 238, .4);
+      border-radius: 999px;
+      color: var(--cyan);
+      font-size: .8rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .dot { width: .45rem; height: .45rem; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 0 .28rem rgba(120, 230, 238, .16); }
+    @media (prefers-reduced-motion: no-preference) {
+      .dot { animation: pulse 2.4s ease-in-out infinite; }
+    }
+    @keyframes pulse { 50% { opacity: .35; } }
   </style>
 </head>
 <body>
   <main>
-    <p class="mark" aria-hidden="true"></p>
-    <p class="who">Ngân Tú</p>
-    <h1>Đang bảo trì<span>.</span></h1>
-    <div class="rule"></div>
-    <p class="when">Coming soon</p>
+    <p class="brand"><span class="mark"></></span> Ngân Tú</p>
+    <h1>Bảo trì</h1>
+    <p class="up">Đang nâng cấp web.</p>
+    <p class="soon"><span class="dot" aria-hidden="true"></span>Coming soon</p>
   </main>
 </body>
 </html>
