@@ -86,6 +86,17 @@
       reveal(element, direction, index * 105);
     });
   });
+  // Keep scroll-snap targets stationary; animate only their inner visual layer.
+  main.querySelectorAll('.nt-gallery > .tilt-shell').forEach((shell, index) => {
+    shell.classList.remove('reveal', 'reveal-shell');
+    const visual = shell.querySelector('.tilt-hitbox');
+    if (!visual) return;
+    visual.setAttribute('data-tsm-reveal', index % 2 ? 'right' : 'left');
+    visual.setAttribute('data-tsm-photo', '');
+    visual.dataset.tsmOnce = 'yes';
+    visual.style.setProperty('--stagger', `${Math.min(320, index * 105)}ms`);
+  });
+  main.querySelector('.nt-gallery')?.setAttribute('data-tsm-depth', 'gallery');
   document.querySelectorAll('.footer > *').forEach((element, index) => reveal(element, 'soft', index * 80));
 
   // Reuse the old divider/underline positions. These decorative layers reserve no new space.
