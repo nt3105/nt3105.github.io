@@ -231,7 +231,7 @@ backTop.addEventListener('click', () => {
 });
 
 // Vỏ ngoài giữ scroll-reveal. Card bên trong chỉ để nghiêng 3D, tránh ghi đè transform.
-document.querySelectorAll('.skill-card, .project-card, .life-card, .social-card, .memory-photo, .hero-visual, .nt-hero-scene, .nt-memory').forEach(card => {
+document.querySelectorAll('.skill-card, .project-card, .life-card, .social-card, .memory-photo, .hero-visual, .nt-hero-scene').forEach(card => {
   if (card.closest('.tilt-shell, .music-widget, .style-controls, dialog')) return;
   const shell = document.createElement('div');
   shell.className = 'tilt-shell reveal-shell';

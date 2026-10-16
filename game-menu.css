@@ -2,8 +2,8 @@
 .hero > .tilt-shell:has(.nt-hero-scene) { align-self:center; }
 .tilt-hitbox > .nt-hero-scene { height:640px; }
 .nt-hero-scene > .depth-shine { border-radius:50%; inset:14% 4% 15% 8%; pointer-events:none; }
-.nt-gallery > .tilt-shell { aspect-ratio:.78; min-width:0; scroll-snap-align:start; }
-.nt-gallery > .tilt-shell:nth-child(even) { margin-top:26px; margin-bottom:-10px; }
+.nt-gallery > .nt-memory { aspect-ratio:.78; min-width:0; scroll-snap-align:start; }
+.nt-gallery > .nt-memory:nth-child(even) { margin-top:26px; margin-bottom:-10px; }
 .nt-gallery .nt-memory { width:100%; margin:0; }
 .nt-gallery .depth-shine { pointer-events:none; }
 .nt-gallery .nt-memory::before { display:none; }
@@ -82,3 +82,6 @@
  #ntjr .ntjr-side button,#ntjr .nt-preset-check,#ntjr .nt-board-themes button { transition:none!important; }
 }
 html[data-fx="calm"] #ntjr .nt-preset-check { transition:none; }
+
+/* Touch scrolling must not leave a sticky hover zoom on the photos. */
+@media (hover: none) { .nt-gallery .nt-memory:hover img { transform: none; } }

@@ -8,7 +8,7 @@
 
   const motionSelector = '[data-tsm-reveal],[data-tsm-kinetic]';
   function reveal(element, direction = 'up', delay = 0) {
-    if (!element || element.closest('dialog,header,.music-widget,.style-controls')) return;
+    if (!element || element.closest('dialog,header,.music-widget,.style-controls,.nt-gallery')) return;
     // Magnetic controls keep their own transform; their surrounding group can enter instead.
     if (element.matches('.button,.explore-trigger,.closing-explore')) return;
     // The existing outer shell owns scroll motion; its inner card owns pointer/sensor tilt.
@@ -80,14 +80,12 @@
   main.querySelector('.closing-scene')?.setAttribute('data-tsm-depth', 'closing');
   reveal(main.querySelector('.tech-strip'), 'soft');
 
-  main.querySelectorAll('.skills-grid,.projects-grid,.social-grid,.life-grid,.timeline,.nt-gallery').forEach(group => {
+  main.querySelectorAll('.skills-grid,.projects-grid,.social-grid,.life-grid,.timeline').forEach(group => {
     [...group.children].forEach((element, index) => {
-      const direction = group.matches('.nt-gallery,.projects-grid') ? (index % 2 ? 'right' : 'left') : 'up';
+      const direction = group.matches('.projects-grid') ? (index % 2 ? 'right' : 'left') : 'up';
       reveal(element, direction, index * 105);
-      if (group.matches('.nt-gallery')) element.setAttribute('data-tsm-photo', '');
     });
   });
-  main.querySelector('.nt-gallery')?.setAttribute('data-tsm-depth', 'gallery');
   document.querySelectorAll('.footer > *').forEach((element, index) => reveal(element, 'soft', index * 80));
 
   // Reuse the old divider/underline positions. These decorative layers reserve no new space.
