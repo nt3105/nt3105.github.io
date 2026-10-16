@@ -66,9 +66,8 @@
   gallery.addEventListener('dragstart',e=>e.preventDefault());
   gallery.addEventListener('click',e=>{if(suppress&&e.detail!==0){e.preventDefault();e.stopImmediatePropagation();suppress=false;}},true);
   function move(direction){const item=gallery.querySelector('.nt-memory'),gap=parseFloat(getComputedStyle(gallery).columnGap)||0;gallery.scrollBy({left:direction*(item.offsetWidth+gap),behavior:behavior()});}
-  $('#nt-gallery-prev').addEventListener('click',()=>move(-1));$('#nt-gallery-next').addEventListener('click',()=>move(1));
   gallery.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();move(e.key==='ArrowRight'?1:-1);}});
-  function update(){frame=0;const max=gallery.scrollWidth-gallery.clientWidth;$('#nt-gallery-prev').disabled=gallery.scrollLeft<2;$('#nt-gallery-next').disabled=max<=2||gallery.scrollLeft>=max-2;$('.nt-gallery-progress i').style.setProperty('--nt-progress',`${max>0?Math.max(0,Math.min(1,gallery.scrollLeft/max))*300:0}%`);}
+  function update(){frame=0;const max=gallery.scrollWidth-gallery.clientWidth;$('.nt-gallery-progress i').style.setProperty('--nt-progress',`${max>0?Math.max(0,Math.min(1,gallery.scrollLeft/max))*300:0}%`);}
   function queue(){if(!frame)frame=requestAnimationFrame(update);}
   gallery.addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue);update();
 

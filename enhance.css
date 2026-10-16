@@ -1126,3 +1126,6 @@ html[data-depth="off"] .orb-c {
   translate: none;
 }
 
+
+/* Keep the QR inside its grid row after reveal styles make it relative. */
+#donate .qr-panel { top: auto; }
