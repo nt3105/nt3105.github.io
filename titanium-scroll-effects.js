@@ -172,16 +172,25 @@
       enterObserver?.disconnect();
       exitObserver?.disconnect();
     }
+    // Observe stationary snap slots, not the animated photo layer: its entrance
+    // transform must not trigger its own exit/re-entry and restart the animation.
+    const observedVisuals = new Map();
+    states.forEach((state, element) => {
+      const slot = element.matches('[data-tsm-photo]')
+        ? element.closest('.nt-gallery > .tilt-shell') : null;
+      observedVisuals.set(slot || element, element);
+    });
     function observe() {
       disconnect();
       if (!enabled) return;
       enterObserver = new IntersectionObserver(entries => {
         if (!enabled) return;
         entries.forEach(entry => {
-          const state = states.get(entry.target);
+          const element = observedVisuals.get(entry.target);
+          const state = states.get(element);
           state.inView = entry.isIntersecting;
-          if (entry.isIntersecting && state.armed) scheduleEntrance(entry.target);
-          else if (!entry.isIntersecting) pending.delete(entry.target);
+          if (entry.isIntersecting && state.armed) scheduleEntrance(element);
+          else if (!entry.isIntersecting) pending.delete(element);
         });
       }, { root: scroller || null, rootMargin: '-72px 0px -12% 0px', threshold: 0 });
       // Replay only after a complete exit beyond 48px, preventing threshold-edge flicker.
@@ -189,16 +198,17 @@
         if (!enabled) return;
         entries.forEach(entry => {
           if (entry.isIntersecting) return;
-          const state = states.get(entry.target);
-          pending.delete(entry.target);
-          if (state.running) settle(entry.target);
-          state.armed = entry.target.dataset.tsmOnce !== 'yes' || !state.played;
+          const element = observedVisuals.get(entry.target);
+          const state = states.get(element);
+          pending.delete(element);
+          if (state.running) settle(element);
+          state.armed = element.dataset.tsmOnce !== 'yes' || !state.played;
           state.inView = false;
         });
       }, { root: scroller || null, rootMargin: '48px 0px 48px 0px', threshold: 0 });
-      states.forEach((state, element) => {
-        enterObserver.observe(element);
-        exitObserver.observe(element);
+      observedVisuals.forEach((element, observed) => {
+        enterObserver.observe(observed);
+        exitObserver.observe(observed);
       });
     }
     function updateMotion() {

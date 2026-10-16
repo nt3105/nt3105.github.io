@@ -93,7 +93,6 @@
     if (!visual) return;
     visual.setAttribute('data-tsm-reveal', index % 2 ? 'right' : 'left');
     visual.setAttribute('data-tsm-photo', '');
-    visual.dataset.tsmOnce = 'yes';
     visual.style.setProperty('--stagger', `${Math.min(320, index * 105)}ms`);
   });
   main.querySelector('.nt-gallery')?.setAttribute('data-tsm-depth', 'gallery');
