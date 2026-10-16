@@ -1,0 +1,572 @@
+/* ==========================================================================
+   NTJR Motion V11 — Pure GPU 120fps Liquid Glass, 3D Spatial Depth & Choreography
+   Zero runtime blur-filter rasterization, zero per-frame gradient repaint.
+   ========================================================================== */
+:root {
+  --tsm-ease: cubic-bezier(.16, 1, .3, 1);
+  --tsm-soft: cubic-bezier(.22, 1, .36, 1);
+  --tsm-spring: cubic-bezier(.22, 1.14, .36, 1);
+  --tsm-duration: 920ms;
+  --tsm-letter-duration: 820ms;
+  --tsm-return-duration: 720ms;
+  --tsm-return-letter-duration: 700ms;
+  --tsm-up: 52px;
+  --tsm-side: 40px;
+  --tsm-violet: #c1aff1;
+  --tsm-cyan: #a9e0e4;
+}
+
+/* --------------------------------------------------------------------------
+   0. GPU COMPOSITOR FAST-PATH (ALL EFFECTS ACTIVE, ZERO OVERDRAW BOTTLENECK)
+   -------------------------------------------------------------------------- */
+.scene-noise {
+  mix-blend-mode: normal !important;
+  opacity: .035 !important;
+}
+.scene-mesh {
+  will-change: transform;
+}
+.orb {
+  filter: none !important;
+  background: radial-gradient(circle, rgba(var(--first-rgb, 126, 232, 238), .24) 0%, transparent 70%) !important;
+  will-change: transform;
+}
+.orb-b {
+  background: radial-gradient(circle, rgba(var(--glow-rgb, 153, 128, 255), .22) 0%, transparent 70%) !important;
+}
+.orb-c {
+  background: radial-gradient(circle, rgba(120, 170, 255, .18) 0%, transparent 70%) !important;
+}
+.global-pointer-glow {
+  mix-blend-mode: normal !important;
+  will-change: transform;
+}
+
+/* --------------------------------------------------------------------------
+   1. KINETIC 3D TYPOGRAPHY & HEADING CHOREOGRAPHY (PURE GPU TRANSFORM + OPACITY)
+   -------------------------------------------------------------------------- */
+[data-tsm-kinetic].tsm-copy { display: inline; }
+.tsm-copy .tsm-word {
+  display: inline-block;
+  white-space: nowrap;
+  perspective: 800px;
+}
+.tsm-copy .tsm-letter {
+  display: inline-block;
+  white-space: pre;
+  transform-origin: 50% 85%;
+  backface-visibility: hidden;
+}
+.tsm-copy .tsm-space { display: inline; white-space: pre-wrap; }
+.gradient-text:has(.tsm-copy),
+.name-first:has(.tsm-copy),
+.dev-name:has(.tsm-copy) { background-image: none; }
+.gradient-text .tsm-copy .tsm-letter {
+  background-image: var(--gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.tsm-entering[data-tsm-kinetic] .tsm-letter:not(.tsm-space) {
+  animation: tsm-letter-arrive var(--tsm-letter-duration) var(--tsm-ease) backwards;
+  animation-delay: calc(var(--tsm-entry-delay, var(--stagger, 0ms)) + var(--letterdelay, 0ms));
+}
+@keyframes tsm-letter-arrive {
+  from {
+    opacity: 0;
+    transform: perspective(700px) translate3d(var(--letterx, 0px), .72em, 0) rotateX(-55deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. DIRECTIONAL SCROLL CHOREOGRAPHY (PURE COMPOSITOR THREAD — ZERO BLUR JANK)
+   -------------------------------------------------------------------------- */
+[data-tsm-reveal].tsm-entering {
+  animation: tsm-rise var(--tsm-duration) var(--tsm-ease) backwards;
+  animation-delay: var(--tsm-entry-delay, var(--stagger, 0ms));
+}
+[data-tsm-reveal="left"].tsm-entering { animation-name: tsm-arrive-left; }
+[data-tsm-reveal="right"].tsm-entering { animation-name: tsm-arrive-right; }
+[data-tsm-reveal="soft"].tsm-entering { animation-name: tsm-focus; }
+[data-tsm-reveal="hero"].tsm-entering { animation-name: tsm-hero-arrive; }
+[data-tsm-reveal="scale"].tsm-entering { animation-name: tsm-scale-arrive; }
+
+@keyframes tsm-rise {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) translate3d(0, var(--tsm-up), 0) rotateX(6deg) scale(.965);
+  }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-focus {
+  from { opacity: 0; transform: translate3d(0, 24px, 0) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-arrive-left {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) translate3d(calc(-1 * var(--tsm-side)), 42px, 0) rotateY(8deg) scale(.955);
+  }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-arrive-right {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) translate3d(var(--tsm-side), 42px, 0) rotateY(-8deg) scale(.955);
+  }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-hero-arrive {
+  from {
+    opacity: 0;
+    transform: perspective(1100px) translate3d(0, 52px, 0) rotateY(-9deg) rotateX(5deg) scale(.92);
+  }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-scale-arrive {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 32px, 0) scale(.94);
+  }
+  to { opacity: 1; transform: none; }
+}
+
+/* Upward scroll return choreography */
+.tsm-entering[data-tsm-direction="up"] {
+  --tsm-entry-delay: var(--tsm-return-delay, 0ms);
+}
+[data-tsm-reveal].tsm-entering[data-tsm-direction="up"] {
+  animation-name: tsm-return-rise;
+  animation-duration: var(--tsm-return-duration);
+}
+[data-tsm-reveal="left"].tsm-entering[data-tsm-direction="up"] { animation-name: tsm-return-left; }
+[data-tsm-reveal="right"].tsm-entering[data-tsm-direction="up"] { animation-name: tsm-return-right; }
+[data-tsm-reveal="soft"].tsm-entering[data-tsm-direction="up"] { animation-name: tsm-return-focus; }
+[data-tsm-reveal="hero"].tsm-entering[data-tsm-direction="up"] { animation-name: tsm-return-hero; }
+[data-tsm-reveal="scale"].tsm-entering[data-tsm-direction="up"] { animation-name: tsm-return-scale; }
+
+.tsm-entering[data-tsm-kinetic][data-tsm-direction="up"] .tsm-letter:not(.tsm-space) {
+  transform-origin: 50% 15%;
+  animation-name: tsm-letter-return;
+  animation-duration: var(--tsm-return-letter-duration);
+  animation-delay: calc(var(--tsm-entry-delay, 0ms) + var(--letterdelay, 0ms) * .5);
+}
+[data-tsm-photo].tsm-entering[data-tsm-direction="up"] .nt-memory img {
+  animation-name: tsm-photo-return;
+  animation-duration: var(--tsm-return-duration);
+}
+.tsm-sweep.tsm-entering[data-tsm-direction="up"] { transform-origin: right center; }
+.tsm-drawline.tsm-entering[data-tsm-direction="up"]::before { animation-direction: reverse; }
+
+@keyframes tsm-return-rise {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) translate3d(0, calc(var(--tsm-up) * -.55), 0) rotateX(-4deg) scale(.975);
+  }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-return-left {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) translate3d(calc(var(--tsm-side) * -.55), -30px, 0) rotateY(5deg) scale(.97);
+  }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-return-right {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) translate3d(calc(var(--tsm-side) * .55), -30px, 0) rotateY(-5deg) scale(.97);
+  }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-return-focus {
+  from { opacity: 0; transform: translate3d(0, -20px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-return-hero {
+  from { opacity: 0; transform: perspective(1000px) translate3d(0, -36px, 0) rotateY(5deg) rotateX(-3deg) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-return-scale {
+  from { opacity: 0; transform: translate3d(0, -24px, 0) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tsm-letter-return {
+  from {
+    opacity: 0;
+    transform: perspective(700px) translate3d(var(--letterx, 0px), -.48em, 0) rotateX(40deg);
+  }
+  to { opacity: 1; transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   3. LIQUID GLASS OPTICS & 3D SPECULAR GLARE
+   -------------------------------------------------------------------------- */
+#header, #header.scrolled, #header.menu-open {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .02) 45%, rgba(var(--first-rgb, 126, 232, 238), .05)),
+    rgba(13, 16, 26, .82) !important;
+  border: 1px solid rgba(255, 255, 255, .18) !important;
+  box-shadow:
+    0 14px 36px -8px rgba(0, 0, 0, .42),
+    inset 0 1px 0.5px rgba(255, 255, 255, .28),
+    inset 0 -1px 0.5px rgba(255, 255, 255, .06) !important;
+}
+#header #nav-links .nav-selection {
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255, 255, 255, .26), transparent 65%),
+    linear-gradient(165deg, rgba(var(--first-rgb, 126, 232, 238), .18), rgba(var(--glow-rgb, 153, 128, 255), .14) 55%, rgba(255, 255, 255, .06)),
+    rgba(46, 51, 66, .88);
+  border-color: rgba(255, 255, 255, .3);
+  box-shadow:
+    0 6px 16px -4px rgba(0, 0, 0, .35),
+    inset 0 1px 1px rgba(255, 255, 255, .34);
+  transition: transform 420ms cubic-bezier(.2, 1.06, .32, 1);
+}
+
+/* Cards with Liquid Glass Specular Rim */
+.skill-card,
+.project-card,
+.life-card,
+.social-card,
+.donate-panel,
+.contact-panel,
+.qr-panel,
+.timeline,
+.code-workbench,
+.site-tools .launch-card {
+  position: relative;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: rgba(255, 255, 255, .14);
+  box-shadow:
+    0 18px 42px -14px rgba(0, 0, 0, .38),
+    inset 0 1px 0 rgba(255, 255, 255, .2),
+    inset 0 -1px 0 rgba(255, 255, 255, .04);
+}
+
+/* Floating Hero Liquid Glass Widgets */
+.nt-float,
+.nt-orbit-code {
+  backdrop-filter: blur(16px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(155%) !important;
+  background:
+    radial-gradient(120% 120% at 15% 0%, rgba(255, 255, 255, .18), transparent 55%),
+    linear-gradient(135deg, rgba(var(--first-rgb, 126, 232, 238), .1), rgba(var(--glow-rgb, 153, 128, 255), .12)),
+    rgba(19, 26, 40, .82) !important;
+  border-color: rgba(255, 255, 255, .24) !important;
+  box-shadow:
+    0 20px 44px -14px rgba(0, 0, 0, .55),
+    inset 0 1px 1px rgba(255, 255, 255, .32),
+    inset 0 -1px 1px rgba(255, 255, 255, .06) !important;
+}
+
+/* Dynamic Specular Glare on 3D Tilt Cards (only active when 3D depth is enabled) */
+.depth-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    360px circle at var(--lx, 50%) var(--ly, 50%),
+    rgba(255, 255, 255, .15),
+    rgba(var(--first-rgb, 126, 232, 238), .09) 34%,
+    transparent 68%
+  ) !important;
+  opacity: 0;
+  transition: opacity .28s ease;
+}
+html[data-depth="on"] .tilt-card.is-tilting > .depth-shine,
+html[data-depth="on"] .tilt-card:hover > .depth-shine {
+  opacity: 1;
+}
+
+/* Iridescent Liquid Glass Border Highlight on 3D Tilt Cards */
+.tilt-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(
+    var(--glare-angle, 135deg),
+    rgba(255, 255, 255, .54),
+    rgba(var(--first-rgb, 126, 232, 238), .34) 40%,
+    rgba(var(--glow-rgb, 153, 128, 255), .28) 76%,
+    transparent
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity .28s ease;
+}
+html[data-depth="on"] .tilt-card.is-tilting::after,
+html[data-depth="on"] .tilt-card:hover::after {
+  opacity: 1;
+}
+html[data-depth="off"] .tilt-card::after,
+html[data-depth="off"] .depth-shine {
+  opacity: 0 !important;
+}
+.nt-hero-scene,
+.hero-visual {
+  overflow: visible !important;
+  outline: none !important;
+}
+.nt-hero-scene::after,
+.nt-hero-scene > .depth-shine,
+.hero-visual::after,
+.hero-visual > .depth-shine {
+  display: none !important;
+}
+
+/* 3D Internal Layer Parallax when tilting cards */
+@media (hover: hover) and (pointer: fine) {
+  html[data-depth="on"] .project-card.is-tilting .project-number {
+    transform: translate3d(calc(var(--layer-x, 0px) * .5), calc(var(--layer-y, 0px) * .5), 14px);
+  }
+}
+.project-card .project-number {
+  transition: transform .32s var(--tsm-ease);
+}
+
+/* --------------------------------------------------------------------------
+   4. DIVIDERS, SWEEPS, SKILL METERS & TOP SCROLL PROGRESS
+   -------------------------------------------------------------------------- */
+.tsm-sweep {
+  display: block;
+  width: 84px;
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--cyan, #78e6ee), var(--purple, #a18aff), #e8f8ff);
+  transform-origin: left center;
+}
+.tsm-sweep.tsm-entering {
+  animation: tsm-grow 950ms var(--tsm-soft) backwards;
+  animation-delay: var(--tsm-entry-delay, var(--stagger, 0ms));
+}
+@keyframes tsm-grow {
+  from { opacity: .2; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+.section-heading h2.tsm-heading-sweep { position: relative; }
+.section-heading h2.tsm-heading-sweep::after { background: transparent; box-shadow: none; }
+.tsm-heading-sweep > .tsm-sweep { position: absolute; left: 0; bottom: 0; margin: 0; }
+
+.section.tsm-section::before { opacity: 0; }
+.tsm-drawline {
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(181, 191, 210, .18), transparent);
+}
+.section > .tsm-drawline { position: absolute; top: 0; left: 6%; width: 88%; margin: 0; }
+.tsm-drawline::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent 8%, #d9e0ee88 36%, #9ef3ff 50%, #c8b2ff99 64%, transparent 92%);
+}
+.tsm-drawline.tsm-entering::before {
+  animation: tsm-line-pass 1350ms cubic-bezier(.2, .7, .2, 1) backwards;
+}
+@keyframes tsm-line-pass {
+  0% { transform: translateX(-100%); opacity: 0; }
+  18% { opacity: 1; }
+  78% { opacity: .85; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* Skill Progress Meters */
+.progress.tsm-meter { overflow: hidden; position: relative; }
+.progress.tsm-meter > span {
+  position: relative;
+  width: var(--level);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--skill-color) 70%, #fff), var(--skill-color));
+  transform-origin: left center;
+}
+.tsm-meter.tsm-entering > span {
+  animation: tsm-meter-fill 1080ms var(--tsm-soft) backwards;
+  animation-delay: calc(var(--tsm-entry-delay, var(--stagger, 0ms)) + 140ms);
+}
+@keyframes tsm-meter-fill {
+  from { transform: scaleX(0); opacity: .35; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+/* Top Scroll Progress Strip */
+.tsm-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  z-index: 95;
+  pointer-events: none;
+  background: rgba(255, 255, 255, .02);
+}
+.tsm-scroll-progress > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+  background: linear-gradient(90deg, var(--cyan, #78e6ee), var(--purple, #a18aff), #e6f7ff);
+}
+
+/* --------------------------------------------------------------------------
+   5. PHOTOGRAPHIC CURTAIN REVEAL & CONTINUOUS PARALLAX DEPTH
+   -------------------------------------------------------------------------- */
+[data-tsm-photo].tsm-entering .nt-memory img {
+  animation: tsm-photo-open var(--tsm-duration) var(--tsm-soft) backwards;
+  animation-delay: var(--tsm-entry-delay, var(--stagger, 0ms));
+}
+@keyframes tsm-photo-open {
+  from { clip-path: inset(0 0 100% 0 round 24px); }
+  to { clip-path: inset(0 0 0 0 round 0px); }
+}
+@keyframes tsm-photo-return {
+  from { clip-path: inset(100% 0 0 0 round 24px); }
+  to { clip-path: inset(0 0 0 0 round 0px); }
+}
+
+/* Continuous Scroll Depth Parallax */
+.tsm-depth-active .nt-memory img {
+  translate: calc(var(--tsm-pan, 0) * 2%) calc(var(--tsm-depth, 0) * -2%);
+  scale: 1.06;
+}
+.tsm-depth-active .nt-memory-caption { translate: 0 calc(var(--tsm-depth, 0) * 8px); }
+.tsm-depth-active .nt-portrait { translate: 0 calc(var(--tsm-depth, 0) * -20px); }
+.tsm-depth-active .nt-code-float { translate: 0 calc(var(--tsm-depth, 0) * -38px); }
+.tsm-depth-active .nt-music-float { translate: 0 calc(var(--tsm-depth, 0) * 26px); }
+.tsm-depth-active .nt-orbit-floor { translate: 0 calc(var(--tsm-depth, 0) * 16px); }
+.tsm-depth-active .nt-star-one { translate: 0 calc(var(--tsm-depth, 0) * -24px); }
+.tsm-depth-active .nt-star-two { translate: 0 calc(var(--tsm-depth, 0) * 32px); }
+.tsm-depth-active .closing-lines {
+  transform: translateX(-50%) translateY(calc(var(--tsm-depth, 0) * -22px));
+}
+
+/* --------------------------------------------------------------------------
+   6. MICRO-INTERACTIONS & LIGHT MODE HARMONY
+   -------------------------------------------------------------------------- */
+.timeline-item {
+  transition: transform .32s var(--tsm-ease), border-color .28s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .timeline-item:hover {
+    transform: translate3d(5px, -2px, 0);
+    border-color: rgba(var(--first-rgb, 126, 232, 238), .28);
+  }
+  .about-pills span {
+    transition: transform .28s var(--tsm-spring), border-color .25s ease;
+  }
+  .about-pills span:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--first-rgb, 126, 232, 238), .34);
+  }
+}
+
+/* Light Mode Specular & Liquid Glass Adaptation */
+html[data-appearance="light"] #header,
+html[data-appearance="light"] #header.scrolled,
+html[data-appearance="light"] #header.menu-open {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .94), rgba(246, 248, 245, .88)),
+    rgba(255, 255, 255, .92) !important;
+  border-color: rgba(24, 34, 30, .12) !important;
+  box-shadow:
+    0 12px 30px -10px rgba(24, 38, 34, .1),
+    inset 0 1px 0 rgba(255, 255, 255, .95) !important;
+}
+html[data-appearance="light"] #header #nav-links .nav-selection {
+  background: linear-gradient(180deg, #25332f, #182320) !important;
+  border-color: rgba(255, 255, 255, .18) !important;
+  box-shadow: 0 4px 12px -4px rgba(20, 32, 28, .2), inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+}
+html[data-appearance="light"] .nt-float,
+html[data-appearance="light"] .nt-orbit-code {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .96), rgba(241, 245, 242, .92)) !important;
+  border-color: rgba(32, 54, 43, .14) !important;
+  box-shadow: 0 16px 36px -14px rgba(24, 38, 34, .14), inset 0 1px 0 #fff !important;
+}
+html[data-appearance="light"] .tsm-drawline {
+  background: linear-gradient(90deg, transparent, #667c742b, transparent);
+}
+html[data-appearance="light"] .tsm-drawline::before {
+  background: linear-gradient(90deg, transparent, #547f7866 40%, #8781ad99 60%, transparent);
+}
+html[data-appearance="light"] .tsm-scroll-progress > span {
+  background: linear-gradient(90deg, #4b857c, #8174a6);
+  box-shadow: none;
+}
+html[data-appearance="light"] .tilt-card::after {
+  background: linear-gradient(var(--glare-angle, 135deg), rgba(74, 127, 119, .36), rgba(125, 115, 161, .2) 55%, transparent);
+}
+html[data-appearance="light"] .depth-shine {
+  background: radial-gradient(
+    360px circle at var(--lx, 50%) var(--ly, 50%),
+    rgba(255, 255, 255, .6),
+    rgba(74, 127, 119, .08) 38%,
+    transparent 65%
+  ) !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. MOBILE, LOW-POWER & ACCESSIBILITY OPTIMIZATIONS
+   -------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  :root {
+    --tsm-up: 40px;
+    --tsm-side: 22px;
+    --tsm-duration: 780ms;
+    --tsm-return-duration: 660ms;
+  }
+}
+
+.tsm-no-motion .tsm-entering,
+.tsm-no-motion .tsm-entering::before,
+.tsm-no-motion .tsm-entering .tsm-letter,
+.tsm-no-motion .tsm-meter > span,
+html[data-fx="calm"] .tsm-entering,
+html[data-fx="calm"] .tsm-entering::before,
+html[data-fx="calm"] .tsm-entering .tsm-letter,
+html[data-fx="calm"] .tsm-meter > span,
+html[data-fx="calm"] [data-tsm-photo] img,
+.tsm-no-motion [data-tsm-photo] img {
+  animation: none !important;
+}
+html[data-fx="calm"] .tilt-card::after,
+html[data-fx="calm"] .depth-shine {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce), print {
+  .tsm-entering,
+  .tsm-entering::before,
+  .tsm-entering .tsm-letter,
+  .tsm-meter > span,
+  [data-tsm-photo] img {
+    animation: none !important;
+  }
+  .tsm-depth-active .nt-memory img { scale: none; }
+  .tsm-depth-active :is(.nt-memory img, .nt-memory-caption, .nt-portrait, .nt-code-float, .nt-music-float, .nt-orbit-floor, .nt-star-one, .nt-star-two, .closing-lines) {
+    translate: none;
+    transform: none;
+  }
+  .tilt-card::after, .depth-shine { display: none !important; }
+}
+@media print {
+  .tsm-scroll-progress, .tsm-drawline { display: none; }
+}

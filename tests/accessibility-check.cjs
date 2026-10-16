@@ -1,0 +1,15 @@
+const{chromium}=require('playwright');const assert=require('node:assert/strict');const fs=require('fs');
+const base=process.env.NT_TEST_URL||'http://127.0.0.1:8001';
+const out=process.env.NT_TEST_OUTPUT||require('node:path').join(require('node:os').tmpdir(),'nt-selected-qa');fs.mkdirSync(out,{recursive:true});
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});const reports=[];
+for(const theme of ['dark','light']){
+ const p=await b.newPage({viewport:{width:390,height:844},reducedMotion:'reduce',isMobile:true,hasTouch:true});await p.addInitScript(t=>{sessionStorage.setItem('nt-motion-choice-v1','off');localStorage.setItem('nt-appearance',t)},theme);await p.goto(base+'/?intro=off');await p.addScriptTag({path:process.env.NT_AXE_PATH||require.resolve('axe-core/axe.min.js')});
+ for(const scope of ['#header','.nt-hero-scene','#memories']){
+  await p.locator(scope).scrollIntoViewIfNeeded();await p.waitForTimeout(100);const r=await p.evaluate(async scope=>await axe.run(document.querySelector(scope),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}}),scope);reports.push({theme,scope,violations:r.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});
+ }
+ await p.locator('[data-open-snake]:not([data-show-scores])').first().click();await p.click('#snake-ntjr');assert.equal(await p.locator('#ntjr-close').evaluate(e=>e===document.activeElement),true);for(const tab of ['mau','auto','play','food','score','look']){await p.click(`[data-ntjr-tab=${tab}]`);const r=await p.evaluate(()=>axe.run(document.querySelector('#ntjr'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}}));reports.push({theme,scope:'#ntjr '+tab,violations:r.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});}await p.keyboard.press('Escape');assert.equal(await p.locator('#snake-ntjr').evaluate(e=>e===document.activeElement),true);
+ await p.click('#snake-start');await p.locator('[data-dir="up"]').dispatchEvent('pointerdown',{pointerType:'touch'});await p.waitForTimeout(300);const a=await p.locator('#snake-board').evaluate(e=>e.toDataURL());await p.click('#nt-game-scores');await p.waitForTimeout(150);const paused=await p.locator('#snake-board').evaluate(e=>e.toDataURL());await p.waitForTimeout(350);assert.equal(await p.locator('#snake-board').evaluate(e=>e.toDataURL()),paused);assert.notEqual(a,paused);
+ const r=await p.evaluate(()=>axe.run(document.querySelector('#nt-scores-dialog'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}}));reports.push({theme,scope:'#nt-scores-dialog',violations:r.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});
+ await p.close();
+}
+fs.writeFileSync(out+'/accessibility.json',JSON.stringify(reports,null,2));console.log(JSON.stringify(reports,null,2));await b.close();if(reports.some(r=>r.violations.length))process.exitCode=1})();

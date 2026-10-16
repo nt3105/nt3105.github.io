@@ -1,0 +1,26 @@
+# Local AppIcon assets
+
+These are vector brand marks, not emoji or font-letter substitutes. The application-tile surfaces, reflections and shadows are CSS. Existing destinations remain configured in `script.js`.
+
+| Files | Pinned source | Treatment |
+| --- | --- | --- |
+| telegram.svg | @iconify-json/logos 1.2.16, `telegram` | Original white paper-plane path; remove circular background and crop viewBox for a gradient tile. |
+| tiktok.svg | @iconify-json/logos 1.2.16, `tiktok-icon` | Original red/cyan paths; central mark white for the dark tile. |
+| c.svg, cpp.svg | @iconify-json/logos 1.2.16, `c`, `c-plusplus` | Original multicolor geometry. |
+| html.svg, css.svg | @iconify-json/logos 1.2.16, `html-5`, `css-3` | Original shields; viewBox excludes separate wordmark above shield. |
+| javascript.svg, git.svg, gmail.svg, swift.svg | @iconify-json/logos 1.2.16, `javascript`, `git-icon`, `google-gmail-2020`, `swift` | Original geometry and colors. |
+| github.svg | simple-icons 13.21.0, `github` | Octocat mark, white fill for a dark tile. |
+| facebook.svg | @fortawesome/fontawesome-free 6.7.2, `brands/facebook-f` | Original F mark, white fill. |
+| objectivec.svg | devicons/devicon v2.17.0, `objectivec/objectivec-plain.svg` | Original Objective-C mark. |
+| email.svg | lucide-static 0.468.0, `mail` | Generic envelope, white stroke. This denotes email, not an invented Apple/Gmail brand logo. |
+
+Sources:
+- https://cdn.jsdelivr.net/npm/@iconify-json/logos@1.2.16/icons.json — SVG Logos, CC0-1.0.
+- https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/github.svg — Simple Icons, CC0-1.0.
+- https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/svgs/brands/facebook-f.svg — Font Awesome Free by Fonticons, Inc., icons CC BY 4.0. https://fontawesome.com/license/free
+- https://cdn.jsdelivr.net/gh/devicons/devicon@v2.17.0/icons/objectivec/objectivec-plain.svg — Devicon, MIT.
+- https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/mail.svg — Lucide, ISC.
+
+License copies are in `licenses/`. Brand names and marks remain the property of their owners; collection licenses do not grant trademark rights.
+
+The existing intro's Be Vietnam Pro weights 300/400/500 are self-hosted from @fontsource/be-vietnam-pro 5.3.0 (Latin, Latin Extended and Vietnamese). `fonts/be-vietnam-pro/LICENSE` contains the SIL Open Font License. This fixes a blocked external-font request without changing the chosen font or weights.

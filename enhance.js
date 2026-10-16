@@ -2,9 +2,12 @@
 
 (() => {
   const root = document.documentElement;
-  if (root.classList.contains('from-intro')) {
+  const fromIntro = root.classList.contains('from-intro');
+  if (fromIntro) {
     try { sessionStorage.removeItem('nt-from-intro'); } catch (error) {}
     requestAnimationFrame(() => root.classList.add('is-in'));
+  } else if (performance.getEntriesByType('navigation')[0]?.type === 'reload') {
+    try { sessionStorage.removeItem('nt-motion-choice-v1'); } catch (error) {}
   }
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -13,25 +16,30 @@
   let depthOn = false;
   try {
     const savedDepth = sessionStorage.getItem('nt-motion-choice-v1');
-    depthOn = savedDepth === 'pointer' || savedDepth === 'enabled';
+    if (savedDepth === 'pointer' || savedDepth === 'enabled') {
+      depthOn = true;
+    }
   } catch {}
   root.dataset.depth = depthOn ? 'on' : 'off';
+  const sceneEl = document.querySelector('.scene');
   function setDepth(on) {
     depthOn = Boolean(on);
     root.dataset.depth = depthOn ? 'on' : 'off';
     if (depthOn) return;
     tx = 0; ty = 0; px = 0; py = 0;
-    root.style.setProperty('--px', '0');
-    root.style.setProperty('--py', '0');
-    root.style.setProperty('--mouse-x', '0px');
-    root.style.setProperty('--mouse-y', '0px');
+    if (sceneEl) {
+      sceneEl.style.setProperty('--px', '0');
+      sceneEl.style.setProperty('--py', '0');
+    }
     document.querySelector('.global-pointer-glow')?.classList.remove('shown');
     resetTilts();
     document.querySelectorAll('.button, .explore-trigger, .closing-explore').forEach(button => {
       button.style.setProperty('--mx', '0px');
       button.style.setProperty('--my', '0px');
     });
-    document.querySelectorAll('.launch-card, .journal-entry, .score-card, .code-workbench').forEach(card => {
+    document.querySelectorAll('.launch-card, .journal-entry, .score-card, .code-workbench, .donate-panel, .contact-panel, .timeline').forEach(card => {
+      card.style.removeProperty('--glass-x');
+      card.style.removeProperty('--glass-y');
       card.style.removeProperty('--glass-visible');
     });
   }
@@ -61,33 +69,27 @@
   let ty = 0;
   let px = 0;
   let py = 0;
-  let sy = 0;
-  let targetSy = 0;
   let frame = 0;
   function tick() {
     frame = 0;
-    if (document.hidden || calm() || !fine.matches || !depthOn) {
-      root.style.setProperty('--px', '0');
-      root.style.setProperty('--py', '0');
+    if (document.hidden || calm() || !fine.matches || !depthOn || !sceneEl) {
+      if (sceneEl) {
+        sceneEl.style.setProperty('--px', '0');
+        sceneEl.style.setProperty('--py', '0');
+      }
       return;
     }
-    px += (tx - px) * 0.22;
-    py += (ty - py) * 0.22;
-    sy += (targetSy - sy) * 0.18;
-    root.style.setProperty('--px', px.toFixed(3));
-    root.style.setProperty('--py', py.toFixed(3));
-    root.style.setProperty('--scroll', sy.toFixed(1));
-    if (Math.abs(tx - px) > 0.002 || Math.abs(ty - py) > 0.002 || Math.abs(targetSy - sy) > 0.2) {
+    px += (tx - px) * 0.18;
+    py += (ty - py) * 0.18;
+    sceneEl.style.setProperty('--px', px.toFixed(3));
+    sceneEl.style.setProperty('--py', py.toFixed(3));
+    if (Math.abs(tx - px) > 0.003 || Math.abs(ty - py) > 0.003) {
       frame = requestAnimationFrame(tick);
     }
   }
   function queue() {
-    if (!frame) frame = requestAnimationFrame(tick);
+    if (!frame && !scrolling) frame = requestAnimationFrame(tick);
   }
-  window.addEventListener('scroll', () => {
-    targetSy = Math.min(window.scrollY, 2400) * 0.035;
-    if (!calm()) queue();
-  }, { passive: true });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) queue(); });
 
   const canvas = document.getElementById('spark-field');
@@ -95,42 +97,42 @@
   if (canvas && canvas.getContext && !reduce.matches) {
     const ctx = canvas.getContext('2d', { alpha: true });
     const dots = [];
+    const palette = ['#d8f6ff', '#8be9f5', '#c3afff'];
     let width = 0;
     let height = 0;
     let running = false;
     let last = 0;
     function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       width = innerWidth;
       height = innerHeight;
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
+      canvas.width = width;
+      canvas.height = height;
       canvas.style.width = width + 'px';
       canvas.style.height = height + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     function seed() {
       dots.length = 0;
-      const count = fine.matches ? 16 : 0;
+      const count = fine.matches ? 18 : 8;
       for (let index = 0; index < count; index += 1) {
         dots.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          r: Math.random() * 1.3 + 0.4,
-          s: Math.random() * 0.2 + 0.04,
-          a: Math.random() * 0.28 + 0.08
+          r: Math.random() * 1.35 + 0.5,
+          s: Math.random() * 0.22 + 0.05,
+          a: Math.random() * 0.32 + 0.1,
+          c: palette[index % palette.length]
         });
       }
     }
     function draw(now) {
       if (document.hidden || calm()) { running = false; return; }
-      const delta = Math.min(34, now - last);
+      const delta = Math.min(48, now - last || 16);
       last = now;
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#d5ecff';
       for (const dot of dots) {
-        dot.y -= dot.s * delta * 0.06;
+        dot.y -= dot.s * delta * 0.05;
         if (dot.y < -4) { dot.y = height + 4; dot.x = Math.random() * width; }
+        ctx.fillStyle = dot.c;
         ctx.globalAlpha = dot.a;
         ctx.beginPath();
         ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
@@ -140,7 +142,7 @@
       requestAnimationFrame(draw);
     }
     startSparks = () => {
-      if (running || calm() || document.hidden || !fine.matches || dots.length === 0) return;
+      if (running || calm() || document.hidden || dots.length === 0) return;
       running = true;
       last = performance.now();
       requestAnimationFrame(draw);
@@ -151,7 +153,7 @@
     let resizeTimer = 0;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { resize(); seed(); }, 160);
+      resizeTimer = setTimeout(() => { resize(); seed(); }, 180);
     }, { passive: true });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) startSparks(); });
   }
@@ -180,15 +182,13 @@
   const flat = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0)';
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-  function glowVars(card, nx, ny) {
-    const lx = ((nx + 1) * 50).toFixed(1) + '%';
-    const ly = ((ny + 1) * 50).toFixed(1) + '%';
-    card.style.setProperty('--lx', lx);
-    card.style.setProperty('--ly', ly);
-    card.style.setProperty('--pointer-x', lx);
-    card.style.setProperty('--pointer-y', ly);
-    card.style.setProperty('--layer-x', (nx * 6).toFixed(1) + 'px');
-    card.style.setProperty('--layer-y', (ny * 6).toFixed(1) + 'px');
+  function glowVars(card, nx, ny, px = (nx + 1) * 0.5, py = (ny + 1) * 0.5) {
+    card.style.setProperty('--lx', `${(px * 100).toFixed(1)}%`);
+    card.style.setProperty('--ly', `${(py * 100).toFixed(1)}%`);
+    card.style.setProperty('--layer-x', `${(nx * 14).toFixed(1)}px`);
+    card.style.setProperty('--layer-y', `${(ny * 14).toFixed(1)}px`);
+    const angle = Math.atan2(ny, nx) * (180 / Math.PI) + 135;
+    card.style.setProperty('--glare-angle', `${angle.toFixed(1)}deg`);
   }
 
   function writeTilt(card, rx, ry) {
@@ -202,7 +202,7 @@
     card.classList.remove('is-tilting');
     card.style.transition = 'transform 400ms cubic-bezier(.16, 1, .3, 1)';
     card.style.transform = flat;
-    glowVars(card, 0, 0);
+    glowVars(card, 0, 0, 0.5, 0.5);
   }
 
   resetTilts = () => {
@@ -210,7 +210,7 @@
       card.classList.remove('is-tilting');
       card.style.transition = '';
       card.style.transform = '';
-      glowVars(card, 0, 0);
+      glowVars(card, 0, 0, 0.5, 0.5);
     });
     active = null;
     queued = null;
@@ -239,6 +239,7 @@
     if (boxesDirty) measureBoxes();
     let found = null;
     for (const box of boxes) {
+      if (box.hit.closest('.tsm-entering')) continue;
       if (x >= box.l && x <= box.r && y >= box.t && y <= box.b) found = box;
     }
     return found;
@@ -246,9 +247,8 @@
 
   function flushTilt() {
     tiltFrame = 0;
-    if (glowPoint) {
-      root.style.setProperty('--mouse-x', glowPoint.x.toFixed(1) + 'px');
-      root.style.setProperty('--mouse-y', glowPoint.y.toFixed(1) + 'px');
+    if (!depthOn) return;
+    if (glowPoint && !scrolling) {
       if (typeof window.applyPointerGlow === 'function') window.applyPointerGlow(glowPoint.x, glowPoint.y);
     }
     const job = queued;
@@ -256,10 +256,12 @@
     if (!job || scrolling) return;
     const box = job.box;
     if (box.w < 2 || box.h < 2) return;
-    const nx = clamp(((job.x - box.l) / box.w) * 2 - 1, -1, 1);
-    const ny = clamp(((job.y - box.t) / box.h) * 2 - 1, -1, 1);
+    const px = clamp((job.x - box.l) / box.w, 0, 1);
+    const py = clamp((job.y - box.t) / box.h, 0, 1);
+    const nx = px * 2 - 1;
+    const ny = py * 2 - 1;
     writeTilt(box.card, -ny * 5, nx * 5);
-    glowVars(box.card, nx, ny);
+    glowVars(box.card, nx, ny, px, py);
   }
 
   function visibleBoxes() {
@@ -270,7 +272,7 @@
 
   function stepOrient() {
     orientFrame = 0;
-    if (document.hidden || calm() || scrolling) return;
+    if (!depthOn || document.hidden || calm() || scrolling) return;
     smoothRx += (targetRx - smoothRx) * 0.2;
     smoothRy += (targetRy - smoothRy) * 0.2;
     for (const box of visibleBoxes()) {
@@ -284,7 +286,7 @@
   }
 
   function onOrient(event) {
-    if (document.hidden || calm()) return;
+    if (!depthOn || document.hidden || calm()) return;
     let beta = event.beta;
     let gamma = event.gamma;
     if (beta == null || gamma == null) return;
@@ -305,7 +307,7 @@
   }
 
   function onMotion(event) {
-    if (gotOrient || document.hidden || calm()) return;
+    if (!depthOn || gotOrient || document.hidden || calm()) return;
     const g = event.accelerationIncludingGravity;
     if (!g) return;
     const gx = clamp((g.x || 0) / 9.8, -1, 1);
@@ -367,7 +369,9 @@
       chose();
       return;
     }
+    // Strictly keep 3D effects OFF until the user explicitly clicks Enable!
     setDepth(false);
+    stopOrientation();
 
     const note = document.createElement('section');
     note.id = 'nt-motion-notice';
@@ -474,18 +478,20 @@
       phase = 'waiting';
       enable.disabled = true; enable.textContent = 'Đang kiểm tra…';
       status.textContent = 'Nghiêng nhẹ máy để thử cảm biến.';
+      const activateMobileDepth = () => {
+        if (phase === 'closed' || phase === 'active') return;
+        clearTimeout(sensorTimer);
+        phase = 'active'; decision = 'enabled'; remember(decision);
+        setDepth(true);
+        if (supported) startOrientation();
+        title.textContent = 'Hiệu ứng đã bật';
+        status.textContent = 'Đã bật hiệu ứng 3D tương tác.';
+        enable.hidden = true; later.textContent = 'Đã hiểu';
+        finishTimer = setTimeout(() => close('enabled'), 1600);
+      };
       const receive = (beta, gamma) => {
         if (!Number.isFinite(beta) || !Number.isFinite(gamma) || document.hidden) return;
-        if (phase === 'waiting') {
-          clearTimeout(sensorTimer);
-          phase = 'active'; decision = 'enabled'; remember(decision);
-          setDepth(true);
-          startOrientation();
-          title.textContent = 'Hiệu ứng đã bật';
-          status.textContent = 'Đã nhận được dữ liệu chuyển động.';
-          enable.hidden = true; later.textContent = 'Đã hiểu';
-          finishTimer = setTimeout(() => close('enabled'), 2400);
-        }
+        if (phase === 'waiting') activateMobileDepth();
         if (phase === 'active') reflect(clamp(gamma, -20, 20), clamp(beta - 45, -14, 14));
       };
       const orient = event => receive(event.beta, event.gamma);
@@ -496,13 +502,13 @@
       window.addEventListener('deviceorientation', orient, options);
       window.addEventListener('deviceorientationabsolute', orient, options);
       window.addEventListener('devicemotion', motion, options);
-      // Only count time while the page is visible: mobile app switching pauses sensors.
+      // If the device is stationary or in mobile emulator without hardware gyroscope, still activate touch-3D after 1.2s.
       const armSensorTimeout = () => {
         clearTimeout(sensorTimer);
         if (phase !== 'waiting' || document.hidden) return;
         sensorTimer = setTimeout(() => {
-          if (phase === 'waiting' && !document.hidden) fail(false);
-        }, 6000);
+          if (phase === 'waiting' && !document.hidden) activateMobileDepth();
+        }, 1200);
       };
       document.addEventListener('visibilitychange', armSensorTimeout, options);
       stopProbe = () => {
@@ -520,6 +526,13 @@
         remember(decision);
         setDepth(true);
         close('pointer');
+        return;
+      }
+      if (!supported) {
+        decision = 'enabled';
+        remember(decision);
+        setDepth(true);
+        close('enabled');
         return;
       }
       phase = 'requesting'; enable.disabled = true;
@@ -542,10 +555,6 @@
     if (calm()) {
       enable.hidden = true; later.textContent = 'Đã hiểu';
       status.textContent = 'Chế độ giảm chuyển động đang bật. Website giữ nguyên tùy chọn của bạn.';
-    } else if (!desktop && !supported) {
-      title.textContent = 'Chuyển động chưa khả dụng';
-      copy.textContent = 'Trình duyệt này chưa cung cấp cảm biến. Thử mở trang bằng Safari hoặc Chrome qua HTTPS.';
-      enable.hidden = true; later.textContent = 'Đã hiểu';
     } else if (!desktop && !asks.length) {
       status.textContent = 'Không cần xin quyền · Bấm để bật hiệu ứng.';
     }
@@ -567,12 +576,14 @@
   document.querySelectorAll('.tilt-card').forEach(card => {
     if (card.dataset.tiltBound === '1') return;
     card.dataset.tiltBound = '1';
-    card.classList.add('depth-card', 'spotlight-card');
-    if (!card.querySelector(':scope > .depth-shine')) {
-      const shine = document.createElement('span');
-      shine.className = 'depth-shine';
-      shine.setAttribute('aria-hidden', 'true');
-      card.append(shine);
+    if (!card.matches('.nt-hero-scene, .hero-visual')) {
+      card.classList.add('depth-card', 'spotlight-card');
+      if (!card.querySelector(':scope > .depth-shine')) {
+        const shine = document.createElement('span');
+        shine.className = 'depth-shine';
+        shine.setAttribute('aria-hidden', 'true');
+        card.append(shine);
+      }
     }
     card.addEventListener('transitionend', event => {
       if (event.propertyName !== 'transform' || card.classList.contains('is-tilting')) return;
@@ -581,7 +592,8 @@
     });
   });
 
-  window.addEventListener('scroll', () => {
+  // Capture also catches the horizontal photo strip and internal panels.
+  document.addEventListener('scroll', () => {
     boxesDirty = true;
     scrolling = true;
     clearTimeout(scrollTimer);
@@ -592,10 +604,11 @@
       measureBoxes();
       if (orientOn && !orientFrame) orientFrame = requestAnimationFrame(stepOrient);
     }, 160);
-  }, listen);
+  }, { ...listen, capture: true });
+  document.addEventListener('tsm:settled', () => { boxesDirty = true; }, listen);
   window.addEventListener('resize', () => { boxesDirty = true; }, listen);
 
-  if (!reduce.matches && fine.matches) {
+  if (!reduce.matches) {
     window.addEventListener('pointermove', event => {
       if (!depthOn || event.pointerType === 'touch' || calm()) return;
       const x = event.clientX;
@@ -620,7 +633,8 @@
       if (active) release(active.card);
       active = null;
     }, listen);
-  } else if (!reduce.matches && root.dataset.tiltTouch !== '1') {
+  }
+  if (!reduce.matches && root.dataset.tiltTouch !== '1') {
     root.dataset.tiltTouch = '1';
     let touch = null;
     const endTouch = event => {
@@ -659,6 +673,13 @@
     window.addEventListener('pointercancel', endTouch, listen);
   }
 
+  window.ntRequestDepth = () => {
+    const existing = document.getElementById('nt-motion-notice');
+    if (existing) { (existing.querySelector('.nt-motion-enable:not([hidden])') || existing.querySelector('.nt-motion-later'))?.focus(); return; }
+    try { sessionStorage.removeItem('nt-motion-choice-v1'); } catch {}
+    window.ntMotionNoticeBooted = false;
+    bootPhoneTilt();
+  };
   scheduleMotionNotice();
 
   window.addEventListener('blur', resetTilts);

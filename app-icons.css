@@ -1,0 +1,97 @@
+/* NT3105 AppIcon — local brand SVGs, isolated glass/tilt/reveal layers. */
+.nt-app-icon {
+  --app-size:56px; --app-radius:29%; --app-bg:linear-gradient(145deg,#37404f,#151921 76%);
+  display:inline-grid; place-items:center; position:relative; flex:0 0 var(--app-size);
+  width:var(--app-size); height:var(--app-size); vertical-align:middle;
+  line-height:1; isolation:isolate; border:0; padding:0; background:none;
+}
+.nt-app-icon--sm { --app-size:40px; }
+.nt-app-icon--xs { --app-size:24px; }
+.nt-app-icon[data-app-icon="telegram"] { --app-bg:linear-gradient(150deg,#4bc8fa 0%,#209cde 54%,#0877c4 100%); }
+.nt-app-icon[data-app-icon="facebook"] { --app-bg:linear-gradient(150deg,#4297ff,#1877f2 55%,#0756c9); }
+.nt-app-icon[data-app-icon="github"] { --app-bg:linear-gradient(145deg,#434954,#20242d 48%,#0d1016); }
+.nt-app-icon[data-app-icon="tiktok"] { --app-bg:linear-gradient(145deg,#292d34,#090a0d 70%); }
+.nt-app-icon[data-app-icon="email"] { --app-bg:linear-gradient(150deg,#5bceff,#1788eb 55%,#0967cc); }
+.nt-app-icon[data-app-icon="javascript"] { --app-bg:linear-gradient(145deg,#ffed78,#f7df1e 62%,#e8bb16); }
+.nt-app-icon[data-app-icon="html"] { --app-bg:linear-gradient(145deg,#54352d,#292023 66%,#1a161a); }
+.nt-app-icon[data-app-icon="css"] { --app-bg:linear-gradient(145deg,#2f4976,#182946 66%,#101b30); }
+.nt-app-icon[data-app-icon="c"],.nt-app-icon[data-app-icon="cpp"],.nt-app-icon[data-app-icon="objectivec"] { --app-bg:linear-gradient(145deg,#3d516d,#1d2c42 62%,#121c2d); }
+.nt-app-icon[data-app-icon="git"] { --app-bg:linear-gradient(145deg,#513b36,#251c1d 66%,#141214); }
+.nt-app-icon[data-app-icon="gmail"] { --app-bg:linear-gradient(145deg,#fff,#edf1f7); }
+.nt-app-icon[data-app-icon="swift"] { --app-bg:linear-gradient(145deg,#fbad43,#ef4232); }
+.nt-app-reveal,.nt-app-face { display:grid; place-items:center; width:100%; height:100%; border-radius:var(--app-radius); }
+.nt-app-face {
+  position:relative; overflow:hidden; isolation:isolate; background:var(--app-bg);
+  border:1px solid #ffffff38;
+  box-shadow:inset 0 1px 1px #ffffff4a,inset 0 -2px 3px #00000024,0 5px 10px -4px #0007,0 12px 20px -13px #000a;
+  transform:perspective(500px) translateY(0) rotateX(0) rotateY(0) scale(1);
+  transition:transform 400ms cubic-bezier(.22,1,.36,1),box-shadow 400ms ease,border-color 250ms ease;
+}
+.nt-app-face::before,.nt-app-face::after { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; }
+.nt-app-face::before { z-index:1; background:linear-gradient(155deg,#ffffff30,transparent 38%,transparent 68%,#ffffff08); box-shadow:inset 0 1px #ffffff30; }
+.nt-app-face::after { z-index:2; background:radial-gradient(circle at var(--app-light-x,28%) var(--app-light-y,12%),#ffffff5c,transparent 68%); opacity:.14; transition:opacity 300ms ease; }
+.nt-app-icon img { display:block; width:62%; height:62%; object-fit:contain; pointer-events:none; user-select:none; -webkit-user-drag:none; }
+.nt-app-icon[data-app-icon="telegram"] img { width:66%; height:66%; }
+.nt-app-icon[data-app-icon="tiktok"] img { width:56%; height:65%; }
+.nt-app-icon[data-app-icon="facebook"] img { width:67%; height:70%; }
+.nt-app-icon[data-app-icon="javascript"] img { width:77%; height:77%; mix-blend-mode:multiply; }
+.nt-app-icon[data-app-icon="swift"] img { width:82%; height:82%; }
+.nt-app-icon:not([data-app-ready]) { background:var(--app-bg); border-radius:var(--app-radius); }
+@supports (corner-shape:squircle) { .nt-app-face { corner-shape:squircle; border-radius:32%; } }
+@media (hover:hover) and (pointer:fine) {
+  .nt-app-icon.is-app-hover .nt-app-face {
+    transform:perspective(500px) translateY(-4px) rotateX(var(--app-rx,0deg)) rotateY(var(--app-ry,0deg)) scale(1.045);
+    border-color:#ffffff65; box-shadow:inset 0 1px 1px #ffffff5c,inset 0 -2px 3px #0003,0 9px 16px -5px #0009,0 18px 28px -14px #000b;
+  }
+  .nt-app-icon.is-app-hover .nt-app-face::after { opacity:.55; }
+}
+.nt-app-icon.is-app-pressed .nt-app-face { transform:perspective(500px) translateY(1px) rotateX(0) rotateY(0) scale(.94); transition-duration:110ms; border-color:#ffffff80; }
+.nt-app-icon.is-app-pressed .nt-app-face::after { opacity:.5; }
+.nt-app-enter .nt-app-reveal { animation:nt-app-arrive 550ms cubic-bezier(.22,1,.36,1) backwards; }
+@keyframes nt-app-arrive { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+.nt-app-card-shell { --tsm-duration:550ms; --tsm-return-duration:550ms; }
+/* Only app/technology card entrances are softened and played once. Other page motion stays intact. */
+.nt-app-card-shell[data-tsm-reveal].tsm-entering,
+.nt-app-card-shell[data-tsm-reveal].tsm-entering[data-tsm-direction="up"] {
+  animation-name:nt-app-card-arrive; animation-duration:550ms;
+}
+@keyframes nt-app-card-arrive { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+/* Existing grid columns and all link destinations are retained. */
+.social-grid .social-card.nt-app-card {
+  display:flex; align-items:center; gap:14px; padding:19px 17px; min-height:114px;
+  border-radius:22px; border:1px solid #d7e0f123; color:#f5f7fc;
+  background:linear-gradient(145deg,#2c303bd9,#15181ff2 72%),#171a22;
+  box-shadow:inset 0 1px 0 #ffffff12,0 8px 24px -12px #0008;
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+  transition:border-color 300ms ease,box-shadow 350ms ease;
+}
+.nt-app-card .nt-app-icon { --app-size:50px; }
+.nt-app-card .nt-app-info { min-width:0; flex:1; }
+.nt-app-card .nt-app-info h3 { color:#f5f7fc; font-size:16px; font-weight:650; letter-spacing:-.02em; margin:0 0 5px; line-height:1.25; }
+.nt-app-card .nt-app-info p { color:#b4bdcd; font-size:11px; line-height:1.65; margin:0; overflow-wrap:anywhere; }
+.nt-app-arrow { flex:0 0 22px; width:22px; height:22px; display:grid; place-items:center; color:#bcc6d9; }
+.nt-app-arrow svg { width:18px; height:18px; transition:transform 300ms cubic-bezier(.22,1,.36,1),color 200ms; }
+.social-grid .nt-app-card:focus-visible { outline:2px solid #9ecbff; outline-offset:5px; border-color:#a4c8ff; }
+@media (hover:hover) and (pointer:fine) {
+  .social-grid .nt-app-card:hover { border-color:#cad9f157; box-shadow:inset 0 1px 0 #ffffff20,0 14px 34px -15px #000b; }
+  .nt-app-card:hover .nt-app-arrow svg { transform:translate(2px,-2px); color:#fff; }
+}
+.nt-app-pair { display:flex; align-items:center; gap:8px; }
+.hero-socials a:has(.nt-app-icon),.source-link:has(.nt-app-icon),.code-tabs button:has(.nt-app-icon) { display:inline-flex; align-items:center; gap:8px; }
+.about-pills>span:has(.nt-app-icon) { display:inline-flex; align-items:center; gap:8px; }
+.footer-socials a:has(.nt-app-icon) { width:44px; height:44px; border:0; border-radius:13px; background:none; }
+.footer-socials a:has(.nt-app-icon):focus-visible { outline:2px solid var(--cyan,#a9e0e4); outline-offset:3px; }
+.mail-actions .button:has(.nt-app-icon) { gap:10px; }
+.code-tabs button:has(.nt-app-icon) { min-height:44px; }
+html[data-appearance="light"] .social-grid .social-card.nt-app-card { background:linear-gradient(145deg,#323946,#1c2029); border-color:#44536540; box-shadow:inset 0 1px #ffffff25,0 12px 26px -15px #24354b80; }
+@media(max-width:1100px) and (min-width:761px) { .social-grid .nt-app-card { gap:10px; padding:17px 14px; } .nt-app-card .nt-app-icon { --app-size:46px; } }
+@media(max-width:760px) { .social-grid { grid-template-columns:minmax(0,1fr); } .social-grid .social-card.nt-app-card { gap:16px; padding:17px; min-height:102px; } .nt-app-card .nt-app-icon { --app-size:54px; } .nt-app-icon:not(.nt-app-icon--xs) .nt-app-face { box-shadow:inset 0 1px 1px #ffffff40,0 7px 14px -8px #000a; } }
+@media(max-width:360px) { .code-tabs button:has(.nt-app-icon) { gap:5px; padding-inline:8px; } .code-tabs .nt-app-icon--xs { --app-size:20px; } .nt-app-pair { gap:5px; } }
+html[data-fx="calm"] .nt-app-face,html[data-fx="calm"] .nt-app-reveal { animation:none!important; transform:none!important; transition:none!important; }
+html[data-fx="calm"] .nt-app-face::after { opacity:.14; }
+@media(prefers-reduced-motion:reduce) {
+  .nt-app-face,.nt-app-reveal,.nt-app-arrow svg { animation:none!important; transform:none!important; transition:none!important; }
+  .nt-app-face::after { transition:none; }
+  .nt-app-icon.is-app-pressed .nt-app-face { border-color:#fff; }
+}
+@media print { .nt-app-face,.nt-app-reveal { animation:none!important; transform:none!important; box-shadow:none; } }

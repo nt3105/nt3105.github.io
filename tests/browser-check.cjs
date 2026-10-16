@@ -1,0 +1,92 @@
+/* Run against the local dev_server.py. Requires Playwright and Chromium. */
+const {chromium,devices}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const base=process.env.NT_TEST_URL||'http://127.0.0.1:8001';
+const out=process.env.NT_TEST_OUTPUT||'/tmp/nt-selected-qa';
+fs.mkdirSync(out,{recursive:true});
+(async()=>{
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
+ const results=[],errors=[],failedResources=[];
+ async function test(name,fn){try{await fn();results.push({name,pass:true});console.log('PASS',name)}catch(e){results.push({name,pass:false,error:e.stack});console.log('FAIL',name,e.message)}}
+ async function page(options={},seed=true){const p=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce',...options});p.setDefaultTimeout(8000);p.setDefaultNavigationTimeout(30000);p.on('pageerror',e=>errors.push(e.message));p.on('response',r=>{if(r.url().startsWith(base)&&r.status()>=400)failedResources.push(r.url()+':'+r.status())});if(seed)await p.addInitScript(()=>sessionStorage.setItem('nt-motion-choice-v1','off'));return p;}
+ const p=await page();await p.goto(base+'/?intro=off');
+ await test('Initial page: unique IDs, internal links, images and gesture autoplay',async()=>{
+  const audit=await p.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(e=>e.id);return{duplicate:ids.filter((id,i)=>ids.indexOf(id)!==i),links:[...document.querySelectorAll('a[href^="#"]')].filter(a=>a.hash&&a.hash!=='#'&&!document.getElementById(a.hash.slice(1))).map(a=>a.hash)}});assert.deepEqual(audit,{duplicate:[],links:[]});await p.click('.hero-description');await p.waitForFunction(()=>!ntSelectedMusic.audio.paused);await p.click('#nt-hero-play');assert.equal(await p.evaluate(()=>ntSelectedMusic.audio.paused),true);await p.mouse.wheel(0,300);await p.click('.hero-description');assert.equal(await p.evaluate(()=>ntSelectedMusic.audio.paused),true);await p.locator('#memories').scrollIntoViewIfNeeded();await p.waitForFunction(()=>[...document.querySelectorAll('.nt-memory img,.nt-portrait img')].every(i=>i.complete&&i.naturalWidth>0));
+ });
+ await test('Header theme: light/dark, persistence, meta color, accessible state',async()=>{
+  await p.click('#nt-theme-toggle');assert.equal(await p.locator('html').getAttribute('data-appearance'),'light');assert.equal(await p.locator('#nt-theme-toggle').getAttribute('aria-pressed'),'true');await p.reload();assert.equal(await p.locator('html').getAttribute('data-appearance'),'light');assert.equal(await p.locator('meta[name="theme-color"]').getAttribute('content'),'#f5f6f3');await p.click('#nt-theme-toggle');assert.equal(await p.locator('html').getAttribute('data-appearance'),'dark');
+ });
+ await test('Hello world opens original code corner; all three code samples work',async()=>{
+  await p.click('.nt-code-float');assert.equal(new URL(p.url()).hash,'#code-corner');for(const lang of ['c','objc','swift']){await p.click(`[data-code-language="${lang}"]`);await p.click('#run-code');assert.equal(await p.locator('#code-output').isVisible(),true);assert.ok((await p.locator('#code-output').textContent()).includes('Ngan Tu')||(await p.locator('#code-output').textContent()).includes('Ngân Tú'))}
+ });
+ await test('Shared music: explicit play/pause, volume, seeking, all six tracks decode and sync',async()=>{
+  if(await p.evaluate(()=>!ntSelectedMusic.audio.paused))await p.click('#nt-hero-play');await p.click('#nt-hero-play');await p.waitForFunction(()=>!ntSelectedMusic.audio.paused&&ntSelectedMusic.audio.currentTime>0);assert.equal(await p.locator('#nt-hero-play').getAttribute('aria-pressed'),'true');await p.click('#nt-hero-play');await p.waitForFunction(()=>ntSelectedMusic.audio.paused);await p.click('#nt-hero-music-open');assert.equal(await p.locator('.music-play').isVisible(),true);
+  await p.locator('#music-volume').fill('0.3');assert.equal(await p.evaluate(()=>ntSelectedMusic.audio.volume),.3);
+  const tracks=p.locator('.playlist-track');assert.equal(await tracks.count(),6);
+  for(let i=0;i<6;i++){await tracks.nth(i).click();await p.waitForFunction(()=>ntSelectedMusic.audio.readyState>=2&&!ntSelectedMusic.audio.paused&&Number.isFinite(ntSelectedMusic.audio.duration));assert.equal(await p.locator('#nt-hero-track').textContent(),await p.evaluate(()=>ntSelectedMusic.current().title));}
+  await p.locator('.music-seek').fill('35');await p.locator('.music-seek').dispatchEvent('change');await p.waitForFunction(()=>ntSelectedMusic.audio.currentTime>ntSelectedMusic.audio.duration*.3);
+  await p.click('.music-play');assert.equal(await p.evaluate(()=>ntSelectedMusic.audio.paused),true);await p.evaluate(()=>document.querySelector('.music-widget').classList.add('compact'));
+ });
+ await test('Gallery arrows, mouse drag without accidental lightbox, keyboard viewer and focus',async()=>{
+  await p.locator('#memories').scrollIntoViewIfNeeded();await p.click('#nt-gallery-next');await p.waitForFunction(()=>document.querySelector('.nt-gallery').scrollLeft>0);await p.click('#nt-gallery-prev');await p.waitForFunction(()=>document.querySelector('.nt-gallery').scrollLeft<3);
+  const g=await p.locator('.nt-gallery').boundingBox();await p.mouse.move(g.x+g.width*.6,g.y+120);await p.mouse.down();await p.mouse.move(g.x+g.width*.2,g.y+120,{steps:12});await p.mouse.up();assert.equal(await p.locator('.photo-viewer').evaluate(e=>e.open),false);assert.ok(await p.locator('.nt-gallery').evaluate(e=>e.scrollLeft)>0);
+  await p.click('#nt-gallery-prev');await p.locator('.nt-memory').first().focus();await p.keyboard.press('Enter');assert.equal(await p.locator('.photo-viewer').evaluate(e=>e.open),true);await p.keyboard.press('ArrowRight');assert.ok((await p.locator('.viewer-count').textContent()).endsWith('2/4'));await p.keyboard.press('Escape');assert.equal(await p.locator('.nt-memory').first().evaluate(e=>e===document.activeElement),true);
+ });
+ await test('Snake sound preference, actual game scoring, pause/resume and end saves one result',async()=>{
+  await p.addInitScript(()=>{Math.random=()=>.525});await p.reload();await p.locator('[data-open-snake]:not([data-show-scores])').first().click();await p.click('#snake-sound');assert.equal(await p.locator('#snake-sound').getAttribute('aria-pressed'),'false');await p.reload();await p.locator('[data-open-snake]:not([data-show-scores])').first().click();assert.equal(await p.locator('#snake-sound').getAttribute('aria-pressed'),'false');await p.click('#snake-start');await p.click('#snake-pause');assert.equal(await p.locator('#snake-state').textContent(),'PAUSED');await p.click('#snake-pause');await p.waitForFunction(()=>Number(document.querySelector('#snake-score').textContent)>=50);await p.waitForFunction(()=>document.querySelector('#snake-state').textContent==='GAME OVER');assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('ngan-tu-snake-scores-v1')).length),1);
+ });
+ await test('Scores from Snake pause round, retain existing scores and filters, restore focus; no outside score section',async()=>{
+  await p.click('#snake-restart');await p.click('#nt-game-scores');assert.equal(await p.locator('#snake-state').textContent(),'PAUSED');assert.equal(await p.locator('#nt-scores-dialog').evaluate(e=>e.open),true);assert.equal(await p.locator('#nt-scores-content #leaderboard-body tr').count(),1);await p.selectOption('#leaderboard-level','hard');assert.equal(await p.locator('#leaderboard-body tr').count(),0);await p.selectOption('#leaderboard-level','all');assert.equal(await p.locator('#leaderboard-body tr').count(),1);await p.keyboard.press('Escape');await p.waitForFunction(()=>!document.querySelector('#nt-scores-dialog').open);assert.equal(await p.locator('#nt-game-scores').evaluate(e=>e===document.activeElement),true);assert.equal(await p.locator('#game-scores').count(),0);assert.equal(await p.locator('#nt-scores-content .score-card').count(),1);assert.equal(await p.locator('#snake-state').textContent(),'PAUSED');
+ });
+ await test('Original Snake presets and menu continue working',async()=>{
+  await p.click('#snake-ntjr');for(const preset of ['farm','speed','god','chaos','normal']){await p.click(`[data-preset="${preset}"]`);assert.equal(await p.locator(`[data-preset="${preset}"]`).getAttribute('aria-pressed'),'true');}await p.click('#ntjr-close');await p.click('#snake-close');assert.equal(await p.locator('#snake-dock').evaluate(e=>e.open),false);
+ });
+ await test('Original contact validation and composed email remain functional',async()=>{
+  await p.click('#contact-form button[value="gmail"]');assert.equal(await p.locator('#name').getAttribute('aria-invalid'),'true');await p.fill('#name','Kiểm thử');await p.fill('#email','test@example.com');await p.fill('#message','Nội dung kiểm thử giao diện.');await p.click('#contact-form button[value="gmail"]');assert.equal(await p.locator('#form-feedback').isVisible(),true);assert.ok((await p.locator('#form-feedback a').first().getAttribute('href')).includes('mail.google.com'));
+ });
+ for(const width of [320,375,390,430,768,1366,1920])await test(`Responsive ${width}px: both themes, header, hero, gallery, scores`,async()=>{
+  const q=await page({viewport:{width,height:900},isMobile:width<761,hasTouch:width<761});await q.goto(base+'/?intro=off');
+  for(const theme of ['dark','light']){
+   if(await q.locator('html').getAttribute('data-appearance')!==theme)await q.click('#nt-theme-toggle');
+   assert.ok(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'page overflow');
+   const bounds=await q.locator('#nt-theme-toggle').boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width);
+   if(width<761){assert.equal(await q.locator('#nav-links>a:visible').count(),4);await q.click('#nav-links a[href="#about"]');assert.equal(await q.locator('#nav-links').isVisible(),true);}
+   await q.locator('.nt-hero-scene').scrollIntoViewIfNeeded();const cards=await q.locator('.nt-float').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right}}));assert.ok(cards.every(r=>r.left>=-1&&r.right<=width+1),JSON.stringify(cards));
+   await q.locator('[data-open-snake]:not([data-show-scores])').first().click();await q.click('#nt-game-scores');assert.ok(await q.locator('#nt-scores-dialog').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'score overflow');await q.click('#nt-scores-close');await q.click('#snake-close');
+  }await q.close();
+ });
+ await test('Touch gallery swipe scrolls without opening viewer',async()=>{
+  const q=await page({...devices['iPhone 13'],reducedMotion:'reduce'});await q.goto(base+'/?intro=off');await q.locator('.nt-gallery').scrollIntoViewIfNeeded();const r=await q.locator('.nt-gallery').boundingBox();const c=await q.context().newCDPSession(q);const y=Math.max(110,r.y+140);await c.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:330,y}]});for(let x=310;x>=70;x-=20){await c.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y}]});await q.waitForTimeout(16)}await c.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await q.waitForFunction(()=>document.querySelector('.nt-gallery').scrollLeft>50);assert.equal(await q.locator('.photo-viewer').evaluate(e=>e.open),false);await q.close();
+ });
+ await test('Storage unavailable: theme, music controls and scores stay usable',async()=>{
+  const q=await page({},false);await q.addInitScript(()=>{Storage.prototype.getItem=Storage.prototype.setItem=()=>{throw new DOMException('Denied','SecurityError')}});await q.goto(base+'/?intro=off');await q.click('#nt-theme-toggle');assert.equal(await q.locator('html').getAttribute('data-appearance'),'light');await q.locator('[data-open-snake]:not([data-show-scores])').first().click();await q.click('#nt-game-scores');assert.equal(await q.locator('#nt-scores-dialog').evaluate(e=>e.open),true);await q.close();
+ });
+ await test('Original intro handoff loads selected components and saved light theme',async()=>{
+  const q=await page({reducedMotion:'no-preference'});await q.addInitScript(()=>localStorage.setItem('nt-appearance','light'));await q.goto(base+'/');await q.waitForSelector('#nt-theme-toggle',{timeout:18000});await q.waitForFunction(()=>!!window.ntSelectedMusic&&!!document.querySelector('#nt-theme-toggle').getAttribute('title'));await q.waitForTimeout(600);assert.equal(await q.locator('html').getAttribute('data-appearance'),'light');assert.equal(await q.locator('.nt-memory').count(),4);await q.click('.hero-description');await q.waitForFunction(()=>!ntSelectedMusic.audio.paused);await q.click('#nt-theme-toggle');assert.equal(await q.locator('html').getAttribute('data-appearance'),'dark');await q.close();
+ });
+ await test('Revision: circular portrait with ntjr only, requested gallery heading, one in-game leaderboard',async()=>{
+  const q=await page();await q.goto(base+'/?intro=off');
+  const r=await q.locator('.nt-portrait').boundingBox();assert.ok(Math.abs(r.width-r.height)<2);assert.equal(await q.locator('.nt-portrait').evaluate(e=>getComputedStyle(e).borderRadius),'50%');
+  assert.equal(await q.locator('.nt-portrait figcaption').count(),0);assert.equal(await q.locator('.nt-photo-signature').textContent(),'ntjr');assert.equal(await q.locator('.nt-location').count(),0);assert.equal(await q.locator('.nt-portrait img').evaluate(e=>getComputedStyle(e).objectPosition),'50% 92%');
+  assert.equal(await q.locator('#game-scores').count(),0);assert.equal(await q.locator('.score-card').count(),1);assert.equal(await q.locator('.nt-gallery-note').textContent(),'NHỮNG KHOẢNH KHẮC CỦA MÌNH');assert.equal(await q.locator('#nt-memories-title').innerText(),'Một chút ngoài\nnhững dòng code.');
+  await q.click('[data-show-scores]');assert.equal(await q.locator('#snake-dock').evaluate(e=>e.open),true);assert.equal(await q.locator('#nt-scores-dialog').evaluate(e=>e.open),true);await q.click('#nt-scores-close');await q.click('#snake-close');
+  await q.locator('[data-open-explorer]').first().click();await q.fill('#explorer-query','bảng điểm');await q.locator('.explorer-item').click();await q.waitForFunction(()=>document.querySelector('#nt-scores-dialog').open);await q.close();
+ });
+ await test('Revision: original circular menu can drag, persist, and open after dragging',async()=>{
+  const q=await page({viewport:{width:390,height:844},hasTouch:true,isMobile:true});await q.goto(base+'/?intro=off');await q.locator('[data-open-snake]:not([data-show-scores])').first().click();assert.equal(await q.locator('#snake-ntjr').getAttribute('class'),'ntjr-orb');
+  const r=await q.locator('#snake-ntjr').boundingBox();const t=await q.locator('.nt-game-tools').boundingBox();assert.ok(r.y+r.height<t.y);await q.mouse.move(r.x+r.width/2,r.y+r.height/2);await q.mouse.down();await q.mouse.move(r.x+r.width/2-100,r.y+r.height/2+60,{steps:8});await q.mouse.up();assert.equal(await q.locator('#ntjr').isVisible(),false);assert.ok(await q.evaluate(()=>!!localStorage.getItem('ngan-tu-ntjr-orb')));await q.click('#snake-ntjr');assert.equal(await q.locator('#ntjr').isVisible(),true);await q.click('#ntjr-close');const moved=await q.locator('#snake-ntjr').boundingBox();await q.reload();await q.locator('[data-open-snake]:not([data-show-scores])').first().click();const restored=await q.locator('#snake-ntjr').boundingBox();assert.ok(Math.abs(moved.x-restored.x)<2);await q.close();
+ });
+ await test('Revision: float, gallery reveal and tilt animate; reduced-motion disables movement',async()=>{
+  const q=await page({reducedMotion:'no-preference'},false);await q.addInitScript(()=>sessionStorage.setItem('nt-motion-choice-v1','pointer'));await q.goto(base+'/?intro=off');await q.locator('.nt-hero-scene').scrollIntoViewIfNeeded();await q.waitForFunction(()=>document.querySelector('.nt-hero-scene').classList.contains('nt-inview'));const a=await q.locator('.nt-code-float').evaluate(e=>getComputedStyle(e).translate);await q.waitForTimeout(350);const b=await q.locator('.nt-code-float').evaluate(e=>getComputedStyle(e).translate);assert.notEqual(a,b);
+  await q.locator('#memories').scrollIntoViewIfNeeded();await q.waitForFunction(()=>{const shell=document.querySelector('.nt-memory').closest('.tilt-shell');return shell.dataset.scrollMotion==='image'&&getComputedStyle(shell).opacity==='1'&&!shell.getAnimations().some(a=>a.playState==='running')});const r=await q.locator('.nt-memory').first().boundingBox();await q.waitForTimeout(250);await q.mouse.move(r.x+30,r.y+80);await q.waitForTimeout(150);assert.ok(await q.locator('.nt-memory').first().evaluate(e=>e.style.transform.includes('rotateX')));
+  await q.emulateMedia({reducedMotion:'reduce'});assert.equal(await q.locator('.nt-code-float').evaluate(e=>getComputedStyle(e).animationName),'none');assert.equal(await q.locator('.nt-memory').first().evaluate(e=>getComputedStyle(e).transform),'none');await q.close();
+ });
+ await test('Autoplay policy: play immediately when allowed; pause/stop survive scrolling and clicking',async()=>{
+  const allowed=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});const q=await allowed.newPage({reducedMotion:'reduce'});await q.addInitScript(()=>sessionStorage.setItem('nt-motion-choice-v1','off'));await q.goto(base+'/?intro=off');await q.waitForFunction(()=>window.ntSelectedMusic&&!ntSelectedMusic.audio.paused&&ntSelectedMusic.audio.currentTime>0);
+  await q.click('#nt-hero-play');await q.mouse.wheel(0,500);await q.click('.hero-description');assert.equal(await q.evaluate(()=>ntSelectedMusic.audio.paused),true);
+  await q.click('#nt-hero-music-open');await q.click('.music-play');await q.waitForFunction(()=>!ntSelectedMusic.audio.paused);await q.click('.music-off');await q.click('.music-close');await q.click('.hero-description');await q.mouse.wheel(0,400);assert.equal(await q.evaluate(()=>ntSelectedMusic.audio.paused),true);assert.equal(await q.evaluate(()=>ntSelectedMusic.audio.currentTime),0);await allowed.close();
+ });
+ await test('No uncaught browser errors or local HTTP failures',async()=>{assert.deepEqual(errors,[]);assert.deepEqual(failedResources,[])});
+ await browser.close();fs.writeFileSync(out+'/results.json',JSON.stringify({date:new Date().toISOString(),results,errors,failedResources},null,2));console.log(`${results.filter(r=>r.pass).length}/${results.length} passed`);if(results.some(r=>!r.pass))process.exitCode=1;
+})();

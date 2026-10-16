@@ -49,6 +49,11 @@
   let chaosBoost = 1;
   let chaosTimer = 0;
   let soundOn = true;
+  try { soundOn = localStorage.getItem('nt-snake-sound') !== 'off'; } catch {}
+  const soundButton = document.querySelector('#snake-sound');
+  soundButton.setAttribute('aria-pressed', String(soundOn));
+  soundButton.firstChild.textContent = soundOn ? 'Âm thanh: bật' : 'Âm thanh: tắt';
+  soundButton.setAttribute('aria-label', soundOn ? 'Âm thanh trò chơi: bật' : 'Âm thanh trò chơi: tắt');
   let audio;
   const mods = () => ({
     auto: document.querySelector('#mod-auto').checked,
@@ -89,9 +94,9 @@
     if (!ntjr.hidden) setMenuOpen(false);
     difficultySelect.disabled = false;
     document.dispatchEvent(new CustomEvent('nt-snake-result', { detail: { score: Math.round(score), difficulty: roundDifficulty, assisted: roundAssisted || hasAssistance() } }));
-    ping('Tài khoản của bạn đã bị khóa');
+    ping('Tài khoản của bạn đã bị khóa.');
     setStatus('THÔNG BÁO');
-    showOverlay('THÔNG BÁO', 'Chơi lại', 'Tài khoản của bạn đã bị khóa');
+    showOverlay('THÔNG BÁO', 'Chơi lại', 'Tài khoản của bạn đã bị khóa.');
     draw(performance.now());
     document.querySelector('#snake-start').focus();
   }
@@ -130,7 +135,7 @@
         if (!occupied(x, y, false)) open.push({ x, y });
       }
     }
-    if (!open.length) return { x: 0, y: 0 };
+    if (!open.length) return null;
     if (preferNear && snake[0]) {
       open.sort((a, b) => Math.abs(a.x - snake[0].x) + Math.abs(a.y - snake[0].y) - (Math.abs(b.x - snake[0].x) + Math.abs(b.y - snake[0].y)));
       const band = open.slice(0, Math.max(4, Math.ceil(open.length * 0.25)));
@@ -272,7 +277,7 @@
       noteScore(flag);
       if (accountLocked) return;
       beep(ate ? 620 : 780, 0.08, 0.04);
-      if (ate) food = spawnAt(flag.magnet);
+      if (ate) { const nextFood = spawnAt(flag.magnet); if (!nextFood) { die(); showOverlay('Bạn đã lấp đầy bàn chơi!', 'Chơi lại'); return; } food = nextFood; }
       if (bonusHit) bonus = null;
     }
     if (flag.magnet && food && snake[0]) {
@@ -301,13 +306,14 @@
   }
   function draw(now) {
     const flag = mods();
+    const palette = ({mint:['#9ff7e4','#2fbf93','#070f16','rgba(126,232,238,.10)'],violet:['#e1c4ff','#a27cf3','#100d1d','rgba(200,165,255,.12)'],amber:['#ffe0a5','#e5a746','#16120a','rgba(255,207,128,.12)']})[dock.dataset.boardTheme] || ['#9ff7e4','#2fbf93','#070f16','rgba(126,232,238,.10)'];
     const size = cellSize();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#070b16';
+    ctx.fillStyle = palette[2];
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = 'rgba(126, 232, 238, .08)';
+    ctx.strokeStyle = palette[3];
     ctx.lineWidth = 1;
-    for (let i = 1; i < COLS; i += 1) {
+    for (let i = 1; dock.dataset.grid !== 'off' && i < COLS; i += 1) {
       ctx.beginPath();
       ctx.moveTo(i * size, 0);
       ctx.lineTo(i * size, canvas.height);
@@ -365,8 +371,8 @@
       else prev.push(part);
     });
     const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0, '#9ff7e4');
-    grad.addColorStop(1, '#2fbf93');
+    grad.addColorStop(0, palette[0]);
+    grad.addColorStop(1, palette[1]);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = size * 0.62;
@@ -421,8 +427,8 @@
   function frame(now) {
     raf = 0;
     if (!dock.open || document.hidden) return;
+    if (mode !== 'play') { last = now; draw(now); return; }
     raf = requestAnimationFrame(frame);
-    if (document.hidden || mode !== 'play') { last = now; draw(now); return; }
     const dt = Math.min(40, now - last || 0);
     last = now;
     acc += dt;
@@ -442,7 +448,7 @@
   }
   function startGame() {
     document.querySelector('#snake-pause').textContent = 'Tạm dừng';
-    if (mode === 'pause') { mode = 'play'; hideOverlay(); setStatus('SYSTEM READY'); refreshFlags(); return; }
+    if (mode === 'pause') { mode = 'play'; hideOverlay(); setStatus('SYSTEM READY'); refreshFlags(); last = performance.now(); ensureLoop(); return; }
     roundDifficulty = difficultySelect.value;
     if (!['easy', 'normal', 'hard'].includes(roundDifficulty)) roundDifficulty = 'normal';
     roundAssisted = hasAssistance();
@@ -461,6 +467,9 @@
     setStatus('PAUSED');
     showOverlay('Tạm dừng', 'Tiếp tục');
   }
+  document.addEventListener('nt:pause-snake', pauseGame);
+  document.addEventListener('nt:snake-redraw', () => { if (dock.open) draw(performance.now()); });
+  window.addEventListener('blur', pauseGame);
   let dockOpener = null;
   function openDock(event) {
     dockOpener = event?.currentTarget || document.activeElement;
@@ -501,9 +510,10 @@
     }
     ntjr.hidden = !open;
     ntjrBtn.setAttribute('aria-expanded', String(open));
-    ntjrBtn.setAttribute('aria-label', open ? 'NTJR MENU đang mở' : 'Mở NTJR MENU');
-    if (open) placeMenu();
-    else if (resumeAfterMenu) {
+    ntjrBtn.setAttribute('aria-label', open ? 'Đóng menu tùy chỉnh Snake' : 'Mở menu tùy chỉnh Snake');
+    if (open) { placeMenu(); document.querySelector('#ntjr-close').focus(); }
+    else ntjrBtn.focus({ preventScroll: true });
+    if (!open && resumeAfterMenu) {
       resumeAfterMenu = false;
       if (mode === 'pause') startGame();
     }
@@ -512,6 +522,8 @@
   let orbX = 16;
   let orbY = 120;
   let orbFrame = 0;
+  let orbPlaced = false;
+  let orbSaved = false;
   let orbDrag = null;
   let suppressOrbClick = false;
   function clampOrb(x, y) {
@@ -536,12 +548,19 @@
     ntjrBtn.style.transform = 'translate3d(0,0,0)';
     const rect = ntjrBtn.getBoundingClientRect();
     ntjrBtn.dataset.origin = `${rect.left},${rect.top}`;
+    if (!orbPlaced && !orbSaved && innerWidth <= 760) {
+      const settings = document.querySelector('.snake-settings').getBoundingClientRect();
+      orbX = dock.getBoundingClientRect().right - ntjrBtn.offsetWidth - 22;
+      orbY = settings.top + 6;
+    }
+    orbPlaced = true;
     paintOrb();
   }
   function restoreOrb() {
     try {
       const saved = JSON.parse(localStorage.getItem(orbKey) || 'null');
       if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+        orbSaved = true;
         orbX = saved.x;
         orbY = saved.y;
         return;
@@ -585,7 +604,7 @@
     ntjrBtn.classList.remove('is-dragging');
     if (moved) {
       suppressOrbClick = true;
-      localStorage.setItem(orbKey, JSON.stringify({ x: orbX, y: orbY }));
+      try { localStorage.setItem(orbKey, JSON.stringify({ x: orbX, y: orbY })); } catch {}
     }
   }
   ntjrBtn.addEventListener('pointerup', endOrbDrag);
@@ -625,15 +644,17 @@
   document.querySelector('#snake-sound').addEventListener('click', event => {
     soundOn = !soundOn;
     event.currentTarget.setAttribute('aria-pressed', String(soundOn));
-    event.currentTarget.textContent = soundOn ? 'Âm thanh' : 'Tắt tiếng';
+    event.currentTarget.firstChild.textContent = soundOn ? 'Âm thanh: bật' : 'Âm thanh: tắt';
+    event.currentTarget.setAttribute('aria-label', soundOn ? 'Âm thanh trò chơi: bật' : 'Âm thanh trò chơi: tắt');
+    try { localStorage.setItem('nt-snake-sound', soundOn ? 'on' : 'off'); } catch {}
   });
   function queueDir(name) {
     if (!DIRS[name] || mode !== 'play') return;
-    if (OPP[dir] === name) return;
+    if (queued || OPP[dir] === name || dir === name) return;
     queued = name;
   }
   window.addEventListener('keydown', event => {
-    if (!dock.open || !ntjr.hidden || event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
+    if (!dock.open || document.querySelector('#nt-scores-dialog').open || !ntjr.hidden || event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
     if (event.key === ' ' && event.target.closest('button, a')) return;
     const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', a: 'left', s: 'down', d: 'right', W: 'up', A: 'left', S: 'down', D: 'right' };
     if (map[event.key]) { event.preventDefault(); queueDir(map[event.key]); }

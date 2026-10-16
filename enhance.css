@@ -29,7 +29,6 @@ html.from-intro.is-in body {
   z-index: -2;
   pointer-events: none;
   overflow: hidden;
-  transform: translate3d(0, calc(var(--scroll, 0) * -1px), 0);
 }
 .scene-mesh,
 .scene-grid,
@@ -95,11 +94,9 @@ html.from-intro.is-in body {
   background: rgba(7, 11, 22, .84);
   border-color: rgba(var(--glow-rgb), .32);
 }
-.header .nav { transition: height .28s ease; }
+
 .header.scrolled .nav { height: 72px; }
-.nav-links a.active::after {
-  box-shadow: 0 0 12px rgba(var(--first-rgb), .8);
-}
+
 
 .hero-copy {
   transform: translate3d(calc(var(--px, 0) * 10px), calc(var(--py, 0) * 7px), 0);
@@ -177,19 +174,19 @@ html.from-intro.is-in body {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  transform: translate3d(var(--mx), var(--my), 0) scale(1);
+  transform: translate3d(var(--mx), var(--my), 0);
   transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
 }
 .button:hover,
 .explore-trigger:hover,
 .closing-explore:hover {
-  transform: translate3d(var(--mx), var(--my), 0) scale(1.03);
+  transform: translate3d(var(--mx), var(--my), 0);
   box-shadow: 0 10px 28px rgba(var(--glow-rgb), .22);
 }
 .button:active,
 .explore-trigger:active,
 .closing-explore:active {
-  transform: translate3d(var(--mx), var(--my), 0) scale(.98);
+  transform: translate3d(var(--mx), var(--my), 0);
 }
 .button:not(.primary)::before,
 .explore-trigger::before,
@@ -204,7 +201,7 @@ html.from-intro.is-in body {
 }
 .button:not(.primary):hover::before,
 .explore-trigger:hover::before,
-.closing-explore:hover::before { animation: btn-sheen .7s ease; }
+.closing-explore:hover::before { animation: btn-sheen .9s cubic-bezier(.16,1,.3,1); }
 .primary:hover { box-shadow: 0 10px 32px rgba(var(--glow-rgb), .38); }
 @keyframes btn-sheen { to { transform: translateX(420%); } }
 
@@ -218,26 +215,6 @@ html.from-intro.is-in body {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(var(--glow-rgb), .45), transparent);
   pointer-events: none;
-}
-.js-reveal .skills-grid .reveal:nth-child(2),
-.js-reveal .projects-grid .reveal:nth-child(2),
-.js-reveal .social-grid .reveal:nth-child(2),
-.js-reveal .life-grid .reveal:nth-child(2) { transition-delay: 70ms; }
-.js-reveal .skills-grid .reveal:nth-child(3),
-.js-reveal .social-grid .reveal:nth-child(3),
-.js-reveal .life-grid .reveal:nth-child(3),
-.js-reveal .timeline .reveal:nth-child(2) { transition-delay: 120ms; }
-.js-reveal .skills-grid .reveal:nth-child(4),
-.js-reveal .social-grid .reveal:nth-child(4),
-.js-reveal .life-grid .reveal:nth-child(4) { transition-delay: 170ms; }
-.js-reveal .skills-grid .reveal:nth-child(5),
-.js-reveal .social-grid .reveal:nth-child(5) { transition-delay: 210ms; }
-.js-reveal .skills-grid .reveal:nth-child(6) { transition-delay: 250ms; }
-.js-reveal .skill-card:not(.is-visible) .progress > span { transform: scaleX(0); }
-.js-reveal .skill-card.is-visible .progress > span {
-  transform: scaleX(1);
-  transform-origin: left center;
-  transition: transform .8s cubic-bezier(.16, 1, .3, 1);
 }
 
 .dev-status {
@@ -534,15 +511,7 @@ html, body { overflow-x: clip; }
     width: calc(100% - 16px);
     border-radius: 16px;
   }
-  .nav-links,
-  .nav-links.open {
-    top: calc(100% + 8px);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, .1);
-    background: rgba(8, 12, 22, .94);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, .38);
-  }
+
   .hero-name,
   .hero-name.gradient-text { font-size: clamp(3.15rem, 13vw, 4.4rem); letter-spacing: -0.04em; }
   .hero-copy { transform: none; }
@@ -612,87 +581,19 @@ html[data-fx="calm"] .tilt-card { transform: none; }
     z-index: 200 !important;
     background: rgba(8, 12, 22, .94) !important;
   }
-  .menu-toggle { width: 44px; height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; }
-  .menu-toggle span { display: block; height: 2px; width: 18px; margin: 0; background: #e8eefc; position: static; border-radius: 2px; transform: none; }
-  /* Closed menu must stay out of the flex row. An opacity/translate hide
-     freezes visible on the first iOS paint (intro handoff) until reload. */
-  .nav-links {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    translate: none !important;
-    transform: none !important;
-    transition: none !important;
-  }
-  .nav-links.open {
-    display: flex !important;
-    position: fixed !important;
-    top: 74px !important;
-    left: 8px !important;
-    right: 8px !important;
-    width: auto !important;
-    max-height: min(70vh, 420px);
-    padding: 6px;
-    gap: 2px;
-    overflow: auto;
-    border-radius: 16px;
-    opacity: 1 !important;
-    visibility: visible !important;
-    translate: none !important;
-    transform: none !important;
-    pointer-events: auto !important;
-    flex-direction: column;
-    align-items: stretch;
-    z-index: 201 !important;
-    background: #0b1020;
-  }
-  .nav-links a,
-  .nav-links .nav-contact {
-    min-height: 44px;
-    margin: 0;
-    padding: 8px 16px;
-    font-size: 15px;
-    border-radius: 10px;
-    position: relative;
-    z-index: 1;
-    color: #e8eefc;
-    opacity: 1;
-  }
-  .nav-links a.active::after,
-  #nav-links.open a.active::after {
-    content: none;
-    display: none;
-  }
+
+
+
+
+
+
   .header,
   .header.menu-open { z-index: 80; }
   .nav { position: relative; }
-  .nav-links.open {
-    position: fixed !important;
-    z-index: 201 !important;
-    top: 74px !important;
-    left: 8px !important;
-    right: 8px !important;
-    width: auto !important;
-    flex-direction: column;
-    align-items: stretch;
-    background: #0c1220;
-  }
-  body.menu-lock {
-    position: static !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    width: auto !important;
-  }
+
+
   .hero { padding-top: calc(124px + env(safe-area-inset-top)); }
-  body.menu-lock::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, .45);
-    z-index: 40;
-  }
+
   .header.menu-open ~ .music-widget,
   body.menu-lock .music-widget,
   body.menu-lock .zip-fab,
@@ -728,22 +629,9 @@ html[data-fx="calm"] .tilt-card { transform: none; }
 }
 .zip-fab:hover { color: #fff; }
 
-body.menu-lock { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
-.page-progress {
-  transform: none;
-  overflow: hidden;
-  background: rgba(255, 255, 255, .06);
-}
-.page-progress > span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: var(--gradient);
-  transform: scaleX(0);
-  transform-origin: left center;
-  box-shadow: 0 0 12px rgba(154, 138, 255, .45);
-}
-.page-progress::after { content: none; display: none; animation: none; }
+
+
+
 
 .qr-panel {
   width: clamp(260px, 22vw, 320px);
@@ -1099,10 +987,6 @@ html.page-hidden *::after {
 @media(max-width:760px){#snake-dock #ntjr{top:50%;left:50%;right:auto;transform:translate(-50%,-50%);width:calc(100vw - 16px);max-height:calc(100dvh - 24px)}#snake-dock #ntjr .ntjr-body{grid-template-columns:72px minmax(0,1fr)}#snake-dock #ntjr .ntjr-main{max-height:calc(100dvh - 180px)}}
 @media(max-width:350px){#snake-dock #ntjr .ntjr-head{gap:7px;padding-inline:10px}#snake-dock #ntjr .ntjr-chip{width:28px;height:28px}#snake-dock #ntjr .ntjr-head b{font-size:1rem}#snake-dock #ntjr .ntjr-row:has(input[type=range]){grid-template-columns:1fr}#snake-dock #ntjr .ntjr-row input[type=range]{width:100%}}
 
-/* Preserve skill styling already published on GitHub. */
-.js-reveal .skills-grid .reveal:nth-child(7) { transition-delay: 290ms; }
-.js-reveal .skills-grid .reveal:nth-child(8) { transition-delay: 330ms; }
-
 .skill-ios .skill-icon {
   border-radius: 14px;
   font-size: .78rem;
@@ -1112,17 +996,8 @@ html.page-hidden *::after {
     rgba(10, 14, 26, .45);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.42), 0 8px 16px rgba(0,0,0,.2);
 }
-.js-reveal .skill-ios.is-visible .skill-icon {
-  animation: iosSpring .72s cubic-bezier(.2, 1.35, .32, 1) both;
-}
-@keyframes iosSpring {
-  0% { transform: scale(.82); }
-  55% { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .js-reveal .skill-ios.is-visible .skill-icon { animation: none; }
-}
+
+
 
 /* Floating motion invitation. Scoped to keep the site's menus and cards untouched. */
 .nt-motion-notice {
@@ -1250,3 +1125,4 @@ html[data-depth="off"] .orb-b,
 html[data-depth="off"] .orb-c {
   translate: none;
 }
+

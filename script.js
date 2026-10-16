@@ -99,113 +99,139 @@ document.querySelectorAll('.optional-image').forEach(img => {
   if (img.complete) show();
 });
 
-// Menu trên điện thoại; hỗ trợ Escape và đóng khi chọn mục.
-const menuButton = document.querySelector('.menu-toggle');
+// Shared desktop/mobile navigation; mobile exposes four primary links directly.
 const menu = document.querySelector('#nav-links');
 const header = document.querySelector('#header');
-function pinMobileChrome() {
-  const phone = window.matchMedia('(max-width: 760px)').matches;
-  const bar = document.getElementById('header');
-  const links = document.getElementById('nav-links');
-  if (!bar || !links) return;
-  if (!phone) {
-    ['position', 'top', 'left', 'right', 'bottom', 'width', 'margin', 'transform', 'translate'].forEach(key => bar.style.removeProperty(key));
-    ['display', 'position', 'top', 'left', 'right', 'bottom', 'width', 'translate', 'transform', 'opacity', 'visibility'].forEach(key => links.style.removeProperty(key));
-    return;
-  }
-  bar.style.setProperty('position', 'fixed', 'important');
-  bar.style.setProperty('top', '8px', 'important');
-  bar.style.setProperty('left', '8px', 'important');
-  bar.style.setProperty('right', '8px', 'important');
-  bar.style.setProperty('bottom', 'auto', 'important');
-  bar.style.setProperty('width', 'auto', 'important');
-  bar.style.setProperty('margin', '0', 'important');
-  bar.style.setProperty('transform', 'none', 'important');
-  bar.style.setProperty('translate', 'none', 'important');
-  if (links.classList.contains('open')) {
-    links.style.setProperty('display', 'flex', 'important');
-    links.style.setProperty('position', 'fixed', 'important');
-    links.style.setProperty('top', '74px', 'important');
-    links.style.setProperty('left', '8px', 'important');
-    links.style.setProperty('right', '8px', 'important');
-    links.style.setProperty('translate', 'none', 'important');
-    links.style.setProperty('transform', 'none', 'important');
-    links.style.setProperty('opacity', '1', 'important');
-    links.style.setProperty('visibility', 'visible', 'important');
-  } else {
-    links.style.setProperty('display', 'none', 'important');
-  }
-}
-function closeMenu() {
-  menu.classList.remove('open');
-  header.classList.remove('menu-open');
-  menuButton.setAttribute('aria-expanded', 'false');
-  menuButton.setAttribute('aria-label', 'Mở menu');
-  document.body.classList.remove('menu-lock');
-  document.documentElement.classList.remove('menu-lock');
-  document.body.style.top = '';
-  pinMobileChrome();
-}
-menuButton.addEventListener('click', () => {
-  const open = menuButton.getAttribute('aria-expanded') !== 'true';
-  menu.classList.toggle('open', open);
-  header.classList.toggle('menu-open', open);
-  menuButton.setAttribute('aria-expanded', String(open));
-  menuButton.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu');
-  document.body.classList.toggle('menu-lock', open);
-  document.documentElement.classList.toggle('menu-lock', open);
-  pinMobileChrome();
-  if (!open) closeMenu();
-});
-menu.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
-document.addEventListener('touchmove', event => {
-  if (!document.body.classList.contains('menu-lock')) return;
-  if (menu.contains(event.target)) return;
-  event.preventDefault();
-}, { passive: false });
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && menu.classList.contains('open')) { closeMenu(); menuButton.focus(); }
-});
-document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
-window.matchMedia('(min-width: 761px)').addEventListener('change', closeMenu);
-pinMobileChrome();
-window.addEventListener('pageshow', pinMobileChrome);
-window.addEventListener('orientationchange', () => setTimeout(pinMobileChrome, 60));
-window.visualViewport?.addEventListener('resize', pinMobileChrome);
-window.visualViewport?.addEventListener('scroll', pinMobileChrome);
 
-// Scroll nhẹ: gom cập nhật vào một frame, không chạy hiệu ứng nặng.
+// One persistent selection layer; native anchor links stay intact on desktop and mobile.
 const backTop = document.querySelector('#back-top');
-const sections = [...document.querySelectorAll('main section[id]')];
-let scrollQueued = false;
+const navItems = [...menu.querySelectorAll('a[href^="#"]')];
+const navSections = navItems.map(link => ({ link, section: document.getElementById(link.hash.slice(1)) })).filter(item => item.section);
+const navSelection = document.createElement('span');
+navSelection.className = 'nav-selection';
+navSelection.setAttribute('aria-hidden', 'true');
+menu.prepend(navSelection);
+menu.classList.add('pill-nav-ready');
+let navWidth = 0, navHeight = 0;
+let selectedNav = null, navFrame = 0, navSnap = true, navPainted = false;
+let navPending = null, navPendingTimer = 0, scrollQueued = false;
+const navMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let navAnchorOffset = 0;
+function measureNavAnchorOffset() {
+  const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  const margins = navSections.map(item => parseFloat(getComputedStyle(item.section).scrollMarginTop) || 0);
+  navAnchorOffset = padding + Math.max(0, ...margins);
+}
+measureNavAnchorOffset();
+
+function queueNavSelection(snap = false) {
+  navSnap = navSnap || snap;
+  if (!navFrame) navFrame = requestAnimationFrame(paintNavSelection);
+}
+function paintNavSelection() {
+  navFrame = 0;
+  // Hidden mobile links have no geometry; the visible selection is measured next frame.
+  if (!selectedNav || !menu.clientWidth || !selectedNav.getClientRects().length) { navSnap = true; return; }
+  const outer = menu.getBoundingClientRect(), item = selectedNav.getBoundingClientRect();
+  const x = item.left - outer.left - menu.clientLeft + menu.scrollLeft;
+  const y = item.top - outer.top - menu.clientTop + menu.scrollTop;
+  const snap = navSnap || !navPainted || navMotion.matches;
+  navSnap = false;
+  if (snap) navSelection.style.transition = 'none';
+  if (navWidth !== item.width) { navWidth = item.width; navSelection.style.width = navWidth + 'px'; }
+  if (navHeight !== item.height) { navHeight = item.height; navSelection.style.height = navHeight + 'px'; }
+  navSelection.style.transform = `translate3d(${x}px,${y}px,0)`;
+  navSelection.classList.add('is-positioned');
+  navPainted = true;
+  if (snap) {
+    // Flush only after layout changes, never on an ordinary tab transition.
+    navSelection.getBoundingClientRect();
+    navSelection.style.removeProperty('transition');
+  }
+}
+function selectNav(link) {
+  if (!link || selectedNav === link) return;
+  selectedNav = link;
+  navItems.forEach(item => {
+    const active = item === link;
+    item.classList.toggle('active', active);
+    if (active) item.setAttribute('aria-current', 'location'); else item.removeAttribute('aria-current');
+  });
+  queueNavSelection();
+}
+function queueNavScroll() {
+  if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(updateScroll); }
+}
+function releaseNavTarget(interrupt = false) {
+  const stopScroll = interrupt && navPending;
+  navPending = null;
+  clearTimeout(navPendingTimer);
+  if (stopScroll) window.scrollTo({ top: scrollY, behavior: 'instant' });
+  queueNavScroll();
+}
+function finishNavTarget() {
+  if (navPending && navPending.link.getClientRects().length) {
+    // Lazy content above an anchor can shift after native scrolling completes.
+    // Correct once at settlement; explicit user interaction cancels this intent.
+    const target = navPending.section;
+    const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+    const top = Math.max(0, Math.min(document.documentElement.scrollHeight - innerHeight, scrollY + target.getBoundingClientRect().top - padding - margin));
+    if (Math.abs(top - scrollY) > 2) window.scrollTo({ top, behavior: 'instant' });
+  }
+  releaseNavTarget();
+}
+navItems.forEach(link => link.addEventListener('click', event => {
+  if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  navPending = navSections.find(item => item.link === link) || null;
+  clearTimeout(navPendingTimer);
+  selectNav(link);
+  // Native anchor scrolling/history is retained. Avoid selecting intermediate sections.
+  navPendingTimer = setTimeout(finishNavTarget, 1800);
+}));
+window.addEventListener('wheel', () => releaseNavTarget(true), { passive: true });
+window.addEventListener('pointerdown', event => { if (!header.contains(event.target)) releaseNavTarget(true); }, { passive: true });
+window.addEventListener('touchstart', event => { if (!header.contains(event.target)) releaseNavTarget(true); }, { passive: true });
+window.addEventListener('keydown', event => {
+  if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key) && !event.target.closest('input,textarea,select')) releaseNavTarget(true);
+});
+window.addEventListener('hashchange', () => { if (navPending?.link.hash !== location.hash) releaseNavTarget(); });
 function updateScroll() {
+  scrollQueued = false;
   header.classList.toggle('scrolled', window.scrollY > 24);
   backTop.hidden = window.scrollY < 600;
-  const marker = Math.min(220, Math.round(window.innerHeight * 0.34));
-  let current = 'home';
-  for (const section of sections) {
-    const box = section.getBoundingClientRect();
-    if (box.top <= marker && box.bottom > marker + 8) { current = section.id; break; }
-    if (box.top <= marker) current = section.id;
+  const marker = Math.min(innerHeight - 1, Math.max(Math.min(220, Math.round(innerHeight * 0.34)), navAnchorOffset + 2));
+  const visibleSections = navSections.filter(item => item.link.getClientRects().length);
+  let current = visibleSections[0]?.link;
+  for (const item of visibleSections) {
+    if (item.section.getBoundingClientRect().top <= marker) current = item.link;
   }
-  menu.querySelectorAll('a').forEach(link => {
-    const active = link.getAttribute('href') === `#${current}`;
-    link.classList.toggle('active', active);
-    if (active) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current');
-  });
-  scrollQueued = false;
+  if (navPending && !navPending.link.getClientRects().length) { navPending = null; clearTimeout(navPendingTimer); }
+  if (navPending) current = navPending.link;
+  selectNav(current);
 }
-window.addEventListener('scroll', () => {
-  if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(updateScroll); }
-}, { passive: true });
+window.addEventListener('scroll', queueNavScroll, { passive: true });
+const navResize = typeof ResizeObserver === 'function' ? new ResizeObserver(() => queueNavSelection(true)) : null;
+navResize?.observe(menu);
+navItems.forEach(link => navResize?.observe(link));
+window.addEventListener('resize', () => { measureNavAnchorOffset(); queueNavSelection(true); queueNavScroll(); }, { passive: true });
+window.addEventListener('pageshow', () => { queueNavSelection(true); queueNavScroll(); });
+navMotion.addEventListener('change', () => queueNavSelection(true));
+document.fonts?.ready.then(() => queueNavSelection(true));
+document.fonts?.addEventListener('loadingdone', () => queueNavSelection(true));
+window.addEventListener('pagehide', event => {
+  clearTimeout(navPendingTimer); navPending = null;
+  if (!event.persisted) navResize?.disconnect();
+});
 updateScroll();
 backTop.addEventListener('click', () => {
+  releaseNavTarget(true);
   window.scrollTo({ top: 0, behavior: reducedMotion ? 'instant' : 'smooth' });
-  document.querySelector('.brand').focus({ preventScroll: true });
+  navItems[0]?.focus({ preventScroll: true });
 });
 
 // Vỏ ngoài giữ scroll-reveal. Card bên trong chỉ để nghiêng 3D, tránh ghi đè transform.
-document.querySelectorAll('.skill-card, .project-card, .life-card, .social-card, .memory-photo, .hero-visual').forEach(card => {
+document.querySelectorAll('.skill-card, .project-card, .life-card, .social-card, .memory-photo, .hero-visual, .nt-hero-scene, .nt-memory').forEach(card => {
   if (card.closest('.tilt-shell, .music-widget, .style-controls, dialog')) return;
   const shell = document.createElement('div');
   shell.className = 'tilt-shell reveal-shell';
@@ -220,27 +246,6 @@ document.querySelectorAll('.skill-card, .project-card, .life-card, .social-card,
   shell.appendChild(hit);
   hit.appendChild(card);
 });
-
-// Hiện nội dung một lần khi cuộn tới; không có JS vẫn đọc được trang.
-if ('IntersectionObserver' in window && !reducedMotion) {
-  document.documentElement.classList.add('js-reveal');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
-    });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.reveal').forEach(element => observer.observe(element));
-}
-if ('IntersectionObserver' in window && !reducedMotion) {
-  const progressObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add('is-visible');
-      progressObserver.unobserve(entry.target);
-    });
-  }, { threshold: 0.28 });
-  document.querySelectorAll('.skill-card').forEach(card => progressObserver.observe(card));
-}
 
 // Typing chỉ dùng một bộ hẹn giờ; tạm dừng khi chuyển sang tab khác.
 const typing = document.querySelector('#typing');
@@ -497,32 +502,8 @@ amountInput.addEventListener('keydown', event => {
   submitDonationAmount();
 });
 
-// Thanh tiến độ cuộn: chỉ cập nhật một lần trong mỗi khung hình.
-const readingProgress = document.createElement('div');
-readingProgress.className = 'page-progress';
-readingProgress.setAttribute('aria-hidden', 'true');
-readingProgress.innerHTML = '<span></span>';
-document.body.append(readingProgress);
-let progressQueued = false;
-function updateReadingProgress() {
-  const distance = document.documentElement.scrollHeight - window.innerHeight;
-  const ratio = distance > 0 ? Math.min(1, Math.max(0, window.scrollY / distance)) : 0;
-  readingProgress.querySelector('span').style.transform = `scaleX(${ratio})`;
-  progressQueued = false;
-}
-function queueReadingProgress() {
-  if (!progressQueued) {
-    progressQueued = true;
-    requestAnimationFrame(updateReadingProgress);
-  }
-}
-window.addEventListener('scroll', queueReadingProgress, { passive: true });
-window.addEventListener('resize', queueReadingProgress);
-window.addEventListener('load', queueReadingProgress);
-updateReadingProgress();
-
 // Xem ảnh lớn bằng dialog: hỗ trợ điện thoại, bàn phím và Escape.
-const memoryLinks = [...document.querySelectorAll('.memory-photo')];
+const memoryLinks = [...document.querySelectorAll('.nt-memory')];
 if (memoryLinks.length && typeof HTMLDialogElement !== 'undefined') {
   const viewer = document.createElement('dialog');
   viewer.className = 'photo-viewer';
@@ -613,8 +594,8 @@ stylePanel.insertAdjacentHTML('beforeend', `
   <div class="custom-colors"><p>Phối màu của bạn</p>
     <label>Màu chính<input type="color" id="theme-first" value="#7ee8ee"></label>
     <label>Màu phụ<input type="color" id="theme-second" value="#bb8cff"></label>
-    <label>Nền<input type="color" id="theme-base" value="#18112e"></label>
-    <small>Nền tự cân chỉnh tối để chữ luôn dễ đọc.</small>
+    <label>Sắc nền tối<input type="color" id="theme-base" value="#18112e"></label>
+    <small>Dùng nút mặt trời trên thanh điều hướng để chuyển nền trắng. Sắc nền ở đây áp dụng cho chế độ tối.</small>
   </div>`);
 stylePanel.insertAdjacentHTML('beforeend', '<h4 class="fx-label">Ánh sáng</h4><label class="glow-option glow-shortcut" title="Bật/tắt ánh sáng theo chuột"><span aria-hidden="true">✧</span> Ánh sáng theo chuột<input type="checkbox" id="global-glow-toggle" aria-label="Ánh sáng theo chuột" checked><span class="glow-switch" aria-hidden="true"></span></label>');
 styleControls.querySelector('.style-close').addEventListener('click', () => { closeStylePanel(); styleToggle.focus({ preventScroll: true }); });
@@ -704,11 +685,11 @@ const musicPlaylist = [
 const introBgm = window.ntBgm instanceof HTMLAudioElement ? window.ntBgm : null;
 const musicAudio = introBgm || new Audio();
 const defaultVolume = 0.5;
-musicAudio.preload = 'auto';
+musicAudio.preload = 'metadata';
 musicAudio.playsInline = true;
 musicAudio.setAttribute('playsinline', '');
 musicAudio.volume = defaultVolume;
-let musicIndex = Math.random() < 0.65 ? 0 : 1 + Math.floor(Math.random() * (musicPlaylist.length - 1));
+let musicIndex = 3;
 try {
   const storedTrack = sessionStorage.getItem('nt-visit-track');
   const saved = storedTrack === null ? NaN : Number(storedTrack);
@@ -887,7 +868,7 @@ function probeTrackDuration(src) {
     .catch(() => 0);
 }
 function armMusicLoad() {
-  musicAudio.preload = 'auto';
+  musicAudio.preload = 'metadata';
   musicAudio.playsInline = true;
   if (!musicAudio.isConnected) {
     musicAudio.hidden = true;
@@ -1090,21 +1071,25 @@ musicAudio.addEventListener('error', () => { musicButtons(); musicStatus('Không
 if (introBgm) loadMusic(musicIndex, true);
 else loadMusic(musicIndex);
 musicButtons();
+// Playback starts only through a music control, never from unrelated taps.
+// Restore the original visit autoplay, with gesture fallback for browser policy.
 let phoneAuto = !window.ntUserHeldMusic;
 let musicStarting = false;
-const musicGestureSelector = '.music-play, .mini-play, .music-off, .music-prev, .music-next, .playlist-track';
+const musicAutoEvents = new AbortController();
+const musicGestureSelector = '.music-widget, .nt-music-float, [data-music-action]';
 function startPhoneMusic(event) {
   if (window.ntUserHeldMusic || !phoneAuto || musicStarting) return;
-  if (!musicAudio.paused && !musicAudio.muted) return;
-  if (event && event.target && event.target.closest && event.target.closest(musicGestureSelector)) return;
+  if (!musicAudio.paused && !musicAudio.muted) { phoneAuto = false; musicAutoEvents.abort(); return; }
+  if (event?.target?.closest?.(musicGestureSelector)) return;
   musicStarting = true;
   musicByUser = true;
   playMusic().finally(() => { musicStarting = false; });
 }
+['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click', 'keydown', 'wheel', 'scroll'].forEach(type => {
+  window.addEventListener(type, startPhoneMusic, { capture: true, passive: true, signal: musicAutoEvents.signal });
+});
+musicAudio.addEventListener('playing', () => { phoneAuto = false; musicAutoEvents.abort(); }, { once: true });
 startPhoneMusic();
-['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click', 'keydown'].forEach(type => window.addEventListener(type, startPhoneMusic, { capture: true, passive: true }));
-musicAudio.addEventListener('playing', () => { phoneAuto = false; }, { once: true });
-
 
 // Quầng sáng toàn trang: chuột, bút cảm ứng và thao tác vuốt trên điện thoại.
 const globalGlow = document.createElement('div');
@@ -1138,114 +1123,6 @@ glowToggle.addEventListener('change', () => {
   try { localStorage.setItem('ngan-tu-global-glow', glowEnabled ? 'on' : 'off'); } catch {}
 });
 
-
-// Tiêu đề và lời giới thiệu hiện theo nhịp khi cuộn, không tách nhỏ câu chữ.
-if ('IntersectionObserver' in window && !reducedMotion) {
-  const scrollText = document.querySelectorAll('main section h2, .about-statement > p, .about-content > p, .journey-intro > p:not(.eyebrow), .memories-heading h3, .contact-copy > p:not(.eyebrow)');
-  const textObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add('text-in-view');
-      textObserver.unobserve(entry.target);
-    });
-  }, { threshold: .1 });
-  scrollText.forEach((element, index) => {
-    element.classList.add('scroll-text');
-    element.style.setProperty('--text-delay', `${(index % 3) * 70}ms`);
-    textObserver.observe(element);
-  });
-}
-
-// Extra reveal on upward re-entry only. The first/downward reveals above stay unchanged.
-(() => {
-  if (window.ntScrollUpBound || !('IntersectionObserver' in window) || !Element.prototype.animate) return;
-  window.ntScrollUpBound = true;
-  const root = document.documentElement;
-  const media = matchMedia('(prefers-reduced-motion: reduce)');
-  const events = new AbortController();
-  const states = new Map();
-  const animations = new Set();
-  let lastY = Math.max(0, window.scrollY);
-  let direction = 0;
-  const calm = () => media.matches || root.dataset.fx === 'calm';
-  const stopAnimations = () => {
-    animations.forEach(animation => animation.cancel());
-    animations.clear();
-  };
-  const updateDirection = () => {
-    const y = Math.max(0, window.scrollY);
-    const delta = y - lastY;
-    if (Math.abs(delta) < 2) return;
-    const next = delta < 0 ? -1 : 1;
-    if (next > 0 && direction < 0) stopAnimations();
-    direction = next;
-    lastY = y;
-  };
-  const hasRevealed = element => element.classList.contains('scroll-text')
-    ? element.classList.contains('text-in-view') : element.classList.contains('visible');
-
-  // Use the existing outer shell, never the inner card transform used by tilt.
-  // A parent containing animated text is excluded to avoid doubling the movement.
-  document.querySelectorAll('main .scroll-text, main .reveal').forEach(element => {
-    if (!element.classList.contains('scroll-text') && element.querySelector('.scroll-text')) return;
-    states.set(element, { armed: false });
-  });
-  const exitObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) return;
-      const state = states.get(entry.target);
-      if (!state) return;
-      // Rearm only after the entire element is above the viewport plus a 48px buffer.
-      state.armed = hasRevealed(entry.target) && entry.boundingClientRect.bottom < (entry.rootBounds?.top ?? -48);
-    });
-  }, { rootMargin: '48px 0px 48px 0px', threshold: 0 });
-  const headerBottom = document.getElementById('header')?.getBoundingClientRect().bottom || 0;
-  const revealTop = Math.max(0, Math.min(headerBottom + 8, window.innerHeight * .3));
-  const enterObserver = new IntersectionObserver(entries => {
-    updateDirection();
-    let order = 0;
-    entries.filter(entry => entry.isIntersecting)
-      .sort((a, b) => b.boundingClientRect.bottom - a.boundingClientRect.bottom)
-      .forEach(entry => {
-        const element = entry.target;
-        const state = states.get(element);
-        if (!state?.armed) return;
-        state.armed = false;
-        if (direction !== -1 || calm() || document.hidden || !hasRevealed(element)) return;
-        if (element.contains(document.activeElement) || document.querySelector('.menu-toggle[aria-expanded="true"]')) return;
-        const animation = element.animate([
-          { opacity: 0, transform: 'translate3d(0,-20px,0)' },
-          { opacity: 1, transform: 'translate3d(0,0,0)' }
-        ], {
-          duration: 680,
-          delay: Math.min(order++, 3) * 45,
-          easing: 'cubic-bezier(.16,1,.3,1)',
-          fill: 'backwards'
-        });
-        animation.id = 'nt-scroll-up';
-        animations.add(animation);
-        const forget = () => animations.delete(animation);
-        animation.onfinish = forget;
-        animation.oncancel = forget;
-      });
-  }, { rootMargin: `-${revealTop}px 0px 0px 0px`, threshold: 0 });
-  states.forEach((state, element) => { exitObserver.observe(element); enterObserver.observe(element); });
-  window.addEventListener('scroll', updateDirection, { passive: true, signal: events.signal });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopAnimations();
-  }, { signal: events.signal });
-  media.addEventListener('change', stopAnimations, { signal: events.signal });
-  const preferenceObserver = new MutationObserver(() => { if (calm()) stopAnimations(); });
-  preferenceObserver.observe(root, { attributes: true, attributeFilter: ['data-fx'] });
-  window.addEventListener('pagehide', event => {
-    stopAnimations();
-    if (event.persisted) return;
-    exitObserver.disconnect();
-    enterObserver.disconnect();
-    preferenceObserver.disconnect();
-    events.abort();
-  }, { signal: events.signal });
-})();
 
 // Kéo các tiện ích bằng tay nắm; không cản nút bấm, thanh tua hoặc cuộn trang.
 function makeWidgetDraggable(widget) {
@@ -1467,7 +1344,7 @@ shuffleButton.addEventListener('click', () => {
   const destinations = [
     ['✧', 'Về mình', 'Một chút về Ngân Tú', '#about'],
     ['⌨', 'Góc code', 'Ví dụ C, Objective-C và Swift', '#code-corner'],
-    ['★', 'Bảng điểm', 'Thành tích game rắn trên máy này', '#game-scores'],
+    ['★', 'Bảng điểm', 'Thành tích game rắn trên máy này', 'snake-scores'],
     ['⌘', 'Dự án', 'Website cá nhân & game con sâu', '#projects'],
     ['♫', 'Âm nhạc', 'Mở playlist của mình', 'music'],
     ['▧', 'Khoảnh khắc', 'Bộ ảnh và kỷ niệm', '#memories'],
@@ -1494,6 +1371,7 @@ shuffleButton.addEventListener('click', () => {
       button.addEventListener('click', () => {
         dialog.close();
         if (item[3] === 'music') { compactMusic(false); musicEl('.music-head button')?.focus({preventScroll:true}); }
+        else if (item[3] === 'snake-scores') { setTimeout(()=>document.querySelector('[data-show-scores]').click(),0); }
         else document.querySelector(item[3])?.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
       });
       results.append(button);
@@ -1525,12 +1403,13 @@ shuffleButton.addEventListener('click', () => {
 })();
 
 
-document.addEventListener('keydown', event => {
-  if (event.key !== 'Tab' || !menu.classList.contains('open')) return;
-  const items = [menuButton, ...menu.querySelectorAll('a[href]')];
-  const first = items[0], last = items[items.length - 1];
-  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-});
 window.addEventListener('offline', () => notify('Bạn đang ngoại tuyến. Nội dung đã tải vẫn xem được; liên kết và QR mới cần Internet.'));
 
+
+// Selected hero cards share the existing audio instance and controls.
+window.ntSelectedMusic = {
+  open() { compactMusic(false); musicEl('.music-play').focus({ preventScroll: true }); },
+  toggle: toggleMusic,
+  audio: musicAudio,
+  current: () => ({ ...musicPlaylist[musicIndex], playing: !musicAudio.paused && !musicAudio.ended })
+};

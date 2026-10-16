@@ -4,7 +4,7 @@ body, button, input, textarea, select {
 }
 pre, code, .role, .code-file, #code-content { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 .orb, .scene-mesh { opacity: .28; }
-.nav-links a.active { box-shadow: none; }
+
 .ios-grab { display: none; }
 
 @media (max-width: 820px) {
