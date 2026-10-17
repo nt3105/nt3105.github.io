@@ -156,7 +156,9 @@ function apply(content,client){
   const img=$("#home .nt-portrait img");
   if(img&&safeUrl(c.hero.image)){img.src=c.hero.image;img.style.objectPosition="center "+Math.max(0,Math.min(100,Number(c.hero.position)||50))+"%";img.style.filter="brightness("+(100-Math.max(0,Math.min(90,Number(c.hero.overlay)||0)))+"%)"}
  }
- if(c.brand?.logoText){$$(".brand-wordmark strong,.logo").forEach(n=>n.textContent=trim(c.brand.logoText))}
+ if(c.brand?.logoText){$(".brand-wordmark strong,.logo").forEach(n=>{
+  if(n.textContent?.trim()!==trim(c.brand.logoText)) n.textContent=trim(c.brand.logoText);
+ })}
  if(c.brand?.favicon&&safeUrl(c.brand.favicon)){
   const icon=$('link[rel="icon"]');if(icon)icon.href=c.brand.favicon;
  }
@@ -174,7 +176,10 @@ function apply(content,client){
  updateCards("#projects .projects-grid",c.projects,"projects");
  if(c.journey){const heading=$("#journey .section-heading");if(heading)heading.hidden=c.journey.visible===false; if(c.journey.visible!==false){setText("#journey h2",c.journey.title);if(c.journey.body){let p=$("#journey .nt-cms-journey");if(!p){p=createNode("p",{class:"nt-cms-journey"});$("#journey")?.append(p)}p.textContent=trim(c.journey.body)}}}
  if(c.contact){if(c.contact.visible===false)show("#contact",false);else{
-  setText("#contact .contact-copy h2",c.contact.title);
+  if(c.contact.title){const title=$("#contact .contact-copy h2");if(title){
+   const normal=t=>String(t||"").replace(/\s/g,"").toLowerCase();
+   if(normal(title.textContent)!==normal(c.contact.title))title.textContent=trim(c.contact.title);
+  }}
   setText("#contact .contact-copy > p:not(.eyebrow):not(.form-note)",c.contact.description);
   const mail=$("#contact .contact-email");if(mail&&c.contact.email&&/^[^@]+@[^@]+\.[^@]+$/.test(c.contact.email)){mail.href="mailto:"+encodeURIComponent(c.contact.email);mail.firstChild.textContent=c.contact.email+" "}
  }}
@@ -191,6 +196,21 @@ function apply(content,client){
  renderMusic(c.music);
  renderComments(client,c);
 }
+let lastContentStamp=null;
+let loadingCMS=false;
+let publicClient=null;
+async function refreshPublished(){
+ if(!publicClient||loadingCMS)return;
+ loadingCMS=true;
+ try{
+  const {data,error}=await publicClient.from("nt3105_cms_published").select("content,updated_at").eq("id","main").maybeSingle();
+  if(error){console.warn("NT3105 CMS: lookup failed; keeping existing page.",error.code);return}
+  if(!data||data.content?.__cmsReady!==true||data.updated_at===lastContentStamp)return;
+  apply(data.content,publicClient);
+  lastContentStamp=data.updated_at;
+ }catch(error){console.warn("NT3105 CMS: refresh failed; retaining current page",error)}
+ finally{loadingCMS=false}
+}
 async function boot(){
  if(!window.supabase?.createClient){
   try{
@@ -204,12 +224,11 @@ async function boot(){
   }catch(error){console.warn("NT3105 CMS: backup SDK unavailable; keeping original site.",error)}
  }
  if(!window.supabase?.createClient){console.warn("NT3105 CMS: Supabase SDK unavailable; using original site.");return}
- const client=window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
- try{
-  const {data,error}=await client.from("nt3105_cms_published").select("content").eq("id","main").maybeSingle();
-  if(error){console.warn("NT3105 CMS: no migration or offline; keeping existing site.",error.code);return}
-  if(data?.content&&typeof data.content==="object"){apply(data.content,client)}
- }catch(error){console.warn("NT3105 CMS: failed to load published content; original site remains.",error)}
+ publicClient=window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+ await refreshPublished();
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshPublished();});
+ window.addEventListener("focus",()=>{if(!document.hidden)refreshPublished();});
+ setInterval(()=>{if(!document.hidden)refreshPublished()},30000);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
