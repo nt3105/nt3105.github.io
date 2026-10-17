@@ -5,7 +5,7 @@ const {JSDOM}=require('jsdom');
 (async()=>{
  const html=fs.readFileSync('index.html','utf8');
  assert(html.includes('reviews-demo.js?v=review-contact-v1'),'Reviews JS reference must be cache refreshed');
- assert(html.includes('reviews-demo.css?v=review-contact-v1'),'Reviews CSS reference must be cache refreshed');
+ assert(html.includes('reviews-demo.css?v=review-eyebrow-20261017'),'Reviews CSS reference must be cache refreshed');
  assert(!html.includes('06 / SAY HELLO'),'Former contact page must be replaced');
  assert(!html.includes('id="contact-form"'),'Old mail form must be absent');
  assert.equal((html.match(/id="contact"/g)||[]).length,1,'One contact anchor');
