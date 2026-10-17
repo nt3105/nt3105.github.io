@@ -28,6 +28,8 @@ const SOCIAL_LINKS = {
   email: 'kienngantu3105@gmail.com',
   telegram: 'https://t.me/neverdierrr'
 };
+// Keep original social links and email-form destination editable by CMS.
+window.ntSocialLinks = SOCIAL_LINKS;
 // Điền URL thật của dự án / kho mã nguồn khi đã có.
 // Để trống: nút sẽ thông báo chưa có liên kết, không mở trang lỗi.
 const PROJECT_LINKS = {
