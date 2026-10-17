@@ -91,7 +91,7 @@ html[data-appearance="light"] #header .brand-simple .brand-dot, html[data-appear
 }
 #header .nav, #header.scrolled .nav { width:100%; height:64px; margin:0; padding:8px; gap:8px; transition:none; }
 #header #nav-links {
- position:relative; isolation:isolate; order:1; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); flex:1; min-width:0; gap:2px; padding:0; margin:0; border:0;
+ position:relative; isolation:isolate; order:1; display:grid; grid-template-columns:repeat(5,max-content); justify-content:center; flex:1; min-width:0; gap:4px; padding:0; margin:0; border:0;
  border-radius:999px; background:none; box-shadow:none;
 }
 #header #nav-links > a {
@@ -137,9 +137,13 @@ html[data-appearance="light"] #header #nav-links .nav-selection { background:lin
  #header .nav { height:58px!important; min-height:58px!important; max-height:58px!important; padding:7px; gap:4px; }
  #header #nav-links { grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; padding:0; border:0; position:relative; top:auto; left:auto; right:auto; width:auto; max-height:none; overflow:visible; background:none; box-shadow:none; }
  #header #nav-links > a { height:44px; min-height:44px; padding:0 3px; justify-content:center; font-size:12px; }
- #header #nav-links > a:is([href="#journey"],[href="#personal-space"],[href="#donate"]) { display:none; }
+ #header #nav-links > a:is([href="#journey"],[href="#personal-space"]) { display:none; }
  #header #nt-theme-toggle > span, #header #nav-links .nav-contact .nav-label > span { display:none; }
  #header .nav > #nt-theme-toggle { order:2!important; flex:0 0 calc((100% - 16px) / 5); width:calc((100% - 16px) / 5); height:44px; min-height:44px; margin:0; padding:0; border-radius:999px; }
+}
+@media(max-width:375px) {
+ #header #nav-links > a { font-size:11px; padding:0 1px; }
+ #header #nav-links { gap:2px; }
 }
 @media(prefers-reduced-motion:reduce) {
  #header #nav-links .nav-selection, #header #nav-links > a { transition:none !important; }
