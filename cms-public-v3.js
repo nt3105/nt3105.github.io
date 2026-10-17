@@ -11,8 +11,8 @@ const $$=s=>Array.from(document.querySelectorAll(s));
 const isURL=s=>{try{const u=new URL(s);return u.protocol==="https:"}catch{return false}};
 const setText=(query,value)=>{if(typeof value!=="string")return;const node=$(query);if(node)node.textContent=value.slice(0,500)};
 const safeUrl=s=>typeof s==="string"&&isURL(s)?s:null;
-const show=(query,visible)=>{const el=$(query);if(el)el.hidden=!visible};
-const trim=s=>String(s||"").slice(0,250);
+const show=(query,visible)=>{const el=$(query);if(el){el.hidden=!visible;el.style.display=visible?"":"none"}};
+const trim=(s,max=1500)=>String(s??"").slice(0,max);
 function createNode(tag,attrs={},text){
   const n=document.createElement(tag);
   for(const [k,v] of Object.entries(attrs)){if(k==="class")n.className=v;else n.setAttribute(k,String(v))}
@@ -40,10 +40,11 @@ function updateGallery(items){
      card.append(img,caption);
    }
    const oldHref=card.getAttribute("href")||"";
+   const previewImg=card.querySelector("img");
+   if(previewImg&&!previewImg.dataset.cmsOriginalThumb)previewImg.dataset.cmsOriginalThumb=previewImg.getAttribute("src")||"";
    card.href=url;
-   if(!oldHref||(oldHref!==url && !url.endsWith(oldHref))){
-     const img=card.querySelector("img");if(img)img.src=url;
-   }
+   const nextThumb=safeUrl(item.thumb)||((oldHref===url||url.endsWith(oldHref))?previewImg?.dataset.cmsOriginalThumb||url:url);
+   if(previewImg&&previewImg.src!==nextThumb)previewImg.src=nextThumb;
    const caption=card.querySelector(".nt-memory-caption strong");
    if(caption)caption.textContent=trim(item.title||"Khoảnh khắc");
    const image=card.querySelector("img");if(image)image.alt=trim(item.title||"Ảnh kỷ niệm");
@@ -70,6 +71,13 @@ function updateCards(selector,items,kind){
   const reused=Boolean(card);
   if(card)remaining.delete(card);
   else card=createNode("article",{class:kind==="skills"?"skill-card reveal":"project-card reveal"});
+  if(!reused&&kind==="skills"){
+    const top=createNode("div",{class:"skill-top"});
+    top.append(createNode("span",{class:"skill-value"},"Đang học"));
+    const progress=createNode("div",{class:"progress"});
+    progress.append(createNode("span"));
+    card.append(top,createNode("h3"),createNode("p"),progress);
+  }
   if(!reused&&kind==="projects"){
     const art=createNode("div",{class:"project-art art-portfolio"});
     art.append(createNode("span",{class:"project-number"},"NT3105 / PROJECT"));
@@ -96,6 +104,59 @@ function updateCards(selector,items,kind){
       if(!reused){link.target="_blank";link.rel="noopener noreferrer"}
     }
   }
+  if(kind==="skills"){
+    if(Number.isFinite(Number(obj.level))&&obj.level!==undefined){
+      const level=Math.max(0,Math.min(100,Number(obj.level)));
+      card.style.setProperty("--level",level+"%");
+      const progress=card.querySelector(".progress > span");
+      if(progress)progress.style.width=level+"%";
+    }
+    if(typeof obj.status==="string"){
+      const badge=card.querySelector(".skill-value");
+      if(badge)badge.textContent=trim(obj.status,80);
+    }
+    if(safeUrl(obj.icon)){
+      let icon=card.querySelector(".nt-app-icon img");
+      if(!icon){
+        const holder=createNode("span",{class:"nt-app-icon"});
+        icon=createNode("img",{alt:"",width:"36",height:"36"});
+        holder.append(icon);
+        (card.querySelector(".skill-top")||card).prepend(holder);
+      }
+      icon.src=obj.icon;
+    }
+  }else if(kind==="projects"){
+    const info=card.querySelector(".project-info")||card;
+    if(typeof obj.type==="string"){
+      let type=card.querySelector(".project-type");
+      if(!type){
+        type=createNode("span",{class:"project-type"});
+        (card.querySelector(".project-title")||info).append(type);
+      }
+      type.textContent=trim(obj.type,80);
+    }
+    if(typeof obj.tags==="string"){
+      let tags=card.querySelector(".tags");
+      if(!tags){tags=createNode("div",{class:"tags"});info.append(tags)}
+      tags.replaceChildren(...obj.tags.split(",").map(t=>t.trim()).filter(Boolean).slice(0,12).map(t=>createNode("span",{},t)));
+    }
+    const actions=card.querySelector(".project-actions")||info;
+    if(Object.hasOwn(obj,"source")){
+      let link=actions.querySelector("a.source-link");
+      if(!link&&safeUrl(obj.source)){link=createNode("a",{class:"source-link"},"Mã nguồn ↗");actions.append(link)}
+      if(link){
+        if(safeUrl(obj.source)){link.href=obj.source;link.target="_blank";link.rel="noopener noreferrer";link.hidden=false;}
+        else link.hidden=true;
+      }
+    }
+    if(Object.hasOwn(obj,"url")){
+      let link=actions.querySelector("a.button");
+      if(link){
+        if(safeUrl(obj.url)){link.href=obj.url;link.hidden=false}
+        else if(obj.url===""){link.hidden=true}
+      }
+    }
+  }
   frag.append(card);
  }
  parent.replaceChildren(frag);
@@ -108,7 +169,7 @@ function renderMusic(music){
 function setSocial(kind,value){
  if(!safeUrl(value))return;
  if(window.ntSocialLinks)window.ntSocialLinks[kind]=value;
- $('[data-social="'+kind+'"]').forEach(a=>{if(a.tagName==="A"){a.href=value;a.rel="noopener noreferrer";a.target="_blank"}});
+ $$('[data-social="'+kind+'"]').forEach(a=>{if(a.tagName==="A"){a.href=value;a.rel="noopener noreferrer";a.target="_blank"}});
 }
 function renderComments(client,content){
  const existing=document.getElementById("nt3105-cms-comments");
@@ -161,8 +222,15 @@ function renderComments(client,content){
  load();
 }
 function apply(content,client){
- const c=content||{};
- if(c.hero){
+ const c=content||{},failures=[];
+ const applyPart=(name,fn)=>{
+   try{fn()}catch(error){
+     console.error("NT3105 CMS "+name+" apply failure",error);
+     failures.push(name+": "+String(error?.message||error).slice(0,160));
+   }
+ };
+ applyPart("hero",()=>{
+if(c.hero){
   if(typeof c.hero.visible==="boolean")show("#home",c.hero.visible);
   setText("#home .hero-description",c.hero.subtitle);
   if(typeof c.hero.title==="string"){
@@ -179,14 +247,39 @@ function apply(content,client){
   }
   const img=$("#home .nt-portrait img");
   if(img&&safeUrl(c.hero.image)){img.src=c.hero.image;img.style.objectPosition="center "+Math.max(0,Math.min(100,Number(c.hero.position)||50))+"%";img.style.filter="brightness("+(100-Math.max(0,Math.min(90,Number(c.hero.overlay)||0)))+"%)"}
+  if(typeof c.hero.roles==="string"&&window.ntCMSUpdateRoles)window.ntCMSUpdateRoles(c.hero.roles);
+  const safeHref=value=>typeof value==="string"&&(value.startsWith("#")&&/^#[a-zA-Z0-9_-]+$/.test(value)||safeUrl(value))?value:null;
+  const labels=[["primaryLabel","primaryUrl","Xem dự án","#projects"],["secondaryLabel","secondaryUrl","Liên hệ với tôi","#contact"]];
+  const actions=$$("#home .hero-actions > a.button");
+  labels.forEach(([labelKey,urlKey,fallbackText,fallbackUrl],i)=>{
+    const link=actions[i];if(!link)return;
+    const label=trim(c.hero[labelKey]||fallbackText,80);
+    let textNode=Array.from(link.childNodes).find(node=>node.nodeType===3);
+    if(textNode)textNode.textContent=label+" ";
+    else link.prepend(document.createTextNode(label+" "));
+    link.href=safeHref(c.hero[urlKey])||fallbackUrl;
+  });
  }
- if(c.brand?.logoText){$(".brand-wordmark strong,.logo").forEach(n=>{
+ });
+ applyPart("branding",()=>{
+if(c.brand?.logoText){$$(".brand-wordmark strong,.logo").forEach(n=>{
   if(n.textContent?.trim()!==trim(c.brand.logoText)) n.textContent=trim(c.brand.logoText);
  })}
+ if(typeof c.brand?.tagline==="string"){
+   const header=$("#header .brand")||$(".footer .brand");
+   if(header){
+    header.title=trim(c.brand.tagline,160);
+    let extra=header.querySelector(".nt-cms-brand-tagline");
+    if(!extra){extra=createNode("small",{class:"nt-cms-brand-tagline"});header.append(extra)}
+    extra.textContent=trim(c.brand.tagline,70);
+   }
+ }
  if(c.brand?.favicon&&safeUrl(c.brand.favicon)){
   const icon=$('link[rel="icon"]');if(icon)icon.href=c.brand.favicon;
  }
- if(c.about){
+ });
+ applyPart("about",()=>{
+if(c.about){
   if(c.about.visible===false)show("#about",false);
   else{
    show("#about",true);setText("#about .section-heading h2",c.about.title);
@@ -195,11 +288,48 @@ function apply(content,client){
    p.textContent=trim(c.about.body);
   }
  }
+ });
+ applyPart("sections",()=>{
+if(c.gallerySettings){
+  setText("#nt-memories-title",c.gallerySettings.title);
+  setText("#memories .nt-gallery-note",c.gallerySettings.subtitle);
+ }
+ if(c.skillsSettings){
+  setText("#skills .section-heading h2",c.skillsSettings.title);
+  setText("#skills .section-heading > p",c.skillsSettings.description);
+ }
+ if(c.projectsSettings){setText("#projects .section-heading h2",c.projectsSettings.title)}
+ if(c.socialsSettings){setText("#social .section-heading h2",c.socialsSettings.title)}
+ if(c.personal){
+  if(typeof c.personal.visible==="boolean")show("#personal-space",c.personal.visible);
+  setText("#personal-space .section-heading h2",c.personal.title);
+  setText("#personal-space .life-moments h3",c.personal.memoryTitle);
+  setText("#personal-space .life-moments p",c.personal.memoryDescription);
+ }
+ if(c.code){
+  if(typeof c.code.visible==="boolean")show("#code-corner",c.code.visible);
+  setText("#code-heading",c.code.title);
+  setText("#code-corner .section-heading > p",c.code.description);
+  if(window.ntCMSCodeSamples)window.ntCMSCodeSamples(c.code);
+ }
+ if(c.donate){
+  if(typeof c.donate.visible==="boolean")show("#donate",c.donate.visible);
+  setText("#donate .donate-copy h2",c.donate.title);
+  const image=$("#donation-qr"),open=$("#qr-open");
+  if(safeUrl(c.donate.qrImage)&&image&&open){
+    image.src=c.donate.qrImage;
+    open.href=c.donate.qrImage;
+  }
+ }
  updateGallery(c.gallery);
  updateCards("#skills .skills-grid",c.skills,"skills");
  updateCards("#projects .projects-grid",c.projects,"projects");
- if(c.journey){const heading=$("#journey .section-heading");if(heading)heading.hidden=c.journey.visible===false; if(c.journey.visible!==false){setText("#journey h2",c.journey.title);if(c.journey.body){let p=$("#journey .nt-cms-journey");if(!p){p=createNode("p",{class:"nt-cms-journey"});$("#journey")?.append(p)}p.textContent=trim(c.journey.body)}}}
- if(c.contact){if(c.contact.visible===false)show("#contact",false);else{
+ });
+ applyPart("journey",()=>{
+if(c.journey){const heading=$("#journey .section-heading");if(heading)heading.hidden=c.journey.visible===false; if(c.journey.visible!==false){setText("#journey h2",c.journey.title);if(c.journey.body){let p=$("#journey .nt-cms-journey");if(!p){p=createNode("p",{class:"nt-cms-journey"});$("#journey")?.append(p)}p.textContent=trim(c.journey.body)}}}
+ });
+ applyPart("contact",()=>{
+if(c.contact){if(c.contact.visible===false)show("#contact",false);else{
   if(c.contact.title){const title=$("#contact .contact-copy h2");if(title){
    const normal=t=>String(t||"").replace(/\s/g,"").toLowerCase();
    if(normal(title.textContent)!==normal(c.contact.title))title.textContent=trim(c.contact.title);
@@ -207,22 +337,48 @@ function apply(content,client){
   setText("#contact .contact-copy > p:not(.eyebrow):not(.form-note)",c.contact.description);
   const mail=$("#contact .contact-email");if(mail&&c.contact.email&&/^[^@]+@[^@]+\.[^@]+$/.test(c.contact.email)){mail.href="mailto:"+encodeURIComponent(c.contact.email);if(mail.firstChild)mail.firstChild.textContent=c.contact.email+" ";if(window.ntSocialLinks)window.ntSocialLinks.email=c.contact.email}
  }}
- if(c.navigation){for(const [section,txt] of Object.entries(c.navigation)){const id=section==="home"?"home":section;$$('#nav-links a[href="#'+id+'"] .nav-label').forEach(n=>n.textContent=trim(txt))}}
- if(c.socials){for(const [kind,url] of Object.entries(c.socials))setSocial(kind,url)}
- if(c.theme?.accent&&/^#[a-fA-F0-9]{3,8}$/.test(c.theme.accent)){
+ });
+ applyPart("navigation",()=>{
+if(c.navigation){
+ for(const [section,txt] of Object.entries(c.navigation)){
+  const id=section==="personal"?"personal-space":section==="code"?"code-corner":section;
+  $$('#nav-links a[href="#'+id+'"] .nav-label').forEach(n=>n.textContent=trim(txt));
+ }
+ if(typeof c.navigation.code==="string")setText('a.launch-card[href="#code-corner"] .launch-copy strong',c.navigation.code);
+ if(typeof c.navigation.home==="string"){
+   const home=$("#header .brand");if(home){home.title=trim(c.navigation.home,80);home.setAttribute("aria-label",trim(c.navigation.home,80))}
+ }
+}
+ });
+ applyPart("social",()=>{
+if(c.socials){for(const [kind,url] of Object.entries(c.socials))setSocial(kind,url)}
+ });
+ applyPart("theme",()=>{
+if(c.theme?.accent&&/^#[a-fA-F0-9]{3,8}$/.test(c.theme.accent)){
   document.documentElement.style.setProperty("--accent",c.theme.accent);
   document.documentElement.style.setProperty("--cyan",c.theme.accent);
   document.documentElement.style.setProperty("--gradient","linear-gradient(110deg,"+c.theme.accent+" 0%,#929cff 52%,#bb8cff 100%)");
  }
+ if(c.theme?.background&&/^#[0-9a-fA-F]{3,8}$/.test(c.theme.background)){
+   document.documentElement.style.setProperty("--bg",c.theme.background);
+ }
  if(c.theme?.surface)document.documentElement.style.setProperty("--surface",c.theme.surface);
  if(c.theme?.text)document.documentElement.style.setProperty("--text",c.theme.text);
- if(c.theme?.light===true)document.documentElement.classList.add("nt-cms-light");
+ document.documentElement.classList.toggle("nt-cms-light",c.theme?.light===true);
  if(c.layout){document.documentElement.style.setProperty("--cms-card-radius",Math.max(0,Math.min(44,Number(c.layout.radius)||22))+"px");document.documentElement.style.setProperty("--cms-card-spacing",Math.max(8,Math.min(52,Number(c.layout.spacing)||24))+"px");document.documentElement.style.setProperty("--cms-card-columns",Math.max(1,Math.min(4,Number(c.layout.cardColumns)||3)))}
- if(c.effects){for(const k of ["glass","reveal","parallax","glow","softMotion"])document.documentElement.classList.toggle("nt-cms-no-"+k,c.effects[k]===false);document.documentElement.style.setProperty("--cms-motion-intensity",Math.max(0,Math.min(100,Number(c.effects.intensity)||35)));document.documentElement.style.setProperty("--cms-blur",Math.max(0,Math.min(35,Number(c.effects.blur)||18))+"px")}
- if(c.seo){if(c.seo.title)document.title=trim(c.seo.title);const desc=$('meta[name="description"]');if(desc&&c.seo.description)desc.content=trim(c.seo.description);if(c.seo.ogImage&&safeUrl(c.seo.ogImage)){const og=$('meta[property="og:image"]');if(og)og.content=c.seo.ogImage}}
+ if(c.effects){for(const k of ["glass","reveal","parallax","glow","softMotion"])document.documentElement.classList.toggle("nt-cms-no-"+k,c.effects[k]===false);document.documentElement.style.setProperty("--cms-motion-intensity",Math.max(0,Math.min(100,Number(c.effects.intensity)||35)));document.documentElement.style.setProperty("--cms-blur",Math.max(0,Math.min(35,Number(c.effects.blur??18)))+"px");document.documentElement.style.setProperty("--cms-motion-duration",(0.2+Math.max(0,Math.min(100,Number(c.effects.intensity??35)))/150).toFixed(2)+"s")}
+ });
+ applyPart("seoFooter",()=>{
+if(c.seo){if(c.seo.title)document.title=trim(c.seo.title);const desc=$('meta[name="description"]');if(desc&&c.seo.description)desc.content=trim(c.seo.description);if(c.seo.ogImage&&safeUrl(c.seo.ogImage)){const og=$('meta[property="og:image"]');if(og)og.content=c.seo.ogImage}}
  if(c.footer){setText(".footer > div p",c.footer.text);setText(".footer > div small",c.footer.credit)}
- renderMusic(c.music);
- renderComments(client,c);
+ });
+ applyPart("audio",()=>{
+renderMusic(c.music);
+ });
+ applyPart("guestbook",()=>{
+renderComments(client,c);
+ });
+ if(failures.length)throw new Error("Không thể hiển thị một số mục: "+failures.join(" | "));
 }
 let lastContentStamp=null;
 let loadingCMS=false;
@@ -267,7 +423,8 @@ const PREVIEW_TARGETS={
  music:"#nt-hero-music-open",effects:"#journey",brand:"#header",
  navigation:"#header",skills:"#skills",projects:"#projects",journey:"#journey",
  contact:"#contact",socials:"#social",theme:"#home",layout:"#skills",
- seo:"#home",footer:".footer",comments:"#nt3105-cms-comments"
+ seo:"#home",footer:".footer",comments:"#nt3105-cms-comments",
+ personal:"#personal-space",code:"#code-corner",donate:"#donate"
 };
 const FIELD_TARGETS={
  "hero.title":"#hero-title","hero.subtitle":".hero-description","hero.image":".nt-portrait",
@@ -276,7 +433,11 @@ const FIELD_TARGETS={
  "gallery.src":"#memories .nt-gallery","gallery.title":"#memories .nt-gallery",
  "tracks.title":"#nt-hero-music-open","tracks.cover":"#nt-hero-cover",
  "theme.accent":"#home","footer.text":".footer","contact.title":"#contact h2",
- "contact.description":"#contact .contact-copy","brand.logoText":"#header .brand"
+ "contact.description":"#contact .contact-copy","brand.logoText":"#header .brand",
+ "gallerySettings.title":"#nt-memories-title","skillsSettings.title":"#skills .section-heading h2",
+ "projectsSettings.title":"#projects .section-heading h2","socialsSettings.title":"#social .section-heading h2",
+ "personal.title":"#personal-space .section-heading h2","code.title":"#code-heading",
+ "donate.title":"#donate .donate-copy h2"
 };
 let previewSpotlight=null;
 function previewNavigate(section,field){
@@ -298,7 +459,8 @@ function previewSectionFromNode(node){
  if(node.closest("#nt3105-cms-comments"))return "comments";
  if(node.closest("#nt-hero-music-open,.music-widget,.nt-music-float"))return "music";
  const ids={home:"hero",about:"about",memories:"gallery",skills:"skills",
-  projects:"projects",journey:"journey",contact:"contact",social:"socials"};
+  projects:"projects",journey:"journey",contact:"contact",social:"socials",
+  "personal-space":"personal","code-corner":"code",donate:"donate"};
  for(const [id,section] of Object.entries(ids)){
   if(node.closest("#"+id))return section;
  }

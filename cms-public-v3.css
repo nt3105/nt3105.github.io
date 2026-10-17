@@ -38,3 +38,23 @@ html.nt-cms-in-studio .nt-cms-spotlight{outline:4px solid rgba(110,203,255,.95)!
 html.nt-cms-in-studio #home,html.nt-cms-in-studio #skills,html.nt-cms-in-studio #journey,html.nt-cms-in-studio #about,html.nt-cms-in-studio #memories{scroll-margin-top:105px}
 html.nt-cms-in-studio a,html.nt-cms-in-studio button{cursor:crosshair}
 @media(prefers-reduced-motion:reduce){html.nt-cms-in-studio,html.nt-cms-in-studio body{scroll-behavior:auto}}
+
+
+/* CMS-managed site branding; responsive without covering the navigation. */
+:is(#header,.footer) .brand .nt-cms-brand-tagline{font-size:9px;font-weight:600;letter-spacing:.06em;line-height:1.25;color:var(--muted,#adb6c8);max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:7px}
+@media(max-width:760px){:is(#header,.footer) .brand .nt-cms-brand-tagline{display:none}}
+body .project-card .project-art[style*="background-image"]{background-size:cover;background-position:center}
+body .project-card .project-art[style*="background-image"] .project-placeholder{background:rgba(4,9,25,.4);backdrop-filter:blur(2px)}
+
+
+/* CMS effect sliders now control real animation and glass strength. */
+html:not(.nt-cms-no-softMotion) .reveal,html:not(.nt-cms-no-softMotion) .reveal-shell,
+html:not(.nt-cms-no-softMotion) .project-card,html:not(.nt-cms-no-softMotion) .skill-card{
+ transition-duration:var(--cms-motion-duration,.43s)!important
+}
+html:not(.nt-cms-no-glass) .glass,html:not(.nt-cms-no-glass) .glass-card{
+ backdrop-filter:blur(var(--cms-blur,18px));
+ -webkit-backdrop-filter:blur(var(--cms-blur,18px))
+}
+html.nt-cms-no-parallax .nt-float,html.nt-cms-no-parallax .parallax-layer{transform:none!important}
+@media(prefers-reduced-motion:reduce){html .reveal,html .project-card,html .skill-card{transition-duration:0s!important}}

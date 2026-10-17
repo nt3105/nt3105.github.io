@@ -16,3 +16,4 @@ jobs:
           node --check script.js
           node --check cms-public-v3.js
           node tests/cms-v3-smoke.cjs
+          node tests/cms-apply-v6.cjs

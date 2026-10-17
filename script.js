@@ -255,6 +255,15 @@ let roleIndex = 0;
 let character = ROLES[0].length;
 let deleting = true;
 let typingTimer;
+const originalRoles=[...ROLES];
+window.ntCMSUpdateRoles=(value)=>{
+ const roleList=String(value??"").split(",").map(x=>x.trim()).filter(Boolean).slice(0,15);
+ ROLES.splice(0,ROLES.length,...(roleList.length?roleList:originalRoles));
+ roleIndex=0;
+ character=0;
+ deleting=false;
+ typing.textContent=ROLES[0];
+};
 function typeNext() {
   const word = ROLES[roleIndex];
   character += deleting ? -1 : 1;
