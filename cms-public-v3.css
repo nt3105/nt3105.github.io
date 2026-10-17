@@ -58,3 +58,42 @@ html:not(.nt-cms-no-glass) .glass,html:not(.nt-cms-no-glass) .glass-card{
 }
 html.nt-cms-no-parallax .nt-float,html.nt-cms-no-parallax .parallax-layer{transform:none!important}
 @media(prefers-reduced-motion:reduce){html .reveal,html .project-card,html .skill-card{transition-duration:0s!important}}
+
+
+/* CMS visual regression fixes: keep the original illustrated cards visible. */
+.skill-card .nt-skill-fallback-icon{
+ display:inline-grid;place-items:center;width:44px;height:44px;flex:0 0 44px;
+ border-radius:12px;border:1px solid color-mix(in srgb,var(--skill-color,#78e6ee) 36%,transparent);
+ background:color-mix(in srgb,var(--skill-color,#78e6ee) 13%,transparent);
+ color:var(--skill-color,#78e6ee);font-size:13px;font-weight:800;letter-spacing:-.025em;
+}
+.skill-card .skill-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.skill-card .skill-top .nt-app-icon{display:inline-grid;place-items:center;flex-shrink:0}
+.skill-card .progress{overflow:hidden}
+.skill-card .progress > span{
+ display:block;height:100%;width:var(--level,45%);
+ background:var(--skill-color,#78e6ee);border-radius:inherit;
+}
+.project-card .project-art{position:relative;isolation:isolate}
+.project-card .project-placeholder{position:relative;z-index:1}
+.project-card .nt-cms-project-placeholder{min-height:100%;gap:12px}
+.project-card .nt-cms-project-placeholder strong{color:var(--text,#f4f6fd)}
+.project-card .project-art[style*="background-image"] .project-placeholder{
+ background:linear-gradient(160deg,rgba(8,13,27,.2),rgba(8,12,27,.5))
+}
+
+/* The iOS-style light navigation uses a dark selected pill: its label must
+   remain high-contrast in both light and dark appearance modes. */
+html[data-appearance="light"] #header #nav-links .nav-selection{
+ background:linear-gradient(155deg,#34433e,#172622)!important;
+ border:1px solid rgba(255,255,255,.3)!important;
+ box-shadow:0 4px 12px #17231e30,inset 0 1px 0 #ffffff22!important;
+}
+html[data-appearance="light"] #header #nav-links > a.active,
+html[data-appearance="light"] #header #nav-links > a.active .nav-label,
+html[data-appearance="light"] #header #nav-links > a.active:hover{
+ color:#f6fff9!important;-webkit-text-fill-color:#f6fff9!important;
+}
+html[data-appearance="light"] #header #nav-links:not(.pill-nav-ready) > a.active{
+ background:#213731!important;color:#f6fff9!important;
+}
