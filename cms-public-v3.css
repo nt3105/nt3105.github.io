@@ -41,8 +41,8 @@ html.nt-cms-in-studio a,html.nt-cms-in-studio button{cursor:crosshair}
 
 
 /* CMS-managed site branding; responsive without covering the navigation. */
-#header .brand .nt-cms-brand-tagline{font-size:9px;font-weight:600;letter-spacing:.06em;line-height:1.25;color:var(--muted,#adb6c8);max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:7px}
-@media(max-width:760px){#header .brand .nt-cms-brand-tagline{display:none}}
+:is(#header,.footer) .brand .nt-cms-brand-tagline{font-size:9px;font-weight:600;letter-spacing:.06em;line-height:1.25;color:var(--muted,#adb6c8);max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:7px}
+@media(max-width:760px){:is(#header,.footer) .brand .nt-cms-brand-tagline{display:none}}
 body .project-card .project-art[style*="background-image"]{background-size:cover;background-position:center}
 body .project-card .project-art[style*="background-image"] .project-placeholder{background:rgba(4,9,25,.4);backdrop-filter:blur(2px)}
 
