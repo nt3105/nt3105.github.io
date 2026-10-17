@@ -167,7 +167,16 @@
       });
       codeLines.replaceChildren(fragment);
       $('positionText').textContent=`Ln ${lines.length}, Col ${Array.from(lines.at(-1)).length+1}`;
-      if(activeLine){const active=codeLines.children[activeLine-1]; if(active){active.scrollIntoView({block:'nearest',behavior:'instant'});}}
+      if(activeLine){
+        const active=codeLines.children[activeLine-1];
+        if(active){
+          // scrollIntoView() also scrolls ancestor documents, including the parent page
+          // when the studio is embedded in an iframe. Keep the animation inside editor.
+          const row=active.getBoundingClientRect(), box=editor.getBoundingClientRect();
+          if(row.bottom>box.bottom-16)editor.scrollTop+=row.bottom-box.bottom+16;
+          else if(row.top<box.top+16)editor.scrollTop+=row.top-box.top-16;
+        }
+      }
       else if(showCaret&&codeCursor){const offset=codeCursor.getBoundingClientRect().bottom-editor.getBoundingClientRect().bottom;if(offset>0)editor.scrollTop+=offset+32;}
     }
     function setStatus(name){
