@@ -233,7 +233,7 @@ function apply(content,client){
   const img=$("#home .nt-portrait img");
   if(img&&safeUrl(c.hero.image)){img.src=c.hero.image;img.style.objectPosition="center "+Math.max(0,Math.min(100,Number(c.hero.position)||50))+"%";img.style.filter="brightness("+(100-Math.max(0,Math.min(90,Number(c.hero.overlay)||0)))+"%)"}
  }
- if(c.brand?.logoText){$(".brand-wordmark strong,.logo").forEach(n=>{
+ if(c.brand?.logoText){$$(".brand-wordmark strong,.logo").forEach(n=>{
   if(n.textContent?.trim()!==trim(c.brand.logoText)) n.textContent=trim(c.brand.logoText);
  })}
  if(c.brand?.favicon&&safeUrl(c.brand.favicon)){
