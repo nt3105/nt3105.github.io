@@ -53,9 +53,13 @@ listeners.message({origin:'https://evil.invalid',source:parent,data:{type:'nt310
 assert.equal(updates(),0,'Untrusted origin must not update preview');
 listeners.message({origin:'https://admin.nt3105.io.vn',source:{},data:{type:'nt3105:cms-preview-update',content:{comments:{enabled:false}}}});
 assert.equal(updates(),0,'Message from unrelated window must be rejected');
-listeners.message({origin:'https://admin.nt3105.io.vn',source:parent,data:{type:'nt3105:cms-preview-update',content:{comments:{enabled:false}}}});
+listeners.message({origin:'https://admin.nt3105.io.vn',source:parent,data:{type:'nt3105:cms-preview-update',revision:42,content:{comments:{enabled:false}}}});
 assert.equal(updates(),1,'Valid Admin message should update the real preview');
-assert.equal(messages.at(-1).origin,'https://admin.nt3105.io.vn','Ack must use strict target origin');
+assert.equal(messages.at(-1).msg.revision,42,'Preview must acknowledge the same revision the Admin confirmed');
+const readyBefore=messages.filter(({msg})=>msg.type==='nt3105:cms-preview-ready').length;
+listeners.message({origin:'https://admin.nt3105.io.vn',source:parent,data:{type:'nt3105:cms-preview-ping'}});
+assert.equal(messages.filter(({msg})=>msg.type==='nt3105:cms-preview-ready').length,readyBefore+1,'Iframe must recover preview readiness on retry');
+assert.equal(messages.at(-1).origin,'https://admin.nt3105.io.vn','Owner-only messages must target Admin origin');
 console.log('NT3105 cross-origin live preview bridge checks passed.');
 
 console.log('NT3105 CMS public smoke checks passed.');
