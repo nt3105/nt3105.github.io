@@ -40,19 +40,19 @@ const previewDoc={
   querySelector(){return null},querySelectorAll(){return []},
   getElementById(){return null}
 };
+class PreviewElement {
+  constructor(kind){this.kind=kind}
+  closest(selector){
+    if(selector.includes("#nt-motion-notice .nt-motion-enable")&&this.kind==="enable")return this;
+    if(selector.includes("#nt-motion-notice .nt-motion-later")&&this.kind==="later")return this;
+    if(selector==="a,button,form")return this;
+    return null;
+  }
+}
 vm.runInNewContext(fs.readFileSync('cms-public-v3.js','utf8'),{
   window:studioWin,document:previewDoc,location:{search:'?nt3105_preview=1'},
   URL,URLSearchParams,console,
-  CustomEvent:class CustomEvent{},
-  Element:class Element{
-    constructor(kind){this.kind=kind}
-    closest(selector){
-      if(selector.includes("#nt-motion-notice .nt-motion-enable")&&this.kind==="enable")return this;
-      if(selector.includes("#nt-motion-notice .nt-motion-later")&&this.kind==="later")return this;
-      if(selector==="a,button,form")return this;
-      return null;
-    }
-  },
+  CustomEvent:class CustomEvent{}, Element:PreviewElement,
   clearTimeout, setTimeout
 },{filename:'cms-public-v3.js'});
 assert(messages.some(({msg,origin})=>msg.type==='nt3105:cms-preview-ready'&&origin==='https://admin.nt3105.io.vn'),'Preview should signal ready only to Admin origin');
@@ -75,14 +75,7 @@ assert.equal(messages.at(-1).origin,'https://admin.nt3105.io.vn','Owner-only mes
 assert(typeof previewListeners.click==='function','Admin preview capture listener must be available');
 const makeClick=kind=>{
   let prevented=false,stopped=false;
-  const target={
-    kind,closest(selector){
-      if(selector.includes("#nt-motion-notice .nt-motion-enable")&&kind==='enable')return this;
-      if(selector.includes("#nt-motion-notice .nt-motion-later")&&kind==='later')return this;
-      if(selector==='a,button,form')return this;
-      return null;
-    }
-  };
+  const target=new PreviewElement(kind);
   return {target,preventDefault(){prevented=true},stopImmediatePropagation(){stopped=true},
     result:()=>({prevented,stopped})};
 };
