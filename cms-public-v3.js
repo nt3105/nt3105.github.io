@@ -290,7 +290,7 @@ function apply(content,client){
   setText("#contact .contact-copy > p:not(.eyebrow):not(.form-note)",c.contact.description);
   const mail=$("#contact .contact-email");if(mail&&c.contact.email&&/^[^@]+@[^@]+\.[^@]+$/.test(c.contact.email)){mail.href="mailto:"+encodeURIComponent(c.contact.email);if(mail.firstChild)mail.firstChild.textContent=c.contact.email+" ";if(window.ntSocialLinks)window.ntSocialLinks.email=c.contact.email}
  }}
- if(c.navigation){for(const [section,txt] of Object.entries(c.navigation)){const id=section==="personal"?"personal-space":section==="code"?"code-corner":section;$('#nav-links a[href="#'+id+'"] .nav-label').forEach(n=>n.textContent=trim(txt))}}
+ if(c.navigation){for(const [section,txt] of Object.entries(c.navigation)){const id=section==="personal"?"personal-space":section==="code"?"code-corner":section;$$('#nav-links a[href="#'+id+'"] .nav-label').forEach(n=>n.textContent=trim(txt))}}
  if(c.socials){for(const [kind,url] of Object.entries(c.socials))setSocial(kind,url)}
  if(c.theme?.accent&&/^#[a-fA-F0-9]{3,8}$/.test(c.theme.accent)){
   document.documentElement.style.setProperty("--accent",c.theme.accent);
