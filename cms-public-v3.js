@@ -11,8 +11,8 @@ const $$=s=>Array.from(document.querySelectorAll(s));
 const isURL=s=>{try{const u=new URL(s);return u.protocol==="https:"}catch{return false}};
 const setText=(query,value)=>{if(typeof value!=="string")return;const node=$(query);if(node)node.textContent=value.slice(0,500)};
 const safeUrl=s=>typeof s==="string"&&isURL(s)?s:null;
-const show=(query,visible)=>{const el=$(query);if(el)el.hidden=!visible};
-const trim=s=>String(s||"").slice(0,250);
+const show=(query,visible)=>{const el=$(query);if(el){el.hidden=!visible;el.style.display=visible?"":"none"}};
+const trim=(s,max=1500)=>String(s??"").slice(0,max);
 function createNode(tag,attrs={},text){
   const n=document.createElement(tag);
   for(const [k,v] of Object.entries(attrs)){if(k==="class")n.className=v;else n.setAttribute(k,String(v))}
@@ -41,8 +41,8 @@ function updateGallery(items){
    }
    const oldHref=card.getAttribute("href")||"";
    card.href=url;
-   if(!oldHref||(oldHref!==url && !url.endsWith(oldHref))){
-     const img=card.querySelector("img");if(img)img.src=url;
+   if(!oldHref||(oldHref!==url && !url.endsWith(oldHref))||safeUrl(item.thumb)){
+     const img=card.querySelector("img");if(img)img.src=safeUrl(item.thumb)||url;
    }
    const caption=card.querySelector(".nt-memory-caption strong");
    if(caption)caption.textContent=trim(item.title||"Khoảnh khắc");
@@ -94,6 +94,59 @@ function updateCards(selector,items,kind){
       if(!link){link=createNode("a",{class:"button primary small",target:"_blank",rel:"noopener noreferrer"},"Xem dự án ↗");actions.prepend(link)}
       link.href=obj.url;
       if(!reused){link.target="_blank";link.rel="noopener noreferrer"}
+    }
+  }
+  if(kind==="skills"){
+    if(Number.isFinite(Number(obj.level))&&obj.level!==undefined){
+      const level=Math.max(0,Math.min(100,Number(obj.level)));
+      card.style.setProperty("--level",level+"%");
+      const progress=card.querySelector(".progress > span");
+      if(progress)progress.style.width=level+"%";
+    }
+    if(typeof obj.status==="string"){
+      const badge=card.querySelector(".skill-value");
+      if(badge)badge.textContent=trim(obj.status,80);
+    }
+    if(safeUrl(obj.icon)){
+      let icon=card.querySelector(".nt-app-icon img");
+      if(!icon){
+        const holder=createNode("span",{class:"nt-app-icon"});
+        icon=createNode("img",{alt:"",width:"36",height:"36"});
+        holder.append(icon);
+        (card.querySelector(".skill-top")||card).prepend(holder);
+      }
+      icon.src=obj.icon;
+    }
+  }else if(kind==="projects"){
+    const info=card.querySelector(".project-info")||card;
+    if(typeof obj.type==="string"){
+      let type=card.querySelector(".project-type");
+      if(!type){
+        type=createNode("span",{class:"project-type"});
+        (card.querySelector(".project-title")||info).append(type);
+      }
+      type.textContent=trim(obj.type,80);
+    }
+    if(typeof obj.tags==="string"){
+      let tags=card.querySelector(".tags");
+      if(!tags){tags=createNode("div",{class:"tags"});info.append(tags)}
+      tags.replaceChildren(...obj.tags.split(",").map(t=>t.trim()).filter(Boolean).slice(0,12).map(t=>createNode("span",{},t)));
+    }
+    const actions=card.querySelector(".project-actions")||info;
+    if(Object.hasOwn(obj,"source")){
+      let link=actions.querySelector("a.source-link");
+      if(!link&&safeUrl(obj.source)){link=createNode("a",{class:"source-link"},"Mã nguồn ↗");actions.append(link)}
+      if(link){
+        if(safeUrl(obj.source)){link.href=obj.source;link.target="_blank";link.rel="noopener noreferrer";link.hidden=false;}
+        else link.hidden=true;
+      }
+    }
+    if(Object.hasOwn(obj,"url")){
+      let link=actions.querySelector("a.button");
+      if(link){
+        if(safeUrl(obj.url)){link.href=obj.url;link.hidden=false}
+        else if(obj.url===""){link.hidden=true}
+      }
     }
   }
   frag.append(card);
@@ -195,6 +248,36 @@ function apply(content,client){
    p.textContent=trim(c.about.body);
   }
  }
+ if(c.gallerySettings){
+  setText("#nt-memories-title",c.gallerySettings.title);
+  setText("#memories .nt-gallery-note",c.gallerySettings.subtitle);
+ }
+ if(c.skillsSettings){
+  setText("#skills .section-heading h2",c.skillsSettings.title);
+  setText("#skills .section-heading > p",c.skillsSettings.description);
+ }
+ if(c.projectsSettings){setText("#projects .section-heading h2",c.projectsSettings.title)}
+ if(c.socialsSettings){setText("#social .section-heading h2",c.socialsSettings.title)}
+ if(c.personal){
+  if(typeof c.personal.visible==="boolean")show("#personal-space",c.personal.visible);
+  setText("#personal-space .section-heading h2",c.personal.title);
+  setText("#personal-space .life-moments h3",c.personal.memoryTitle);
+  setText("#personal-space .life-moments p",c.personal.memoryDescription);
+ }
+ if(c.code){
+  if(typeof c.code.visible==="boolean")show("#code-corner",c.code.visible);
+  setText("#code-heading",c.code.title);
+  setText("#code-corner .section-heading > p",c.code.description);
+ }
+ if(c.donate){
+  if(typeof c.donate.visible==="boolean")show("#donate",c.donate.visible);
+  setText("#donate .donate-copy h2",c.donate.title);
+  const image=$("#donation-qr"),open=$("#qr-open");
+  if(safeUrl(c.donate.qrImage)&&image&&open){
+    image.src=c.donate.qrImage;
+    open.href=c.donate.qrImage;
+  }
+ }
  updateGallery(c.gallery);
  updateCards("#skills .skills-grid",c.skills,"skills");
  updateCards("#projects .projects-grid",c.projects,"projects");
@@ -207,7 +290,7 @@ function apply(content,client){
   setText("#contact .contact-copy > p:not(.eyebrow):not(.form-note)",c.contact.description);
   const mail=$("#contact .contact-email");if(mail&&c.contact.email&&/^[^@]+@[^@]+\.[^@]+$/.test(c.contact.email)){mail.href="mailto:"+encodeURIComponent(c.contact.email);if(mail.firstChild)mail.firstChild.textContent=c.contact.email+" ";if(window.ntSocialLinks)window.ntSocialLinks.email=c.contact.email}
  }}
- if(c.navigation){for(const [section,txt] of Object.entries(c.navigation)){const id=section==="home"?"home":section;$$('#nav-links a[href="#'+id+'"] .nav-label').forEach(n=>n.textContent=trim(txt))}}
+ if(c.navigation){for(const [section,txt] of Object.entries(c.navigation)){const id=section==="personal"?"personal-space":section==="code"?"code-corner":section;$('#nav-links a[href="#'+id+'"] .nav-label').forEach(n=>n.textContent=trim(txt))}}
  if(c.socials){for(const [kind,url] of Object.entries(c.socials))setSocial(kind,url)}
  if(c.theme?.accent&&/^#[a-fA-F0-9]{3,8}$/.test(c.theme.accent)){
   document.documentElement.style.setProperty("--accent",c.theme.accent);
@@ -216,7 +299,7 @@ function apply(content,client){
  }
  if(c.theme?.surface)document.documentElement.style.setProperty("--surface",c.theme.surface);
  if(c.theme?.text)document.documentElement.style.setProperty("--text",c.theme.text);
- if(c.theme?.light===true)document.documentElement.classList.add("nt-cms-light");
+ document.documentElement.classList.toggle("nt-cms-light",c.theme?.light===true);
  if(c.layout){document.documentElement.style.setProperty("--cms-card-radius",Math.max(0,Math.min(44,Number(c.layout.radius)||22))+"px");document.documentElement.style.setProperty("--cms-card-spacing",Math.max(8,Math.min(52,Number(c.layout.spacing)||24))+"px");document.documentElement.style.setProperty("--cms-card-columns",Math.max(1,Math.min(4,Number(c.layout.cardColumns)||3)))}
  if(c.effects){for(const k of ["glass","reveal","parallax","glow","softMotion"])document.documentElement.classList.toggle("nt-cms-no-"+k,c.effects[k]===false);document.documentElement.style.setProperty("--cms-motion-intensity",Math.max(0,Math.min(100,Number(c.effects.intensity)||35)));document.documentElement.style.setProperty("--cms-blur",Math.max(0,Math.min(35,Number(c.effects.blur)||18))+"px")}
  if(c.seo){if(c.seo.title)document.title=trim(c.seo.title);const desc=$('meta[name="description"]');if(desc&&c.seo.description)desc.content=trim(c.seo.description);if(c.seo.ogImage&&safeUrl(c.seo.ogImage)){const og=$('meta[property="og:image"]');if(og)og.content=c.seo.ogImage}}
