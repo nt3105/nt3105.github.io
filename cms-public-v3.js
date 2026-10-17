@@ -57,109 +57,141 @@ function updateGallery(items){
  gallery.style.scrollSnapType="x mandatory";
  gallery.style.touchAction="pan-x";
 }
+// Capture the original markup before any CMS transformation. In particular,
+// icon SVGs, progress fills and illustrated project covers must survive
+// published content changes (including a renamed skill such as "C1").
+const originalCardTemplates={
+ skills:$$("#skills .skills-grid > .skill-card").map((card,index)=>({
+  index,title:card.querySelector("h3")?.textContent?.trim()||"",
+  description:card.querySelector("p")?.textContent?.trim()||"",
+  template:card.cloneNode(true)
+ })),
+ projects:$$("#projects .projects-grid > .project-card").map((card,index)=>({
+  index,title:card.querySelector("h3")?.textContent?.trim()||"",
+  description:card.querySelector(".project-info > p")?.textContent?.trim()||"",
+  template:card.cloneNode(true)
+ }))
+};
 function updateCards(selector,items,kind){
  if(!Array.isArray(items))return;
  const parent=$(selector);if(!parent)return;
+ const originals=originalCardTemplates[kind]||[];
  const existing=Array.from(parent.children).filter(node=>node.matches(".skill-card,.project-card"));
- const remaining=new Set(existing),frag=document.createDocumentFragment();
- const titleOf=node=>(node.querySelector("h3")?.textContent||"").trim();
- for(const obj of items.filter(x=>x&&x.visible!==false).slice(0,30)){
+ const available=new Set(existing),fragment=document.createDocumentFragment();
+ const listed=items.map((obj,index)=>({obj,index})).filter(({obj})=>obj&&obj.visible!==false).slice(0,30);
+ const baseline=(obj,index)=>originals.find(o=>o.description&&o.description===String(obj.description||"").trim())
+   ||originals.find(o=>o.title===String(kind==="skills"?obj.name:obj.title||"").trim())
+   ||originals[index]||null;
+ for(const {obj,index} of listed){
   const title=trim(kind==="skills"?obj.name:obj.title);
   if(!title)continue;
-  let card=existing.find(node=>remaining.has(node)&&titleOf(node)===title);
-  if(!card)card=existing.find(node=>remaining.has(node))||null;
-  const reused=Boolean(card);
-  if(card)remaining.delete(card);
-  else card=createNode("article",{class:kind==="skills"?"skill-card reveal":"project-card reveal"});
-  if(!reused&&kind==="skills"){
-    const top=createNode("div",{class:"skill-top"});
-    top.append(createNode("span",{class:"skill-value"},"Đang học"));
-    const progress=createNode("div",{class:"progress"});
-    progress.append(createNode("span"));
-    card.append(top,createNode("h3"),createNode("p"),progress);
-  }
-  if(!reused&&kind==="projects"){
-    const art=createNode("div",{class:"project-art art-portfolio"});
-    art.append(createNode("span",{class:"project-number"},"NT3105 / PROJECT"));
-    const info=createNode("div",{class:"project-info"});
-    const titled=createNode("div",{class:"project-title"});
-    titled.append(createNode("h3"));
-    info.append(titled,createNode("p"),createNode("div",{class:"project-actions"}));
-    card.append(art,info);
-  }
-  let h=card.querySelector("h3");
-  if(!h){h=createNode("h3");card.append(h)}
-  h.textContent=title;
-  let p=card.querySelector(kind==="projects"?".project-info > p":":scope > p");
-  if(!p){p=createNode("p");(kind==="projects"?card.querySelector(".project-info")||card:card).append(p)}
-  p.textContent=trim(obj.description);
-  if(kind==="projects"){
-    const art=card.querySelector(".project-art");
-    if(art&&safeUrl(obj.image))art.style.backgroundImage="url("+JSON.stringify(obj.image)+")";
-    const actions=card.querySelector(".project-actions");
-    if(actions&&safeUrl(obj.url)){
-      let link=actions.querySelector("a.button");
-      if(!link){link=createNode("a",{class:"button primary small",target:"_blank",rel:"noopener noreferrer"},"Xem dự án ↗");actions.prepend(link)}
-      link.href=obj.url;
-      if(!reused){link.target="_blank";link.rel="noopener noreferrer"}
-    }
-  }
+  const original=baseline(obj,index);
+  const match=(node)=>node.querySelector("h3")?.textContent?.trim()===title;
+  let card=existing.find(node=>available.has(node)&&match(node));
+  if(!card)card=existing.find(node=>available.has(node)&&node.dataset.cmsSourceIndex===String(index));
+  if(!card)card=existing.find(node=>available.has(node))||null;
+  if(card)available.delete(card);
+  const hasVisuals=card&&(kind==="skills"
+   ?Boolean(card.querySelector(".skill-top .nt-app-icon img,.skill-top .nt-skill-fallback-icon"))
+   :Boolean(card.querySelector(".project-art .project-placeholder,.project-art .nt-cms-project-placeholder")));
+  // Restore complete original visuals whenever an older CMS update produced
+  // a blank card. Do not depend on remaining live DOM after previous edits.
+  if(!hasVisuals)card=original?.template.cloneNode(true)||null;
+  if(!card)card=createNode("article",{class:kind==="skills"?"skill-card reveal":"project-card reveal"});
+  card.dataset.cmsSourceIndex=String(index);
   if(kind==="skills"){
-    if(Number.isFinite(Number(obj.level))&&obj.level!==undefined){
-      const level=Math.max(0,Math.min(100,Number(obj.level)));
-      card.style.setProperty("--level",level+"%");
-      const progress=card.querySelector(".progress > span");
-      if(progress)progress.style.width=level+"%";
+   let top=card.querySelector(".skill-top");
+   if(!top){top=createNode("div",{class:"skill-top"});card.prepend(top)}
+   let icon=top.querySelector(".nt-app-icon img");
+   if(safeUrl(obj.icon)){
+    if(!icon){
+     const holder=createNode("span",{class:"nt-app-icon"});
+     icon=createNode("img",{alt:"",width:"36",height:"36",loading:"lazy"});
+     holder.append(icon);top.prepend(holder);
     }
-    if(typeof obj.status==="string"){
-      const badge=card.querySelector(".skill-value");
-      if(badge)badge.textContent=trim(obj.status,80);
-    }
-    if(safeUrl(obj.icon)){
-      let icon=card.querySelector(".nt-app-icon img");
-      if(!icon){
-        const holder=createNode("span",{class:"nt-app-icon"});
-        icon=createNode("img",{alt:"",width:"36",height:"36"});
-        holder.append(icon);
-        (card.querySelector(".skill-top")||card).prepend(holder);
-      }
-      icon.src=obj.icon;
-    }
-  }else if(kind==="projects"){
-    const info=card.querySelector(".project-info")||card;
-    if(typeof obj.type==="string"){
-      let type=card.querySelector(".project-type");
-      if(!type){
-        type=createNode("span",{class:"project-type"});
-        (card.querySelector(".project-title")||info).append(type);
-      }
-      type.textContent=trim(obj.type,80);
-    }
-    if(typeof obj.tags==="string"){
-      let tags=card.querySelector(".tags");
-      if(!tags){tags=createNode("div",{class:"tags"});info.append(tags)}
-      tags.replaceChildren(...obj.tags.split(",").map(t=>t.trim()).filter(Boolean).slice(0,12).map(t=>createNode("span",{},t)));
-    }
-    const actions=card.querySelector(".project-actions")||info;
-    if(Object.hasOwn(obj,"source")){
-      let link=actions.querySelector("a.source-link");
-      if(!link&&safeUrl(obj.source)){link=createNode("a",{class:"source-link"},"Mã nguồn ↗");actions.append(link)}
-      if(link){
-        if(safeUrl(obj.source)){link.href=obj.source;link.target="_blank";link.rel="noopener noreferrer";link.hidden=false;}
-        else link.hidden=true;
-      }
-    }
-    if(Object.hasOwn(obj,"url")){
-      let link=actions.querySelector("a.button");
-      if(link){
-        if(safeUrl(obj.url)){link.href=obj.url;link.hidden=false}
-        else if(obj.url===""){link.hidden=true}
-      }
-    }
+    icon.src=obj.icon;
+    top.querySelector(".nt-skill-fallback-icon")?.remove();
+   }else if(!icon&&!top.querySelector(".nt-skill-fallback-icon")){
+    const emblem=createNode("span",{class:"nt-skill-fallback-icon","aria-hidden":"true"},title.replace(/\s+/g,"").slice(0,2).toUpperCase());
+    top.prepend(emblem);
+   }
+   let status=top.querySelector(".skill-value");
+   if(!status){status=createNode("span",{class:"skill-value"});top.append(status)}
+   if(typeof obj.status==="string"&&obj.status.trim())status.textContent=trim(obj.status,80);
+   else if(!status.textContent.trim())status.textContent="Đang học";
+   let heading=card.querySelector("h3");
+   if(!heading){heading=createNode("h3");top.after(heading)}
+   heading.textContent=title;
+   let desc=card.querySelector(":scope > p");
+   if(!desc){desc=createNode("p");heading.after(desc)}
+   desc.textContent=trim(obj.description);
+   const baseLevel=parseFloat(card.style.getPropertyValue("--level"))||45;
+   const level=(obj.level!==undefined&&obj.level!==null&&Number.isFinite(Number(obj.level)))
+    ?Math.max(0,Math.min(100,Number(obj.level))):baseLevel;
+   card.style.setProperty("--level",level+"%");
+   if(!card.style.getPropertyValue("--skill-color"))card.style.setProperty("--skill-color","#78e6ee");
+   let progress=card.querySelector(".progress");
+   if(!progress){progress=createNode("div",{class:"progress"});progress.append(createNode("span"));card.append(progress)}
+   const bar=progress.querySelector("span");
+   if(bar)bar.style.width=level+"%";
+   if(!card.querySelector(":scope > small"))card.append(createNode("small",{},"Đang thực hành"));
+  }else{
+   let art=card.querySelector(".project-art");
+   if(!art){art=createNode("div",{class:"project-art art-portfolio"});card.prepend(art)}
+   if(!art.querySelector(".project-placeholder,.nt-cms-project-placeholder")){
+    const placeholder=createNode("div",{class:"project-placeholder nt-cms-project-placeholder"});
+    placeholder.append(createNode("span",{class:"art-kicker"},"NT3105 / PROJECT"),
+      createNode("strong",{},title),createNode("span",{class:"art-caption"},"DỰ ÁN CỦA MÌNH"));
+    art.prepend(placeholder);
+   }
+   const placeholderTitle=art.querySelector(".project-placeholder strong,.nt-cms-project-placeholder strong");
+   if(placeholderTitle&&!original)placeholderTitle.textContent=title;
+   if(safeUrl(obj.image)){
+    art.style.backgroundImage="linear-gradient(135deg,rgba(7,10,20,.28),rgba(10,12,25,.44)),url("+JSON.stringify(obj.image)+")";
+   }else{
+    art.style.removeProperty("background-image");
+   }
+   let info=card.querySelector(".project-info");
+   if(!info){info=createNode("div",{class:"project-info"});card.append(info)}
+   let heading=info.querySelector("h3");
+   if(!heading){
+    let titled=info.querySelector(".project-title");
+    if(!titled){titled=createNode("div",{class:"project-title"});info.prepend(titled)}
+    heading=createNode("h3");titled.prepend(heading);
+   }
+   heading.textContent=title;
+   let desc=info.querySelector(":scope > p");
+   if(!desc){desc=createNode("p");heading.parentElement.after(desc)}
+   desc.textContent=trim(obj.description);
+   if(typeof obj.type==="string"){
+    let badge=info.querySelector(".project-type");
+    if(!badge){badge=createNode("span",{class:"project-type"});(info.querySelector(".project-title")||info).append(badge)}
+    badge.textContent=trim(obj.type,80);
+   }
+   if(typeof obj.tags==="string"){
+    let tags=info.querySelector(".tags");
+    if(!tags){tags=createNode("div",{class:"tags"});info.append(tags)}
+    tags.replaceChildren(...obj.tags.split(",").map(t=>t.trim()).filter(Boolean).slice(0,12).map(t=>createNode("span",{},t)));
+   }
+   let actions=info.querySelector(".project-actions");
+   if(!actions){actions=createNode("div",{class:"project-actions"});info.append(actions)}
+   let demo=actions.querySelector("a.button");
+   if(safeUrl(obj.url)){
+    if(!demo){demo=createNode("a",{class:"button primary small"},"Xem dự án ↗");actions.prepend(demo)}
+    demo.href=obj.url;demo.hidden=false;
+    if(!obj.url.startsWith(location.origin)){demo.target="_blank";demo.rel="noopener noreferrer"}
+   }else if(demo&&Object.hasOwn(obj,"url")&&obj.url==="")demo.hidden=true;
+   if(Object.hasOwn(obj,"source")){
+    let source=actions.querySelector("a.source-link");
+    if(safeUrl(obj.source)){
+     if(!source){source=createNode("a",{class:"source-link"},"Mã nguồn ↗");actions.append(source)}
+     source.href=obj.source;source.hidden=false;source.target="_blank";source.rel="noopener noreferrer";
+    }else if(source)source.hidden=true;
+   }
   }
-  frag.append(card);
+  fragment.append(card);
  }
- parent.replaceChildren(frag);
+ parent.replaceChildren(fragment);
 }
 function renderMusic(music){
  if(!music||typeof music!=="object")return;
