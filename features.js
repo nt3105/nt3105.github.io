@@ -27,6 +27,7 @@
     }
   }
 
+  if ($('#code-panel')) {
   const samples = {
     c: { label: 'C', file: 'hello.c', info: '', output: 'Xin chao, minh la Ngan Tu!', code: '#include <stdio.h>\n\nint main(void) {\n    printf("Xin chao, minh la Ngan Tu!\\n");\n    return 0;\n}\n' },
     objc: { label: 'Objective-C', file: 'main.m', info: 'Ví dụ dùng Foundation. Chạy trong dự án Command Line Tool của Xcode trên macOS.', output: 'Xin chào, mình là Ngân Tú!', code: '#import <Foundation/Foundation.h>\n\nint main(int argc, const char *argv[]) {\n    @autoreleasepool {\n        NSString *name = @"Ngân Tú";\n        NSLog(@"Xin chào, mình là %@!", name);\n    }\n    return 0;\n}\n' },
@@ -81,6 +82,7 @@
     });
   }
   selectCode('c');
+  }
 
   const shareDialog = $('#share-dialog');
   const shareUrl = document.querySelector('link[rel="canonical"]').href;
