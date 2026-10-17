@@ -17,3 +17,7 @@ jobs:
           node --check cms-public-v3.js
           node tests/cms-v3-smoke.cjs
           node tests/cms-apply-v6.cjs
+      - name: Install DOM test dependency
+        run: npm install --no-save --ignore-scripts jsdom@26
+      - name: Run original HTML layout and CMS re-render tests
+        run: node tests/cms-visual-cards.cjs
