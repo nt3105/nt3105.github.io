@@ -33,6 +33,8 @@ jobs:
         run: node tests/nav-studio-browser.cjs
       - name: Test Liquid Glass reviews and centered navigation in Chromium
         run: node tests/reviews-contact-browser.cjs
+      - name: Verify Admin iframe 3D choice buttons stay clickable
+        run: node tests/admin-preview-motion-browser.cjs
       - name: Save nav layout screenshots for review
         if: always()
         uses: actions/upload-artifact@v4
