@@ -60,6 +60,20 @@
     @media(max-width:650px){body{padding:18px 10px;align-items:center}.masthead{margin:0 6px 12px}.studio{width:100%}.window{border-radius:16px}.titlebar{height:44px;padding:0 13px}.tab{min-width:134px;padding:0 12px}.editor{height:310px;padding-top:13px;padding-right:5px}.code-lines{font-size:12px;line-height:1.8}.code-line{grid-template-columns:35px minmax(0,1fr);min-height:22px}.line-num{padding-right:10px}.output-wrap{height:153px;min-height:130px;padding:14px 14px}.output{font-size:12px}.terminal-head{padding:0 14px}.status-right{display:none}.control{min-height:39px;padding:0 10px}.control .label{display:none}.help{display:none}.controls{justify-content:center}.brand{font-size:10px}}
     @media(max-width:360px){body{padding:10px 5px}.win-actions{display:none}.controls{gap:4px}.editor{height:285px}.tab-meta{padding-right:9px}.brand{letter-spacing:.08em}}
     @media(prefers-reduced-motion:reduce){.aura,.pulse,.studio{animation:none}.caret{animation-duration:1.5s}.control{transition:none}}
+  
+    /* Seamless embedded Góc code: only the existing editor and Output remain visible. */
+    html.embed,html.embed body{height:auto!important;min-height:0!important;background:transparent!important;overflow:hidden;scrollbar-width:none}
+    html.embed body{display:block;padding:0!important;margin:0!important}
+    html.embed body:before,html.embed .aura,html.embed .masthead,html.embed .bottom,html.embed .statusbar{display:none!important}
+    html.embed .studio{width:100%;max-width:none;margin:0;animation:none;filter:none}
+    html.embed .window{border:0;border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:hidden}
+    html.embed .titlebar{background:transparent;border-bottom:1px solid rgba(170,190,231,.14);height:45px;justify-content:center}
+    html.embed .titlebar .title{font-weight:600;color:#c9d6ee}
+    html.embed .traffic,html.embed .win-actions{display:none}
+    html.embed .tabrow,html.embed .tab{background:transparent}
+    html.embed .editor,html.embed .output-wrap{background:transparent;scrollbar-width:none}
+    html.embed .terminal-head{background:transparent}
+    html.embed::-webkit-scrollbar,html.embed body::-webkit-scrollbar,html.embed .editor::-webkit-scrollbar,html.embed .output-wrap::-webkit-scrollbar{display:none;width:0;height:0}
   </style>
 </head>
 <body>
@@ -264,6 +278,21 @@
       });
       start();
     });
+
+    // The outer page owns scrolling; keep this embedded panel exactly as tall as its content.
+    if (document.documentElement.classList.contains('embed') && window.parent !== window) {
+      const panel = document.querySelector('.studio');
+      const notifyParentSize = () => {
+        if (!panel) return;
+        window.parent.postMessage({
+          type: 'ntjr:python-studio-height',
+          height: Math.ceil(panel.getBoundingClientRect().height)
+        }, window.location.origin);
+      };
+      if (panel && typeof ResizeObserver === 'function') new ResizeObserver(notifyParentSize).observe(panel);
+      window.addEventListener('resize', notifyParentSize, {passive:true});
+      requestAnimationFrame(notifyParentSize);
+    }
     // Start after parsing, without any click; custom animation is all client-side.
     start();
   })();
