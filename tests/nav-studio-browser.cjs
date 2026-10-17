@@ -49,6 +49,20 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   await sleep(7000);
   const after=await desktop.evaluate(()=>window.scrollY);
   assert(Math.abs(after-before)<165,'Revisiting tab jumped unexpectedly to Code Corner: '+before+' => '+after);
+  // Check narrow desktop/tablet widths and the actual geometry of each pill.
+  for(const width of [761,800,1024,1440]){
+    await desktop.setViewportSize({width,height:800});
+    const geometry=await desktop.locator('#nav-links > a').evaluateAll(links=>{
+      const header=document.querySelector('#header').getBoundingClientRect();
+      return {outer:{left:header.left,right:header.right},links:links.map(a=>{
+        const r=a.getBoundingClientRect();
+        return {left:r.left,right:r.right,visible:getComputedStyle(a).display!=='none'};
+      })};
+    });
+    assert(geometry.links.every(a=>a.visible),'Desktop link hidden at '+width);
+    assert(geometry.links.every(a=>a.left>=geometry.outer.left-2&&a.right<=geometry.outer.right+2),'Desktop nav overflow at '+width);
+  }
+  await desktop.setViewportSize({width:1280,height:800});
   await desktop.screenshot({path:'nav-desktop-ci.png'});
   const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1,reducedMotion:'reduce'});
   await mobile.goto('http://127.0.0.1:'+port+'/?intro=off',{waitUntil:'domcontentloaded'});
@@ -57,12 +71,26 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const frame=await mobile.locator('#header').boundingBox();
   assert(frame&&mobileNav.every(x=>x.x>=frame.x-2&&x.right<=frame.x+frame.width+2),'Mobile nav pills overflow header');
   assert(await mobile.locator('#nt-theme-toggle').isVisible(),'Appearance switch must remain visible as fifth control');
+  for(const width of [320,360,375,390,430]){
+    await mobile.setViewportSize({width,height:844});
+    const geometry=await mobile.locator('#nav-links > a').evaluateAll(links=>{
+      const rect=document.querySelector('#header').getBoundingClientRect();
+      return {outer:{left:rect.left,right:rect.right},links:links.filter(a=>getComputedStyle(a).display!=='none').map(a=>{
+       const r=a.getBoundingClientRect();
+       return {text:a.textContent.trim(),left:r.left,right:r.right};
+      })};
+    });
+    assert.equal(geometry.links.length,4,'Mobile must show 4 links at '+width);
+    assert(geometry.links.some(a=>a.text==='Ủng hộ'),'Donate missing at '+width);
+    assert(geometry.links.every(a=>a.left>=geometry.outer.left-2&&a.right<=geometry.outer.right+2),'Mobile nav overflows at '+width);
+  }
+  await mobile.setViewportSize({width:390,height:844});
   await mobile.locator('#nav-links a[href="#donate"]').click();
   await mobile.waitForTimeout(2100);
   const clicked=await mobile.evaluate(()=>({hash:location.hash,delta:Math.round(document.querySelector('#donate').getBoundingClientRect().top)}));
   assert.equal(clicked.hash,'#donate','Mobile Donate must navigate to real Donation section');
   assert(Math.abs(clicked.delta)<230,'Donate scroll target not reached: '+JSON.stringify(clicked));
   await mobile.screenshot({path:'nav-mobile-ci.png'});
-  console.log('PASS desktop compact 5 links; idle 16s no Code Corner jump; tab switch retained position; mobile 4 links + theme; Donate anchor works.');
+  console.log('PASS desktop compact 5 links; idle 16s no Code Corner jump; tab switch retained position; mobile 4 links + theme at 320–430px; Donate anchor works.');
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>server.close());
