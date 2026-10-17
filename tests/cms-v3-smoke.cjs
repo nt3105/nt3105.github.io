@@ -7,7 +7,7 @@ assert(src.trimEnd().endsWith('})();'));
 src=src.replace(/\}\)\(\);\s*$/, 'window.__ntCmsTest={isURL,safeUrl};\n})();');
 const sandbox={
  window:{},
- document:{readyState:'loading',addEventListener(){},querySelector(){return null}},
+ document:{readyState:'loading',addEventListener(){},querySelector(){return null},querySelectorAll(){return []}},
  URL, URLSearchParams, location:{search:""}, console, CustomEvent:class CustomEvent{},
 };
 vm.runInNewContext(src,sandbox,{filename:'cms-public-v3.js'});
