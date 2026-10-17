@@ -266,7 +266,7 @@ if(c.brand?.logoText){$$(".brand-wordmark strong,.logo").forEach(n=>{
   if(n.textContent?.trim()!==trim(c.brand.logoText)) n.textContent=trim(c.brand.logoText);
  })}
  if(typeof c.brand?.tagline==="string"){
-   const header=$("#header .brand");
+   const header=$("#header .brand")||$(".footer .brand");
    if(header){
     header.title=trim(c.brand.tagline,160);
     let extra=header.querySelector(".nt-cms-brand-tagline");
