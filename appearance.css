@@ -82,16 +82,10 @@ html[data-appearance="light"] #header .brand-simple .brand-dot, html[data-appear
 @media(min-width:761px) and (max-width:1100px) { #header .brand-simple .brand-mark { width:40px; height:40px; border-radius:13px; font-size:25px; } }
 
 /* Pill navigation: a single moving selection replaces all per-link effects. */
-/* Center the five compact desktop pills within the entire glass capsule,
-   independently of the appearance switch at the far right. */
-@media(min-width:761px){
- #header .nav{position:relative;justify-content:flex-end}
- #header #nav-links{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max-content;flex:0 0 auto;gap:3px}
- #header #nt-theme-toggle{position:relative;flex:0 0 auto;margin-left:auto}
-}
+/* Desktop fits the pill group and theme toggle without a large empty capsule. */
 
 #header, #header.scrolled, #header.menu-open {
- width:min(780px,calc(100% - 24px));
+ width:max-content; max-width:calc(100% - 24px);
  border-radius:999px; border-color:#ffffff24 !important; background:linear-gradient(125deg,#ffffff0b,transparent 42%,#b8c8db06),rgba(18,19,22,.76) !important;
  box-shadow:0 12px 32px #0000002b,inset 0 1px 0 #ffffff10,inset 0 -1px 0 #00000024 !important;
  backdrop-filter:blur(20px) saturate(1.15); -webkit-backdrop-filter:blur(20px) saturate(1.15);
@@ -152,6 +146,12 @@ html[data-appearance="light"] #header #nav-links .nav-selection { background:lin
 @media(max-width:375px) {
  #header #nav-links > a { font-size:11px; padding:0 1px; }
  #header #nav-links { gap:2px; }
+}
+/* Desktop capsule shrinks to its contents; keep the highlight on real nav links. */
+@media(min-width:761px){
+ #header .nav,#header.scrolled .nav{width:max-content;max-width:100%;justify-content:center;gap:10px}
+ #header #nav-links{position:relative;top:auto;left:auto;right:auto;transform:none;flex:0 0 auto;width:max-content;min-width:0;gap:3px;justify-content:center}
+ #header #nt-theme-toggle{position:relative;flex:0 0 auto;margin:0}
 }
 @media(prefers-reduced-motion:reduce) {
  #header #nav-links .nav-selection, #header #nav-links > a { transition:none !important; }
