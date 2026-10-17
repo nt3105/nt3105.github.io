@@ -32,20 +32,6 @@
     objc: { label: 'Objective-C', file: 'main.m', info: 'Ví dụ dùng Foundation. Chạy trong dự án Command Line Tool của Xcode trên macOS.', output: 'Xin chào, mình là Ngân Tú!', code: '#import <Foundation/Foundation.h>\n\nint main(int argc, const char *argv[]) {\n    @autoreleasepool {\n        NSString *name = @"Ngân Tú";\n        NSLog(@"Xin chào, mình là %@!", name);\n    }\n    return 0;\n}\n' },
     swift: { label: 'Swift', file: 'Hello.swift', info: 'Ví dụ Swift cơ bản. Chạy bằng Swift hoặc trong Xcode Playground.', output: 'Xin chào, mình là Ngân Tú!', code: 'let name = "Ngân Tú"\n\nprint("Xin chào, mình là \\(name)!")\n' }
   };
-  // CMS text samples are display-only: Run shows configured sample output,
-  // it does not execute arbitrary C, Objective-C, or Swift in visitors' browsers.
-  const originalSamples = JSON.parse(JSON.stringify(samples));
-  window.ntCMSCodeSamples = overrides => {
-    if (!overrides || typeof overrides !== 'object') return;
-    const languageFields = { c:['c','cOutput'], objc:['objc','objcOutput'], swift:['swift','swiftOutput'] };
-    for (const [lang,[codeKey,outputKey]] of Object.entries(languageFields)) {
-      const code=overrides[codeKey];
-      const output=overrides[outputKey];
-      if (typeof code==='string') samples[lang].code=(code.trim()?code.slice(0,16000):originalSamples[lang].code);
-      if (typeof output==='string') samples[lang].output=(output.trim()?output.slice(0,2000):originalSamples[lang].output);
-    }
-    selectCode(selected);
-  };
   const tabs = [...document.querySelectorAll('[data-code-language]')];
   let selected = 'c';
   function selectCode(key, focus = false) {
