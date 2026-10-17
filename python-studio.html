@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1021">
+  <title>Python Studio — ntjr</title>
+  <script>if(new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');</script>
+  <style>
+    :root{color-scheme:dark;--text:#e7edfc;--muted:#9baecc;--border:rgba(181,204,255,.18);--panel:rgba(18,26,45,.79);--blue:#88b8ff;--purple:#c29afa;--green:#a1e5bd;--gold:#efce91}
+    *{box-sizing:border-box}
+    html{height:100%;background:#080d1c}
+    body{margin:0;min-height:100svh;display:flex;justify-content:center;align-items:center;padding:44px 20px;color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden;background:radial-gradient(ellipse 62% 58% at 17% 8%,rgba(57,102,203,.28),transparent 75%),radial-gradient(ellipse 53% 65% at 90% 85%,rgba(124,72,192,.30),transparent 76%),linear-gradient(130deg,#070d1b 2%,#10172a 54%,#141328 100%)}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.34;background-image:linear-gradient(rgba(203,215,255,.037) 1px,transparent 1px),linear-gradient(90deg,rgba(203,215,255,.037) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,transparent,#000 35%,#000 85%,transparent)}
+    html.embed body{min-height:0;padding:12px 8px;align-items:flex-start}html.embed .studio{margin:0 auto}html.embed .aura{display:none}
+    .aura{position:fixed;border-radius:50%;filter:blur(85px);pointer-events:none;animation:float 12s ease-in-out infinite alternate}
+    .aura.one{width:280px;height:280px;background:#3961ec33;top:10%;right:10%}
+    .aura.two{width:300px;height:300px;background:#9b53d92e;bottom:6%;left:3%;animation-delay:-5s}
+    @keyframes float{from{transform:translate3d(0,0,0)}to{transform:translate3d(35px,-35px,0)}}
+    .studio{position:relative;width:min(940px,100%);margin:auto;animation:reveal .85s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes reveal{0%{opacity:0;transform:translateY(25px) scale(.90);filter:blur(12px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+    .masthead{display:flex;align-items:center;justify-content:space-between;margin:0 4px 17px;gap:10px}
+    .brand{display:flex;align-items:center;gap:10px;letter-spacing:.14em;font-size:11px;color:#b7cae9;font-weight:700}
+    .python-icon{display:grid;place-items:center;width:29px;height:29px;background:linear-gradient(130deg,#2d82bb,#e0b650);color:white;border:1px solid #ffffff35;border-radius:9px;box-shadow:0 4px 20px #3578b94d;font:800 17px ui-monospace,monospace}
+    .autoplay{display:flex;align-items:center;gap:8px;font:600 11px ui-monospace,SFMono-Regular,Consolas,monospace;color:#c7d4ef}
+    .pulse{width:7px;height:7px;border-radius:50%;background:#75e3b1;box-shadow:0 0 0 5px #75e3b111,0 0 13px #75e3b176;animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{50%{opacity:.4}}
+    .window{overflow:hidden;border-radius:20px;border:1px solid rgba(201,218,255,.25);box-shadow:0 30px 100px #030916b0,0 1px #ffffff15 inset,0 0 0 1px #ffffff09;backdrop-filter:blur(32px) saturate(135%);-webkit-backdrop-filter:blur(32px) saturate(135%);background:linear-gradient(115deg,rgba(30,45,75,.70),rgba(12,19,35,.89) 40%,rgba(27,27,53,.85))}
+    .titlebar{height:54px;display:flex;justify-content:space-between;align-items:center;padding:0 18px;background:rgba(255,255,255,.035);border-bottom:1px solid rgba(177,197,237,.13)}
+    .traffic{display:flex;gap:8px}.traffic span{display:block;width:11px;height:11px;border-radius:50%;box-shadow:0 1px 5px #0003}.traffic span:nth-child(1){background:#ff6a68}.traffic span:nth-child(2){background:#f8c55f}.traffic span:nth-child(3){background:#57ce89}
+    .title{font:500 12px ui-monospace,Consolas,monospace;color:#acbdd7;white-space:nowrap}
+    .win-actions{display:flex;gap:7px}.win-actions .mini{color:#99aac4;font-size:12px}
+    .tabrow{height:38px;background:rgba(0,0,0,.16);border-bottom:1px solid #ffffff0e;display:flex;justify-content:space-between;align-items:stretch}
+    .tab{border-right:1px solid #ffffff18;border-top:2px solid #8cadfa;display:flex;align-items:center;gap:9px;padding:0 18px;background:#ffffff0a;font:500 12px ui-monospace,Consolas,monospace;color:#e7edfa;min-width:156px}
+    .py-badge{color:#ffd273;font-size:13px;font-weight:800}.tab-meta{display:flex;align-items:center;padding-right:17px;color:#8297ba;font:10px ui-monospace,Consolas,monospace;letter-spacing:.08em}
+    .editor{height:345px;overflow:auto;overscroll-behavior:contain;scrollbar-color:#59658577 transparent;scrollbar-width:thin;padding:17px 22px 30px 0;background:rgba(3,9,23,.21)}
+    .code-lines{margin:0;font:500 14px/1.85 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;tab-size:4;min-width:0}
+    .code-line{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:start;min-height:25.9px;padding:0 12px 0 0;border-left:2px solid transparent;transition:background .1s ease,border-color .1s ease}
+    .code-line.active{background:linear-gradient(90deg,#628dce30,#628dce06);border-left-color:#8fbaff}
+    .line-num{text-align:right;padding-right:17px;color:#5f728f;user-select:none}.active .line-num{color:#bbd1ff}
+    .code-text{white-space:pre-wrap;overflow-wrap:anywhere;color:#e1e8f7;min-width:0}.code-text .kw{color:#caabff}.code-text .fn{color:#87c5ff}.code-text .str{color:#f3cf91}.code-text .num{color:#a4e3b9}.code-text .comment{color:#7899b1;font-style:italic}.code-text .var{color:#e7eefc}.code-text .operator{color:#a9bbdf}
+    .caret{display:inline-block;width:2px;height:1.18em;background:#b5d9ff;box-shadow:0 0 11px #83b5ffb6;margin-left:0;vertical-align:-.22em;animation:blink .85s steps(1) infinite;white-space:nowrap}
+    @keyframes blink{50%{opacity:0}}
+    .divider{border-top:1px solid rgba(180,197,236,.18)}
+    .terminal-head{height:41px;display:flex;justify-content:space-between;align-items:center;padding:0 23px;background:#0b1325a8;border-bottom:1px solid #ffffff12}
+    .terminal-label{font-size:10px;letter-spacing:.12em;font-weight:700;color:#b7c7e1;display:flex;align-items:center;gap:10px}
+    .terminal-label:before{content:"›_";letter-spacing:0;color:#a0d9b9;font:800 15px monospace}
+    .runtime{font:11px ui-monospace,Consolas,monospace;color:#86a3c2}
+    .output-wrap{min-height:142px;height:169px;overflow:auto;scrollbar-color:#59658577 transparent;scrollbar-width:thin;background:rgba(1,7,18,.45);padding:20px 24px;overscroll-behavior:contain}
+    .output{font:500 14px/1.85 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;color:#b8efd0;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;min-height:1.85em}
+    /* Crucial: cursor is a LAST INLINE CHILD inside the output pre, not absolutely placed or outside it. */
+    .output .caret{background:#a6f1cf;box-shadow:0 0 11px #72e4ad99}
+    .statusbar{display:flex;align-items:center;justify-content:space-between;gap:10px;height:34px;padding:0 16px;background:#23548bb8;border-top:1px solid #75a8e72b;color:#edf3ff;font:500 11px ui-monospace,Consolas,monospace}
+    .status-left,.status-right{display:flex;align-items:center;gap:13px}
+    .bottom{margin-top:20px;padding:0 3px}.meta{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#a6b8d6;font-size:12px;margin-bottom:10px}.meta b{color:#e4eafd}.percent{font:600 12px ui-monospace,Consolas,monospace;color:#9bbdfc}
+    .track{height:4px;border-radius:10px;background:#a6badb1d;overflow:hidden;box-shadow:0 0 0 1px #ffffff09 inset}.fill{height:100%;background:linear-gradient(90deg,#7bb6ff,#bd9cff);width:0;border-radius:10px;transition:width .18s linear;box-shadow:0 0 15px #78adf78c}
+    .controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px}.buttons{display:flex;gap:9px;align-items:center}.control{border:1px solid #b5c8eb34;background:#ffffff0b;color:#dbe8ff;min-height:39px;padding:0 13px;border-radius:11px;display:flex;gap:8px;align-items:center;cursor:pointer;font:600 12px ui-sans-serif,system-ui,sans-serif;transition:background .15s ease,transform .15s ease}.control:hover{background:#b9ceff1a;transform:translateY(-1px)}.control:focus-visible{outline:2px solid #aac9ff;outline-offset:2px}.control[aria-pressed=true]{border-color:#9ac3ff8a;background:#9ac3ff20}
+    .help{font:11px/1.6 ui-sans-serif,system-ui,sans-serif;color:#8c9fbd;text-align:right;max-width:330px}.sr{position:absolute;height:1px;width:1px;overflow:hidden;clip:rect(0,0,0,0)}
+    noscript .notice{padding:16px;text-align:center;color:#f4c58b;background:#342c2b;border-radius:10px;margin-top:14px}
+    @media(max-width:650px){body{padding:18px 10px;align-items:center}.masthead{margin:0 6px 12px}.studio{width:100%}.window{border-radius:16px}.titlebar{height:44px;padding:0 13px}.tab{min-width:134px;padding:0 12px}.editor{height:310px;padding-top:13px;padding-right:5px}.code-lines{font-size:12px;line-height:1.8}.code-line{grid-template-columns:35px minmax(0,1fr);min-height:22px}.line-num{padding-right:10px}.output-wrap{height:153px;min-height:130px;padding:14px 14px}.output{font-size:12px}.terminal-head{padding:0 14px}.status-right{display:none}.control{min-height:39px;padding:0 10px}.control .label{display:none}.help{display:none}.controls{justify-content:center}.brand{font-size:10px}}
+    @media(max-width:360px){body{padding:10px 5px}.win-actions{display:none}.controls{gap:4px}.editor{height:285px}.tab-meta{padding-right:9px}.brand{letter-spacing:.08em}}
+    @media(prefers-reduced-motion:reduce){.aura,.pulse,.studio{animation:none}.caret{animation-duration:1.5s}.control{transition:none}}
+  </style>
+</head>
+<body>
+  <div class="aura one" aria-hidden="true"></div><div class="aura two" aria-hidden="true"></div>
+  <main class="studio" aria-label="Python code animation tự chạy">
+    <div class="masthead"><div class="brand"><span class="python-icon">Py</span><span>PYTHON / LIVE CODE</span></div><div class="autoplay"><span class="pulse"></span><span id="live">AUTO PLAY · ON</span></div></div>
+    <section class="window" id="window" aria-label="Trình soạn thảo Python và kết quả">
+      <header class="titlebar"><div class="traffic" aria-hidden="true"><span></span><span></span><span></span></div><div class="title">Python Studio — ntjr</div><div class="win-actions" aria-hidden="true"><span class="mini">⌁</span><span class="mini">▤</span></div></header>
+      <div class="tabrow"><div class="tab"><span class="py-badge">◆</span><span id="fileName">hello.py</span><span style="color:#697f9e">×</span></div><div class="tab-meta">UTF-8 · PYTHON 3</div></div>
+      <div class="editor" id="editor" aria-label="Mã Python đang được gõ"><div class="code-lines" id="codeLines"><div class="code-line"><span class="line-num">1</span><span class="code-text"><span class="caret"></span></span></div></div></div>
+      <div class="divider"></div>
+      <div class="terminal-head"><span class="terminal-label">OUTPUT</span><span class="runtime" id="runStatus">Writing…</span></div>
+      <div class="output-wrap" id="outputWrap"><pre class="output" id="output"><span class="caret" id="outputCaret" hidden></span></pre></div>
+      <footer class="statusbar"><div class="status-left"><span id="statusText">● Writing</span><span id="positionText">Ln 1, Col 1</span></div><div class="status-right"><span>Python 3</span><span>UTF-8</span><span id="sceneCounter">01 / 03</span></div></footer>
+    </section>
+    <section class="bottom" aria-label="Tiến trình và điều khiển">
+      <div class="meta"><span><b id="sceneTitle">01.</b> <span id="description">Hello World</span></span><span class="percent" id="percent">0%</span></div>
+      <div class="track" role="progressbar" aria-label="Tiến độ trình diễn" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="track"><div class="fill" id="fill"></div></div>
+      <div class="controls"><div class="buttons">
+        <button class="control" id="pause" title="Tạm dừng / tiếp tục" aria-label="Tạm dừng"><span id="pauseIcon">⏸</span><span class="label" id="pauseText">Tạm dừng</span></button>
+        <button class="control" id="restart" title="Chạy lại từ đầu" aria-label="Chạy lại"><span>↻</span><span class="label">Chạy lại</span></button>
+        <button class="control" id="sound" title="Bật/tắt tiếng gõ phím" aria-label="Bật âm thanh" aria-pressed="false"><span id="soundIcon">♪̸</span><span class="label" id="soundText">Âm thanh</span></button>
+        <button class="control" id="fullscreen" title="Toàn màn hình" aria-label="Toàn màn hình"><span>⛶</span><span class="label">Toàn màn hình</span></button>
+      </div><div class="help">Tự chạy khi mở trang · 3 chương trình · Lặp vô hạn</div></div>
+    </section>
+    <noscript><div class="notice">Trình duyệt đang chặn JavaScript. Hãy mở tệp bằng Chrome/Safari và bật JavaScript để hiệu ứng tự chạy.</div></noscript>
+  </main>
+  <script>
+  (() => {
+    'use strict';
+    // Kịch bản dựng sẵn: đổi 3 mục này để thay nội dung, không cần máy chủ hoặc Python.
+    const scenes = [
+      {file:'hello.py',title:'Hello World',code:'print("Hello World!")',events:[{line:1,text:'Hello World!\n'}]},
+      {file:'intro.py',title:'Giới thiệu',code:'print("Xin chào, mình là Ngân Tú!")',events:[{line:1,text:'Xin chào, mình là Ngân Tú!\n'}]},
+      {file:'calculator.py',title:'Vòng lặp và phép tính',code:[
+        'print("Bắt đầu chương trình...")',
+        'print("Đếm từ 1 đến 10")',
+        'chan = []',
+        'le = []',
+        'tong = 0',
+        'for i in range(1, 11):',
+        '    tong += i',
+        '    if i % 2 == 0:',
+        '        chan.append(i)',
+        '    else:',
+        '        le.append(i)',
+        'print("Số chẵn:", *chan)',
+        'print("Số lẻ:", *le)',
+        'print("Tổng =", tong)',
+        'print("Hoàn thành!")'
+      ].join('\n'),events:[
+        {line:1,text:'Bắt đầu chương trình...\n'},
+        {line:2,text:'Đếm từ 1 đến 10\n'},
+        {line:6,walk:[6,7,8,9,6,7,8,10,11,6,7,8,9,6,7,8,10,11],delay:65},
+        {line:12,text:'Số chẵn: 2 4 6 8 10\n'},
+        {line:13,text:'Số lẻ: 1 3 5 7 9\n'},
+        {line:14,text:'Tổng = 55\n'},
+        {line:15,text:'Hoàn thành!\n'}
+      ]}
+    ];
+    const $=id=>document.getElementById(id);
+    const editor=$('editor'), codeLines=$('codeLines'), output=$('output'), outputWrap=$('outputWrap'), outputCaret=$('outputCaret');
+    // This is a real text node BEFORE a real inline cursor node, both inside <pre>.
+    // It follows every character, wrapped line and newline without position calculations.
+    const outputText=document.createTextNode('');
+    output.insertBefore(outputText,outputCaret);
+    let runToken=0,paused=false,soundEnabled=false,audioContext=null,keystroke=0;
+    const typeDelay=60, eraseDelay=16, eraseChunk=8, outDelay=55, holdDelay=3000;
+    const escapeHtml=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function syntax(raw){
+      let html='',prev=0;
+      const regex=/(#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b)/g;
+      for(const match of raw.matchAll(regex)){
+        html+=escapeHtml(raw.slice(prev,match.index));const s=match[0];let cls='var';
+        if(s[0]==='#')cls='comment';else if(s[0]==='"'||s[0]==="'")cls='str';else if(/^\d/.test(s))cls='num';
+        else if(['print','range','append','len','sum','int','str'].includes(s))cls='fn';
+        else if(['for','in','if','else','while','def','return'].includes(s))cls='kw';
+        html+='<span class="'+cls+'">'+escapeHtml(s)+'</span>';prev=match.index+s.length;
+      }
+      return html+escapeHtml(raw.slice(prev));
+    }
+    let codeCursor;
+    function renderCode(text,showCaret=true,activeLine=0){
+      const lines=text.split('\n');const fragment=document.createDocumentFragment();
+      lines.forEach((line,i)=>{
+        const row=document.createElement('div');row.className='code-line'+(activeLine===i+1?' active':'');
+        const number=document.createElement('span');number.className='line-num';number.textContent=i+1;
+        const body=document.createElement('span');body.className='code-text';body.innerHTML=syntax(line);
+        if(showCaret&&i===lines.length-1){const cur=document.createElement('span');cur.className='caret';cur.setAttribute('aria-hidden','true');body.appendChild(cur);codeCursor=cur;}
+        row.append(number,body);fragment.append(row);
+      });
+      codeLines.replaceChildren(fragment);
+      $('positionText').textContent=`Ln ${lines.length}, Col ${Array.from(lines.at(-1)).length+1}`;
+      if(activeLine){const active=codeLines.children[activeLine-1]; if(active){active.scrollIntoView({block:'nearest',behavior:'instant'});}}
+      else if(showCaret&&codeCursor){const offset=codeCursor.getBoundingClientRect().bottom-editor.getBoundingClientRect().bottom;if(offset>0)editor.scrollTop+=offset+32;}
+    }
+    function setStatus(name){
+      const messages={Writing:'● Writing',Running:'▶ Running',Finished:'✓ Finished',Clearing:'⌫ Clearing',Paused:'Ⅱ Paused'};
+      $('statusText').textContent=messages[name]||name;
+      $('runStatus').textContent=name==='Running'?'● Executing…':name==='Writing'?'Typing source…':name==='Clearing'?'Cleaning up…':name==='Finished'?'Process finished · exit code 0':name==='Paused'?'Paused':name;
+    }
+    function setProgress(v){const n=Math.max(0,Math.min(100,Math.round(v)));$('fill').style.width=n+'%';$('percent').textContent=n+'%';$('track').setAttribute('aria-valuenow',String(n));}
+    function updateOutput(v,visible){outputText.nodeValue=v;outputCaret.hidden=!visible;outputWrap.scrollTop=outputWrap.scrollHeight;}
+    function setPaused(v){paused=v;const label=paused?'Tiếp tục':'Tạm dừng';$('pause').setAttribute('aria-label',label);$('pauseIcon').textContent=paused?'▶':'⏸';$('pauseText').textContent=label;$('live').textContent=paused?'PAUSED':'AUTO PLAY · ON';if(paused)setStatus('Paused');}
+    function clickSound(){
+      if(!soundEnabled||!audioContext||audioContext.state!=='running')return;
+      if(++keystroke%3!==0)return;
+      try{const time=audioContext.currentTime;const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type='triangle';osc.frequency.setValueAtTime(420+(keystroke%7)*33,time);osc.frequency.exponentialRampToValueAtTime(170,time+.026);gain.gain.setValueAtTime(.006,time);gain.gain.exponentialRampToValueAtTime(.0001,time+.032);osc.connect(gain);gain.connect(audioContext.destination);osc.start(time);osc.stop(time+.04);}catch(_){/* no audio */}
+    }
+    async function delay(ms,token){
+      let remaining=ms;
+      while(remaining>0){if(token!==runToken)return false;if(paused){await new Promise(r=>setTimeout(r,35));continue;}
+        const part=Math.min(25,remaining);await new Promise(r=>setTimeout(r,part));remaining-=part;}
+      return token===runToken;
+    }
+    async function typeCode(s,token,index){let shown='';const chars=Array.from(s.code);editor.scrollTop=0;setStatus('Writing');
+      for(let i=0;i<chars.length;i++){if(token!==runToken)return false;shown+=chars[i];renderCode(shown,true);clickSound();setProgress(((index+(i+1)/chars.length*.58)/scenes.length)*100);
+        if(!(await delay(chars[i]==='\n'?92:typeDelay,token)))return false;}
+      return true;
+    }
+    async function printText(str,token){let text=outputText.nodeValue;
+      for(const c of Array.from(str)){if(token!==runToken)return false;text+=c;updateOutput(text,true);clickSound();if(!(await delay(c==='\n'?90:outDelay,token)))return false;}
+      return true;
+    }
+    async function execute(s,token,index){setStatus('Running');const events=s.events;
+      for(let n=0;n<events.length;n++){if(token!==runToken)return false;const ev=events[n];
+        if(ev.walk){for(const line of ev.walk){renderCode(s.code,false,line);if(!(await delay(ev.delay||90,token)))return false;}}
+        renderCode(s.code,false,ev.line);
+        if(!(await delay(220,token)))return false;
+        if(ev.text&&!(await printText(ev.text,token)))return false;
+        setProgress(((index+.58+(n+1)/events.length*.27)/scenes.length)*100);
+      }
+      renderCode(s.code,false);setStatus('Finished');updateOutput(outputText.nodeValue,true);setProgress(((index+.85)/scenes.length)*100);return true;
+    }
+    async function clearScene(s,token,index){
+      setStatus('Clearing');
+      // Xóa rất nhanh theo nhóm 8 ký tự mỗi khung ~16ms, thay vì 30ms MỖI ký tự.
+      // Con trỏ vẫn nằm ngay sau chữ cuối cùng trong Output và Code khi lùi.
+      const outputChars=Array.from(outputText.nodeValue);
+      while(outputChars.length){
+        if(token!==runToken)return false;
+        outputChars.length=Math.max(0,outputChars.length-eraseChunk);
+        updateOutput(outputChars.join(''),true);
+        if(!(await delay(eraseDelay,token)))return false;
+      }
+      updateOutput('',false);
+      const codeChars=Array.from(s.code);
+      while(codeChars.length){
+        if(token!==runToken)return false;
+        codeChars.length=Math.max(0,codeChars.length-eraseChunk);
+        renderCode(codeChars.join(''),true);
+        if(!(await delay(eraseDelay,token)))return false;
+      }
+      renderCode('',true);
+      setProgress(((index+1)/scenes.length)*100);
+      return true;
+    }
+    async function start(){const token=++runToken;setPaused(false);setProgress(0);outputText.nodeValue='';editor.scrollTop=0;updateOutput('',false);renderCode('',true);
+      while(token===runToken){for(let i=0;i<scenes.length;i++){if(token!==runToken)return;
+        const s=scenes[i];$('sceneTitle').textContent=String(i+1).padStart(2,'0')+'.';$('description').textContent=s.title;$('sceneCounter').textContent=String(i+1).padStart(2,'0')+' / 03';$('fileName').textContent=s.file;
+        renderCode('',true);updateOutput('',false);editor.scrollTop=0;outputWrap.scrollTop=0;
+        if(!(await delay(350,token)))return;
+        if(!(await typeCode(s,token,i)))return;
+        if(!(await delay(1000,token)))return;
+        if(!(await execute(s,token,i)))return;
+        if(!(await delay(holdDelay,token)))return;
+        if(!(await clearScene(s,token,i)))return;
+        if(!(await delay(200,token)))return;
+      }
+      if(token!==runToken)return;setProgress(0);
+      }
+    }
+    $('pause').addEventListener('click',()=>{setPaused(!paused);if(!paused)setStatus(outputText.nodeValue?'Running':'Writing');});
+    $('restart').addEventListener('click',()=>{start();});
+    $('sound').addEventListener('click',async()=>{
+      if(!soundEnabled){try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx){$('soundText').textContent='Không hỗ trợ';return;}audioContext=audioContext||new Ctx();await audioContext.resume();soundEnabled=true;}catch(_){$('soundText').textContent='Không hỗ trợ';return;}}
+      else soundEnabled=false;
+      $('sound').setAttribute('aria-pressed',String(soundEnabled));$('sound').setAttribute('aria-label',soundEnabled?'Tắt âm thanh':'Bật âm thanh');$('soundIcon').textContent=soundEnabled?'♫':'♪̸';$('soundText').textContent=soundEnabled?'Đang bật tiếng':'Âm thanh';
+    });
+    $('fullscreen').addEventListener('click',()=>{if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});}else{($('window').requestFullscreen?$('window'):document.documentElement).requestFullscreen().catch(()=>{});}});
+    const defaultScenes = scenes.map(s=>({...s,events:s.events.map(e=>({...e}))}));
+    let lastCMSConfig = '';
+    window.addEventListener('message', event => {
+      if(event.source !== window.parent || event.origin !== window.location.origin || event.data?.type !== 'ntjr:python-studio-config') return;
+      const fields=event.data.code;
+      if(!fields || typeof fields !== 'object') return;
+      const mapping=[['pythonHello','pythonHelloOutput'],['pythonIntro','pythonIntroOutput'],['pythonCalculator','pythonCalculatorOutput']];
+      const values=mapping.map(([codeKey,outKey])=>[fields[codeKey],fields[outKey]].map(v=>typeof v==='string'?v:''));
+      const fingerprint=JSON.stringify(values);
+      if(fingerprint===lastCMSConfig) return;
+      lastCMSConfig=fingerprint;
+      mapping.forEach(([codeKey,outKey],i)=>{
+        const base=defaultScenes[i], scene=scenes[i];
+        scene.code=base.code;
+        scene.events=base.events.map(e=>({...e}));
+        const source=fields[codeKey], result=fields[outKey];
+        if(typeof source==='string' && source.trim() && source.length<=5000) scene.code=source.replace(/\r\n?/g,'\n');
+        if(typeof result==='string' && result.trim() && result.length<=2000){
+          const rendered=result.replace(/\r\n?/g,'\n');
+          scene.events=[{line:Math.max(1,scene.code.split('\n').length),text:rendered.endsWith('\n')?rendered:rendered+'\n'}];
+        }
+      });
+      start();
+    });
+    // Start after parsing, without any click; custom animation is all client-side.
+    start();
+  })();
+  </script>
+</body>
+</html>
