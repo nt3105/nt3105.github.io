@@ -293,6 +293,33 @@
       window.addEventListener('resize', notifyParentSize, {passive:true});
       requestAnimationFrame(notifyParentSize);
     }
+    // Let the visitor scroll the main website while their pointer is over the embedded code.
+    if (document.documentElement.classList.contains('embed') && window.parent !== window) {
+      const moveHost = (x,y) => {
+        try { window.parent.scrollBy({left:x,top:y,behavior:'instant'}); } catch (_) {}
+      };
+      window.addEventListener('wheel', event => {
+        if(event.ctrlKey || event.metaKey || !(event.deltaX || event.deltaY)) return;
+        const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+        event.preventDefault();
+        moveHost(event.deltaX * unit,event.deltaY * unit);
+      },{passive:false});
+      let lastTouch=null;
+      window.addEventListener('touchstart',event=>{
+        lastTouch=event.touches.length===1
+          ? {x:event.touches[0].clientX,y:event.touches[0].clientY}:null;
+      },{passive:true});
+      window.addEventListener('touchmove',event=>{
+        if(!lastTouch || event.touches.length!==1)return;
+        const t=event.touches[0],dx=lastTouch.x-t.clientX,dy=lastTouch.y-t.clientY;
+        lastTouch={x:t.clientX,y:t.clientY};
+        if(!event.cancelable || Math.abs(dy)<0.1)return;
+        event.preventDefault();
+        moveHost(dx,dy);
+      },{passive:false});
+      window.addEventListener('touchend',()=>lastTouch=null,{passive:true});
+      window.addEventListener('touchcancel',()=>lastTouch=null,{passive:true});
+    }
     // Start after parsing, without any click; custom animation is all client-side.
     start();
   })();
