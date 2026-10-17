@@ -539,6 +539,10 @@ if(STUDIO_PREVIEW){
  document.addEventListener("click",event=>{
    const node=event.target instanceof Element?event.target:null;
    if(!node)return;
+   // The 3D introduction is a local website interaction, not a CMS field.
+   // Its two controls must remain clickable while the page is embedded in Admin.
+   // This branch runs only when STUDIO_PREVIEW is true; public visits are unaffected.
+   if(node.closest("#nt-motion-notice .nt-motion-enable, #nt-motion-notice .nt-motion-later"))return;
    const section=previewSectionFromNode(node);
    if(node.closest("a,button,form")){
      event.preventDefault();
