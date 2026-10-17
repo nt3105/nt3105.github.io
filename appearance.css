@@ -85,7 +85,7 @@ html[data-appearance="light"] #header .brand-simple .brand-dot, html[data-appear
 /* Desktop fits the pill group and theme toggle without a large empty capsule. */
 
 #header, #header.scrolled, #header.menu-open {
- width:max-content; max-width:calc(100% - 24px);
+ width:max-content; max-width:calc(100% - 24px); margin-inline:auto;
  border-radius:999px; border-color:#ffffff24 !important; background:linear-gradient(125deg,#ffffff0b,transparent 42%,#b8c8db06),rgba(18,19,22,.76) !important;
  box-shadow:0 12px 32px #0000002b,inset 0 1px 0 #ffffff10,inset 0 -1px 0 #00000024 !important;
  backdrop-filter:blur(20px) saturate(1.15); -webkit-backdrop-filter:blur(20px) saturate(1.15);
