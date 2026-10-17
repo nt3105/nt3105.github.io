@@ -71,7 +71,7 @@
   <link rel="stylesheet" href="app-icons.css?v=icons-11">
   <script src="script.js?v=gallery-19" defer></script>
   <script src="enhance.js?v=motion-14" defer></script>
-  <script src="features.js?v=motion-13" defer></script>
+  <script src="features.js?v=ntjr-python-1" defer></script>
   <script src="snake.js?v=depth-1" defer></script>
   <script src="ios-effects.js?v=motion-14" defer></script>
   <script src="ios-preview.js" defer></script>
@@ -304,6 +304,14 @@
 <dialog id="nt-scores-dialog" class="nt-scores-dialog" aria-labelledby="nt-scores-title"><div class="nt-dialog-head"><div><p>BẢNG ĐIỂM / SNAKE</p><h2 id="nt-scores-title">Một kỷ lục mới.</h2></div><button type="button" id="nt-scores-close" aria-label="Đóng bảng thành tích"><svg class="nt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><p class="nt-scores-description">Thành tích lưu trên trình duyệt này. Lọc theo độ khó và chế độ chơi.</p><div id="nt-scores-content"><div class="score-card"><div class="score-filters"><label>Độ khó<select id="leaderboard-level"><option value="all" selected>Tất cả</option><option value="easy">Dễ</option><option value="normal">Vừa</option><option value="hard">Khó</option></select></label><label>Chế độ<select id="leaderboard-mode"><option value="all" selected>Tất cả</option><option value="normal">Chơi thường</option><option value="assisted">Có hỗ trợ / tuỳ chỉnh</option></select></label></div>
   <table class="leaderboard"><caption>Điểm đã lưu trên máy này</caption><thead><tr><th scope="col">Hạng</th><th scope="col">Điểm</th><th scope="col">Thời gian</th></tr></thead><tbody id="leaderboard-body"></tbody></table><p id="leaderboard-empty">Chưa có thành tích. Chơi một ván để bắt đầu nhé!</p><p class="score-note" id="score-storage-note">Điểm lưu trên trình duyệt này. Chỉ ghi nhận ván đã kết thúc.</p></div></div></dialog>
 <noscript><style>.loader{display:none!important}#contact-form{display:none}.nav{height:auto;flex-wrap:wrap;padding-block:12px}</style><p class="nojs-note">Bạn vẫn có thể đọc nội dung và mở liên kết. Bật JavaScript để chơi game, nghe nhạc và dùng biểu mẫu.</p></noscript>
+<script>
+  // Admin CMS preview only; does not enable unverified CMS publishing on the public site.
+  if (new URLSearchParams(location.search).get('nt3105_preview') === '1') {
+    const cmsPreviewScript = document.createElement('script');
+    cmsPreviewScript.src = 'cms-public-v3.js?v=ntjr-python-1';
+    document.body.appendChild(cmsPreviewScript);
+  }
+</script>
 </body>
 </html>
 
