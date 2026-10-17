@@ -59,6 +59,28 @@ const source=[
   assert(nav.leading>=4&&nav.trailing>=4,'Capsule content does not fit: '+JSON.stringify(nav));
   assert(nav.hasNavLinks,'Some nav links collapsed or disappeared');
   assert(nav.fontSize>=16,'06 / ĐÁNH GIÁ WEBSITE eyebrow still too small: '+nav.fontSize);
+  // Regression: toggling only the light theme must replace the dark green pill.
+  const readActivePill=()=>desktop.evaluate(()=>{
+    const node=document.querySelector('#nav-links .nav-selection');
+    const active=document.querySelector('#nav-links > a.active');
+    const cs=getComputedStyle(node);
+    return {mode:document.documentElement.dataset.appearance,
+      background:cs.backgroundImage,border:cs.borderColor,shadow:cs.boxShadow,
+      color:active?getComputedStyle(active).color:null};
+  });
+  const darkPill=await readActivePill();
+  assert.equal(darkPill.mode,'dark','Precondition: dark appearance');
+  await desktop.locator('#nt-theme-toggle').click();
+  const lightPill=await readActivePill();
+  assert.equal(lightPill.mode,'light','Appearance toggle must enable light mode');
+  assert(lightPill.background.includes('222, 229, 242'),'Light selected pill did not turn to pale glass: '+lightPill.background);
+  assert(!lightPill.background.includes('37, 51, 47')&&!lightPill.background.includes('24, 35, 32'),'Dark selected pill incorrectly retained');
+  assert.notEqual(lightPill.background,darkPill.background,'Theme change must update active pill');
+  await desktop.locator('#nt-theme-toggle').click();
+  const restored=await readActivePill();
+  assert.equal(restored.mode,'dark','Appearance toggle must restore dark mode');
+  assert.equal(restored.background,darkPill.background,'Dark mode selected pill must remain unchanged');
+
   await desktop.locator('#nav-links a[href="#contact"]').click();
   await desktop.waitForTimeout(2000);
   assert((await desktop.locator('#contact').boundingBox()).y<270,'Review section not reached from header menu');
