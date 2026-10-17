@@ -24,6 +24,7 @@ assert(css.includes('flex:0 0 calc((100% - 16px) / 5)'), 'Five equal compact slo
 assert(script.includes('function paintNavSelection()'), 'Original sliding selection effect must be kept');
 assert(script.includes('window.addEventListener(\'pageshow\''), 'Original page restoration listener must remain');
 assert(script.includes('navPending = navSections.find('), 'Click-intent scroll logic must remain');
-const nav=[...html.matchAll(/<a href="#(skills|projects|personal-space|donate|contact)"/g)].map(x=>x[1]);
+const navMarkup=html.slice(html.indexOf('id="nav-links"'),html.indexOf('</nav>'));
+const nav=[...navMarkup.matchAll(/<a href="#(skills|projects|personal-space|donate|contact)"/g)].map(x=>x[1]);
 assert.deepEqual(nav,['skills','projects','personal-space','donate','contact'], 'Original links stay intact and in order');
 console.log('PASS scroll isolation + original typing, animations and navigation + 4 mobile links including Donate');
