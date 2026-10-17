@@ -931,9 +931,10 @@ window.addEventListener('nt3105:cms-music', event => {
     return;
   }
   musicWidget.hidden = false;
-  if (!Array.isArray(settings.tracks) || !settings.tracks.length) return;
+  const heroWidget=document.querySelector('.nt-music-float'); if(heroWidget)heroWidget.hidden=false;
+  if (!Array.isArray(settings.tracks) || !settings.tracks.length) { stopMusic(); musicWidget.hidden = true; return; }
   const tracks = settings.tracks.filter(t => t && typeof t.src === 'string' && /^https:\/\//i.test(t.src));
-  if (!tracks.length) return;
+  if (!tracks.length) { stopMusic(); musicWidget.hidden = true; return; }
   stopMusic();
   musicPlaylist.splice(0, musicPlaylist.length, ...tracks.map(t => ({
     title: String(t.title || 'Không tên').slice(0, 100),
