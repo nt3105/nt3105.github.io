@@ -2,7 +2,7 @@ name: V3 CMS JavaScript syntax
 on:
   pull_request:
   push:
-    branches: [feature/admin-v3-cms-preview]
+    branches: [main, feature/admin-v3-cms-preview]
 jobs:
   js-syntax:
     runs-on: ubuntu-latest
