@@ -18,9 +18,25 @@ jobs:
           node --check reviews-demo.js
           node tests/cms-v3-smoke.cjs
           node tests/cms-apply-v6.cjs
+          node tests/nav-studio-scroll-regression.cjs
       - name: Install DOM test dependency
         run: npm install --no-save --ignore-scripts jsdom@26
       - name: Run original HTML layout and CMS re-render tests
         run: node tests/cms-visual-cards.cjs
       - name: Test isolated restored comments without changing site visuals
         run: node tests/reviews-demo-smoke.cjs
+      - name: Install headless Chromium and Playwright
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test PC/mobile navigation and iframe scroll stability in Chromium
+        run: node tests/nav-studio-browser.cjs
+      - name: Save nav layout screenshots for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-scroll-browser-screenshots
+          path: |
+            nav-desktop-ci.png
+            nav-mobile-ci.png
+          if-no-files-found: ignore
