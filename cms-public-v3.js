@@ -239,12 +239,33 @@ if(c.hero){
   }
   const img=$("#home .nt-portrait img");
   if(img&&safeUrl(c.hero.image)){img.src=c.hero.image;img.style.objectPosition="center "+Math.max(0,Math.min(100,Number(c.hero.position)||50))+"%";img.style.filter="brightness("+(100-Math.max(0,Math.min(90,Number(c.hero.overlay)||0)))+"%)"}
+  if(typeof c.hero.roles==="string"&&window.ntCMSUpdateRoles)window.ntCMSUpdateRoles(c.hero.roles);
+  const safeHref=value=>typeof value==="string"&&(value.startsWith("#")&&/^#[a-zA-Z0-9_-]+$/.test(value)||safeUrl(value))?value:null;
+  const labels=[["primaryLabel","primaryUrl","Xem dự án","#projects"],["secondaryLabel","secondaryUrl","Liên hệ với tôi","#contact"]];
+  const actions=$$("#home .hero-actions > a.button");
+  labels.forEach(([labelKey,urlKey,fallbackText,fallbackUrl],i)=>{
+    const link=actions[i];if(!link)return;
+    const label=trim(c.hero[labelKey]||fallbackText,80);
+    let textNode=Array.from(link.childNodes).find(node=>node.nodeType===3);
+    if(textNode)textNode.textContent=label+" ";
+    else link.prepend(document.createTextNode(label+" "));
+    link.href=safeHref(c.hero[urlKey])||fallbackUrl;
+  });
  }
  });
  applyPart("branding",()=>{
 if(c.brand?.logoText){$$(".brand-wordmark strong,.logo").forEach(n=>{
   if(n.textContent?.trim()!==trim(c.brand.logoText)) n.textContent=trim(c.brand.logoText);
  })}
+ if(typeof c.brand?.tagline==="string"){
+   const header=$("#header .brand");
+   if(header){
+    header.title=trim(c.brand.tagline,160);
+    let extra=header.querySelector(".nt-cms-brand-tagline");
+    if(!extra){extra=createNode("small",{class:"nt-cms-brand-tagline"});header.append(extra)}
+    extra.textContent=trim(c.brand.tagline,70);
+   }
+ }
  if(c.brand?.favicon&&safeUrl(c.brand.favicon)){
   const icon=$('link[rel="icon"]');if(icon)icon.href=c.brand.favicon;
  }
@@ -319,6 +340,9 @@ if(c.theme?.accent&&/^#[a-fA-F0-9]{3,8}$/.test(c.theme.accent)){
   document.documentElement.style.setProperty("--accent",c.theme.accent);
   document.documentElement.style.setProperty("--cyan",c.theme.accent);
   document.documentElement.style.setProperty("--gradient","linear-gradient(110deg,"+c.theme.accent+" 0%,#929cff 52%,#bb8cff 100%)");
+ }
+ if(c.theme?.background&&/^#[0-9a-fA-F]{3,8}$/.test(c.theme.background)){
+   document.documentElement.style.setProperty("--bg",c.theme.background);
  }
  if(c.theme?.surface)document.documentElement.style.setProperty("--surface",c.theme.surface);
  if(c.theme?.text)document.documentElement.style.setProperty("--text",c.theme.text);
