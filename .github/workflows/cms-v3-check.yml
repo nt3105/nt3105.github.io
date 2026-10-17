@@ -31,6 +31,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Test PC/mobile navigation and iframe scroll stability in Chromium
         run: node tests/nav-studio-browser.cjs
+      - name: Test Liquid Glass reviews and centered navigation in Chromium
+        run: node tests/reviews-contact-browser.cjs
       - name: Save nav layout screenshots for review
         if: always()
         uses: actions/upload-artifact@v4
@@ -39,4 +41,6 @@ jobs:
           path: |
             nav-desktop-ci.png
             nav-mobile-ci.png
+            reviews-desktop-ci.png
+            reviews-mobile-ci.png
           if-no-files-found: ignore
