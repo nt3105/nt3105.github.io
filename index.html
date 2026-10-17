@@ -172,13 +172,23 @@
     <section class="section container" id="code-corner" aria-labelledby="code-heading">
   <div class="section-heading split-heading"><div><p class="eyebrow">CODE / MỖI NGÀY MỘT CHÚT</p><h2 id="code-heading">Góc code<span class="accent">.</span></h2></div><p>Những ví dụ nhỏ để đọc, thử và học. Chọn ngôn ngữ rồi sao chép để chạy trên máy.</p></div>
   <div class="code-workbench nt-python-host">
-    <iframe id="nt-python-studio" title="Python Studio — ntjr" src="python-studio.html?embed=1&amp;v=1" loading="eager" allow="fullscreen" allowfullscreen></iframe>
+    <iframe id="nt-python-studio" title="Python Studio — ntjr" src="python-studio.html?embed=1&amp;v=2" loading="eager" allow="fullscreen" allowfullscreen></iframe>
   </div>
   <style id="nt-python-embed-style">
     #code-corner .nt-python-host{padding:0!important;overflow:hidden;background:transparent;border:0;box-shadow:none}
-    #code-corner .nt-python-host iframe{display:block;width:100%;height:820px;border:0;border-radius:18px;background:#0b1021}
-    @media(max-width:650px){#code-corner .nt-python-host iframe{height:740px}}
+    #code-corner .nt-python-host iframe{display:block;width:100%;height:640px;border:0;border-radius:0;background:transparent;overflow:hidden}
+    @media(max-width:650px){#code-corner .nt-python-host iframe{height:610px}}
   </style>
+  <script>
+    (() => {
+      const studio = document.getElementById('nt-python-studio');
+      window.addEventListener('message', (event) => {
+        if (event.origin !== location.origin || event.source !== studio?.contentWindow || event.data?.type !== 'ntjr:python-studio-height') return;
+        const height = Number(event.data.height);
+        if (Number.isFinite(height) && height >= 250 && height <= 1600) studio.style.height = Math.ceil(height) + 'px';
+      });
+    })();
+  </script>
   </section>
 
     <section class="section container" id="donate"><div class="donate-panel reveal"><div class="donate-copy"><p class="eyebrow">07 / MỘT CHÚT ĐỘNG LỰC</p><h2>Góp gió<br><span class="gradient-text">thành bão.</span></h2><dl class="bank-details"><div><dt>Ngân hàng</dt><dd>Techcombank</dd></div><div><dt>Chủ tài khoản</dt><dd>KIEN NGAN TU</dd></div><div><dt>Số tài khoản</dt><dd id="bank-account">19076415749012</dd></div></dl><div id="donate-form" class="amount-form" style="display:block"><label for="donate-amount">Số tiền ủng hộ</label><div class="amount-input-wrap"><input id="donate-amount" name="amount" inputmode="numeric" autocomplete="off" placeholder="Nhập số tiền" maxlength="15" aria-describedby="amount-error" required><span>VNĐ</span></div><div class="amount-presets" aria-label="Chọn nhanh số tiền"><button type="button" data-amount="20000">20.000đ</button><button type="button" data-amount="50000">50.000đ</button><button type="button" data-amount="100000">100.000đ</button></div><p id="amount-error" class="field-error" role="alert"></p><button id="generate-qr" type="button" class="button primary">Tạo QR ủng hộ</button></div><div class="hero-actions"><button class="button primary" type="button" id="copy-account">Sao chép số tài khoản</button><a id="qr-open" class="button secondary" href="images/qr-techcombank-card.png" target="_blank" rel="noopener">Mở ảnh QR</a></div></div><figure class="qr-panel"><div id="qr-status" class="qr-status" role="status">QR tài khoản · Chưa có số tiền</div><div class="qr-crop qr-static"><img loading="lazy" id="donation-qr" src="images/qr-techcombank-card.png" alt="Mã QR Techcombank của KIEN NGAN TU, số tài khoản 19076415749012" decoding="async"></div><figcaption id="qr-caption">Nhập số tiền và bấm tạo QR, hoặc quét mã tài khoản để tự nhập tiền.</figcaption></figure></div></section>
