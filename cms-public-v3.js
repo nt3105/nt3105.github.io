@@ -16,33 +16,83 @@ function createNode(tag,attrs={},text){
   if(text!==undefined)n.textContent=String(text);
   return n;
 }
+// Keep original gallery/cards and their styling, changing only published content.
 function updateGallery(items){
  const gallery=$("#memories .nt-gallery");
  if(!gallery||!Array.isArray(items))return;
+ const existing=Array.from(gallery.querySelectorAll(":scope > .nt-memory"));
  const allowed=items.filter(i=>i&&i.visible!==false&&safeUrl(i.src)).slice(0,40);
  if(!allowed.length){gallery.replaceChildren();gallery.hidden=true;return}
- gallery.hidden=false;
- const frag=document.createDocumentFragment();
+ const remaining=new Set(existing),frag=document.createDocumentFragment();
  for(const item of allowed){
-   const a=createNode("a",{class:"nt-memory",href:item.src,target:"_blank",rel:"noopener noreferrer"});
-   const img=createNode("img",{src:item.src,alt:trim(item.title||"Ảnh kỷ niệm"),loading:"lazy",decoding:"async",draggable:"false"});
-   const caption=createNode("span",{class:"nt-memory-caption"});
-   caption.append(createNode("strong",{},trim(item.title||"Khoảnh khắc")),createNode("small",{},"NT3105 / GALLERY"));
-   a.append(img,caption);frag.append(a);
+   const url=safeUrl(item.src);
+   let card=existing.find(node=>remaining.has(node)&&(node.href===url||node.getAttribute("href")===url));
+   if(!card)card=existing.find(node=>remaining.has(node))||null;
+   if(card)remaining.delete(card);
+   else {
+     card=createNode("a",{class:"nt-memory"});
+     const img=createNode("img",{alt:"",loading:"lazy",decoding:"async",draggable:"false"});
+     const caption=createNode("span",{class:"nt-memory-caption"});
+     caption.append(createNode("strong"),createNode("small",{},"NT3105 / GALLERY"));
+     card.append(img,caption);
+   }
+   const oldHref=card.getAttribute("href")||"";
+   card.href=url;
+   if(!oldHref||(oldHref!==url && !url.endsWith(oldHref))){
+     const img=card.querySelector("img");if(img)img.src=url;
+   }
+   const caption=card.querySelector(".nt-memory-caption strong");
+   if(caption)caption.textContent=trim(item.title||"Khoảnh khắc");
+   const image=card.querySelector("img");if(image)image.alt=trim(item.title||"Ảnh kỷ niệm");
+   card.setAttribute("aria-label","Xem ảnh: "+trim(item.title||"Ảnh"));
+   frag.append(card);
  }
  gallery.replaceChildren(frag);
- gallery.style.overflowX="auto";gallery.style.scrollSnapType="x mandatory";gallery.style.touchAction="pan-x";
+ gallery.hidden=false;
+ gallery.style.overflowX="auto";
+ gallery.style.scrollSnapType="x mandatory";
+ gallery.style.touchAction="pan-x";
 }
 function updateCards(selector,items,kind){
  if(!Array.isArray(items))return;
  const parent=$(selector);if(!parent)return;
- const frag=document.createDocumentFragment();
+ const existing=Array.from(parent.children).filter(node=>node.matches(".skill-card,.project-card"));
+ const remaining=new Set(existing),frag=document.createDocumentFragment();
+ const titleOf=node=>(node.querySelector("h3")?.textContent||"").trim();
  for(const obj of items.filter(x=>x&&x.visible!==false).slice(0,30)){
-  const title=trim(kind==="skills"?obj.name:obj.title);if(!title)continue;
-  const card=createNode("article",{class:kind==="skills"?"skill-card reveal":"project-card reveal"});
-  if(kind==="projects"&&safeUrl(obj.image)){card.append(createNode("img",{src:obj.image,loading:"lazy",alt:title}))}
-  card.append(createNode("h3",{},title),createNode("p",{},trim(obj.description)));
-  if(kind==="projects"&&safeUrl(obj.url)){const link=createNode("a",{href:obj.url,target:"_blank",rel:"noopener noreferrer"},"Xem dự án ↗");card.append(link)}
+  const title=trim(kind==="skills"?obj.name:obj.title);
+  if(!title)continue;
+  let card=existing.find(node=>remaining.has(node)&&titleOf(node)===title);
+  if(!card)card=existing.find(node=>remaining.has(node))||null;
+  const reused=Boolean(card);
+  if(card)remaining.delete(card);
+  else card=createNode("article",{class:kind==="skills"?"skill-card reveal":"project-card reveal"});
+  if(!reused&&kind==="projects"){
+    const art=createNode("div",{class:"project-art art-portfolio"});
+    art.append(createNode("span",{class:"project-number"},"NT3105 / PROJECT"));
+    const info=createNode("div",{class:"project-info"});
+    const titled=createNode("div",{class:"project-title"});
+    titled.append(createNode("h3"));
+    info.append(titled,createNode("p"),createNode("div",{class:"project-actions"}));
+    card.append(art,info);
+  }
+  let h=card.querySelector("h3");
+  if(!h){h=createNode("h3");card.append(h)}
+  h.textContent=title;
+  let p=card.querySelector(kind==="projects"?".project-info > p":":scope > p");
+  if(!p){p=createNode("p");(kind==="projects"?card.querySelector(".project-info")||card:card).append(p)}
+  p.textContent=trim(obj.description);
+  if(kind==="projects"){
+    const art=card.querySelector(".project-art");
+    if(art&&safeUrl(obj.image))art.style.backgroundImage="url("+JSON.stringify(obj.image)+")";
+    const actions=card.querySelector(".project-actions");
+    if(actions&&safeUrl(obj.url)){
+      let link=actions.querySelector("a.button");
+      if(!link){link=createNode("a",{class:"button primary small",target:"_blank",rel:"noopener noreferrer"},"Xem dự án ↗");actions.prepend(link)}
+      link.href=obj.url;
+      if(!reused){link.target="_blank";link.rel="noopener noreferrer"}
+    }
+  }
   frag.append(card);
  }
  parent.replaceChildren(frag);
