@@ -19,6 +19,7 @@ function el(id) {
 }
 const nodes={hero:el('hero'),brand:el('brand'),nav:el('nav'),social:el('social'),contact:el('contact')};
 nodes.hero.innerHTML='<span>Old</span>';
+nodes.social.tagName='A';
 const map=new Map([
  ['#hero-title',nodes.hero],['#home .hero-description',el('subtitle')],
  ['#contact .contact-copy h2',el('contact-title')],
