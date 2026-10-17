@@ -490,9 +490,10 @@ html[data-appearance="light"] #header.menu-open {
     inset 0 1px 0 rgba(255, 255, 255, .95) !important;
 }
 html[data-appearance="light"] #header #nav-links .nav-selection {
-  background: linear-gradient(180deg, #25332f, #182320) !important;
-  border-color: rgba(255, 255, 255, .18) !important;
-  box-shadow: 0 4px 12px -4px rgba(20, 32, 28, .2), inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+  /* Light-only selected pill: soft translucent glass, never the dark green pill. */
+  background: linear-gradient(160deg, rgba(222, 229, 242, .97), rgba(243, 246, 252, .91)) !important;
+  border-color: rgba(112, 126, 151, .32) !important;
+  box-shadow: 0 3px 12px -5px rgba(66, 80, 112, .2), inset 0 1px 0 rgba(255, 255, 255, .97) !important;
 }
 html[data-appearance="light"] .nt-float,
 html[data-appearance="light"] .nt-orbit-code {
