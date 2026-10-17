@@ -34,7 +34,7 @@ const studioWin={
 };
 const previewDoc={
   readyState:'complete',
-  documentElement:{classList:{add(){}}},
+  documentElement:{classList:{add(){},toggle(){},remove(){}},style:{setProperty(){}}},
   addEventListener(){},
   querySelector(){return null},
   getElementById(){return null}
