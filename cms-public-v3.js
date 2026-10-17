@@ -142,6 +142,17 @@ function apply(content,client){
  renderComments(client,c);
 }
 async function boot(){
+ if(!window.supabase?.createClient){
+  try{
+    await new Promise((resolve,reject)=>{
+      const js=document.createElement("script");
+      js.src="https://unpkg.com/@supabase/supabase-js@2";
+      js.onload=resolve;
+      js.onerror=()=>reject(new Error("Supabase SDK backup unavailable"));
+      document.head.append(js);
+    });
+  }catch(error){console.warn("NT3105 CMS: backup SDK unavailable; keeping original site.",error)}
+ }
  if(!window.supabase?.createClient){console.warn("NT3105 CMS: Supabase SDK unavailable; using original site.");return}
  const client=window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
  try{
