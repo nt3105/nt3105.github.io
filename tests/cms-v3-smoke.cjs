@@ -36,7 +36,7 @@ const previewDoc={
   readyState:'complete',
   documentElement:{classList:{add(){},toggle(){},remove(){}},style:{setProperty(){}}},
   addEventListener(){},
-  querySelector(){return null},
+  querySelector(){return null},querySelectorAll(){return []},
   getElementById(){return null}
 };
 vm.runInNewContext(fs.readFileSync('cms-public-v3.js','utf8'),{
