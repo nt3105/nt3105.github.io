@@ -70,7 +70,7 @@ const {JSDOM}=require('jsdom');
  filter.value='all';filter.dispatchEvent(new window.Event('change'));
  // Local likes are visibly local, never written to remote Supabase.
  const like=root.querySelector('.ntjr-comment-like');
- like.click();assert.equal(like.closest('article').parentElement.querySelectorAll('.ntjr-comment-like.is-liked').length,1);
+ like.click();assert.equal(root.querySelectorAll('.ntjr-comment-like.is-liked').length,1);
  assert.equal(posts,0,'Like action must not mutate comments DB');
  const form=root.querySelector('#nt3105-comment-form');
  form.elements.namedItem('author').value='Người thử';
