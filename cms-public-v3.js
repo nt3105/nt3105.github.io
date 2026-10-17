@@ -18,9 +18,9 @@ function createNode(tag,attrs={},text){
 }
 function updateGallery(items){
  const gallery=$("#memories .nt-gallery");
- if(!gallery||!Array.isArray(items)||!items.length)return;
+ if(!gallery||!Array.isArray(items))return;
  const allowed=items.filter(i=>i&&i.visible!==false&&safeUrl(i.src)).slice(0,40);
- if(!allowed.length){gallery.hidden=true;return}
+ if(!allowed.length){gallery.replaceChildren();gallery.hidden=true;return}
  gallery.hidden=false;
  const frag=document.createDocumentFragment();
  for(const item of allowed){
@@ -34,7 +34,7 @@ function updateGallery(items){
  gallery.style.overflowX="auto";gallery.style.scrollSnapType="x mandatory";gallery.style.touchAction="pan-x";
 }
 function updateCards(selector,items,kind){
- if(!Array.isArray(items)||!items.length)return;
+ if(!Array.isArray(items))return;
  const parent=$(selector);if(!parent)return;
  const frag=document.createDocumentFragment();
  for(const obj of items.filter(x=>x&&x.visible!==false).slice(0,30)){
@@ -45,7 +45,7 @@ function updateCards(selector,items,kind){
   if(kind==="projects"&&safeUrl(obj.url)){const link=createNode("a",{href:obj.url,target:"_blank",rel:"noopener noreferrer"},"Xem dự án ↗");card.append(link)}
   frag.append(card);
  }
- if(frag.childNodes.length)parent.replaceChildren(frag);
+ parent.replaceChildren(frag);
 }
 function renderMusic(music){
  if(!music||typeof music!=="object")return;
@@ -101,7 +101,7 @@ function apply(content,client){
   if(c.hero.visible===false)show("#home",false);
   setText("#home .hero-description",c.hero.subtitle);
   if(c.hero.title&&c.hero.title!=="Xin chào, mình là Ngân Tú Dev."){
-   const h=$("#hero-title");if(h)h.replaceChildren(createNode("span",{class:"gradient-text"},trim(c.hero.title)));
+   const h=$("#hero-title");if(h){h.replaceChildren(createNode("span",{class:"gradient-text"},trim(c.hero.title)));h.setAttribute("aria-label",trim(c.hero.title));}
   }
   const img=$("#home .nt-portrait img");
   if(img&&safeUrl(c.hero.image)){img.src=c.hero.image;img.style.objectPosition="center "+Math.max(0,Math.min(100,Number(c.hero.position)||50))+"%";img.style.filter="brightness("+(100-Math.max(0,Math.min(90,Number(c.hero.overlay)||0)))+"%)"}
