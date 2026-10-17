@@ -104,7 +104,8 @@ function renderMusic(music){
 }
 function setSocial(kind,value){
  if(!safeUrl(value))return;
- $$('[data-social="'+kind+'"]').forEach(a=>{if(a.tagName==="A"){a.href=value;a.rel="noopener noreferrer";a.target="_blank"}});
+ if(window.ntSocialLinks)window.ntSocialLinks[kind]=value;
+ $('[data-social="'+kind+'"]').forEach(a=>{if(a.tagName==="A"){a.href=value;a.rel="noopener noreferrer";a.target="_blank"}});
 }
 function renderComments(client,content){
  if(content?.comments?.enabled===false)return;
@@ -181,11 +182,15 @@ function apply(content,client){
    if(normal(title.textContent)!==normal(c.contact.title))title.textContent=trim(c.contact.title);
   }}
   setText("#contact .contact-copy > p:not(.eyebrow):not(.form-note)",c.contact.description);
-  const mail=$("#contact .contact-email");if(mail&&c.contact.email&&/^[^@]+@[^@]+\.[^@]+$/.test(c.contact.email)){mail.href="mailto:"+encodeURIComponent(c.contact.email);mail.firstChild.textContent=c.contact.email+" "}
+  const mail=$("#contact .contact-email");if(mail&&c.contact.email&&/^[^@]+@[^@]+\.[^@]+$/.test(c.contact.email)){mail.href="mailto:"+encodeURIComponent(c.contact.email);if(mail.firstChild)mail.firstChild.textContent=c.contact.email+" ";if(window.ntSocialLinks)window.ntSocialLinks.email=c.contact.email}
  }}
  if(c.navigation){for(const [section,txt] of Object.entries(c.navigation)){const id=section==="home"?"home":section;$$('#nav-links a[href="#'+id+'"] .nav-label').forEach(n=>n.textContent=trim(txt))}}
  if(c.socials){for(const [kind,url] of Object.entries(c.socials))setSocial(kind,url)}
- if(c.theme?.accent)document.documentElement.style.setProperty("--accent",c.theme.accent);
+ if(c.theme?.accent&&/^#[a-fA-F0-9]{3,8}$/.test(c.theme.accent)){
+  document.documentElement.style.setProperty("--accent",c.theme.accent);
+  document.documentElement.style.setProperty("--cyan",c.theme.accent);
+  document.documentElement.style.setProperty("--gradient","linear-gradient(110deg,"+c.theme.accent+" 0%,#929cff 52%,#bb8cff 100%)");
+ }
  if(c.theme?.surface)document.documentElement.style.setProperty("--surface",c.theme.surface);
  if(c.theme?.text)document.documentElement.style.setProperty("--text",c.theme.text);
  if(c.theme?.light===true)document.documentElement.classList.add("nt-cms-light");
