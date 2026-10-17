@@ -3,6 +3,9 @@
 "use strict";
 const SUPABASE_URL="https://oyogarwaylhfupcrrfyq.supabase.co";
 const KEY="sb_publishable_UWm-gQGorsvOGOksKL0BHg_rR265JRi";
+const STUDIO_PREVIEW = new URLSearchParams(location.search).get("nt3105_preview")==="1";
+const ADMIN_ORIGIN="https://admin.nt3105.io.vn";
+const ORIGINAL_HERO_MARKUP=document.querySelector("#hero-title")?.innerHTML||"";
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
 const isURL=s=>{try{const u=new URL(s);return u.protocol==="https:"}catch{return false}};
@@ -108,13 +111,24 @@ function setSocial(kind,value){
  $('[data-social="'+kind+'"]').forEach(a=>{if(a.tagName==="A"){a.href=value;a.rel="noopener noreferrer";a.target="_blank"}});
 }
 function renderComments(client,content){
+ const existing=document.getElementById("nt3105-cms-comments");
+ if(existing){
+   existing.hidden=content?.comments?.enabled===false;
+   const h=existing.querySelector("h2");if(h)h.textContent=trim(content?.comments?.title||"Nhận xét của khách.");
+   return;
+ }
  if(content?.comments?.enabled===false)return;
- const main=$("#main");if(!main||document.getElementById("nt3105-cms-comments"))return;
+ const main=$("#main");if(!main)return;
  const section=createNode("section",{class:"section container nt-cms-comments",id:"nt3105-cms-comments"});
  section.innerHTML='<div class="section-heading"><p class="eyebrow">GUESTBOOK / BÌNH LUẬN</p><h2></h2><p>Để lại lời nhắn hoặc đánh giá trải nghiệm.</p></div><div class="nt-cms-comment-shell"><form id="nt3105-comment-form"><label>Tên hiển thị<input name="author" maxlength="40" minlength="2" required autocomplete="nickname" placeholder="Tên của bạn"></label><label>Đánh giá<select name="rating"><option value="5">★★★★★ (5)</option><option value="4">★★★★ (4)</option><option value="3">★★★ (3)</option><option value="2">★★ (2)</option><option value="1">★ (1)</option></select></label><label class="wide">Lời nhắn<textarea name="body" rows="3" minlength="3" maxlength="500" required placeholder="Bạn muốn chia sẻ điều gì?"></textarea></label><button type="submit">Gửi nhận xét ↗</button><p id="nt3105-comment-status" role="status" aria-live="polite"></p></form><div id="nt3105-comment-list" aria-live="polite"></div></div>';
  const heading=section.querySelector("h2");heading.textContent=trim(content?.comments?.title||"Nhận xét của khách.");
  main.append(section);
  const list=$("#nt3105-comment-list"),status=$("#nt3105-comment-status"),form=$("#nt3105-comment-form");
+ if(!client){
+   form.hidden=true;
+   list.textContent="Bản xem trước phần bình luận. Khách truy cập sẽ thấy bình luận thật sau khi xuất bản.";
+   return;
+ }
  const load=async()=>{
   const {data,error}=await client.from("site_comments").select("author,body,rating,is_pinned,admin_reply,created_at").eq("is_hidden",false).order("created_at",{ascending:false}).limit(100);
   if(error){list.textContent="Chưa thể tải bình luận.";return}
@@ -149,10 +163,19 @@ function renderComments(client,content){
 function apply(content,client){
  const c=content||{};
  if(c.hero){
-  if(c.hero.visible===false)show("#home",false);
+  if(typeof c.hero.visible==="boolean")show("#home",c.hero.visible);
   setText("#home .hero-description",c.hero.subtitle);
-  if(c.hero.title&&c.hero.title!=="Xin chào, mình là Ngân Tú Dev."){
-   const h=$("#hero-title");if(h){h.replaceChildren(createNode("span",{class:"gradient-text"},trim(c.hero.title)));h.setAttribute("aria-label",trim(c.hero.title));}
+  if(typeof c.hero.title==="string"){
+   const h=$("#hero-title");
+   if(h){
+     const title=trim(c.hero.title);
+     if(title==="Xin chào, mình là Ngân Tú Dev."&&ORIGINAL_HERO_MARKUP){
+       if(h.innerHTML!==ORIGINAL_HERO_MARKUP)h.innerHTML=ORIGINAL_HERO_MARKUP;
+     } else if(h.textContent?.trim()!==title) {
+       h.replaceChildren(createNode("span",{class:"gradient-text"},title));
+     }
+     h.setAttribute("aria-label",title);
+   }
   }
   const img=$("#home .nt-portrait img");
   if(img&&safeUrl(c.hero.image)){img.src=c.hero.image;img.style.objectPosition="center "+Math.max(0,Math.min(100,Number(c.hero.position)||50))+"%";img.style.filter="brightness("+(100-Math.max(0,Math.min(90,Number(c.hero.overlay)||0)))+"%)"}
@@ -217,6 +240,7 @@ async function refreshPublished(){
  finally{loadingCMS=false}
 }
 async function boot(){
+ if(STUDIO_PREVIEW)return;
  if(!window.supabase?.createClient){
   try{
     await new Promise((resolve,reject)=>{
@@ -234,6 +258,92 @@ async function boot(){
  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshPublished();});
  window.addEventListener("focus",()=>{if(!document.hidden)refreshPublished();});
  setInterval(()=>{if(!document.hidden)refreshPublished()},30000);
+}
+
+// Studio preview bridge: only the owner's Admin origin can push draft data here.
+// This uses the actual public page; no guest can change the published CMS record.
+const PREVIEW_TARGETS={
+ overview:"#home",hero:"#home",about:"#about",gallery:"#memories",
+ music:"#nt-hero-music-open",effects:"#journey",brand:"#header",
+ navigation:"#header",skills:"#skills",projects:"#projects",journey:"#journey",
+ contact:"#contact",socials:"#social",theme:"#home",layout:"#skills",
+ seo:"#home",footer:".footer",comments:"#nt3105-cms-comments"
+};
+const FIELD_TARGETS={
+ "hero.title":"#hero-title","hero.subtitle":".hero-description","hero.image":".nt-portrait",
+ "hero.position":".nt-portrait","hero.overlay":".nt-portrait",
+ "about.title":"#about h2","about.body":"#about",
+ "gallery.src":"#memories .nt-gallery","gallery.title":"#memories .nt-gallery",
+ "tracks.title":"#nt-hero-music-open","tracks.cover":"#nt-hero-cover",
+ "theme.accent":"#home","footer.text":".footer","contact.title":"#contact h2",
+ "contact.description":"#contact .contact-copy","brand.logoText":"#header .brand"
+};
+let previewSpotlight=null;
+function previewNavigate(section,field){
+ const selector=FIELD_TARGETS[section+"."+field]||PREVIEW_TARGETS[section]||"#home";
+ const target=document.querySelector(selector)||document.querySelector(PREVIEW_TARGETS[section]||"#home");
+ if(!target)return;
+ const opts={behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"};
+ target.scrollIntoView(opts);
+ if(previewSpotlight)previewSpotlight.classList.remove("nt-cms-spotlight");
+ previewSpotlight=target;
+ target.classList.add("nt-cms-spotlight");
+ clearTimeout(window.__nt3105SpotlightTimer);
+ window.__nt3105SpotlightTimer=setTimeout(()=>{
+  target.classList.remove("nt-cms-spotlight");
+  if(previewSpotlight===target)previewSpotlight=null;
+ },2200);
+}
+function previewSectionFromNode(node){
+ if(node.closest("#nt3105-cms-comments"))return "comments";
+ if(node.closest("#nt-hero-music-open,.music-widget,.nt-music-float"))return "music";
+ const ids={home:"hero",about:"about",memories:"gallery",skills:"skills",
+  projects:"projects",journey:"journey",contact:"contact",social:"socials"};
+ for(const [id,section] of Object.entries(ids)){
+  if(node.closest("#"+id))return section;
+ }
+ if(node.closest(".footer"))return "footer";
+ if(node.closest("#header"))return "navigation";
+ return null;
+}
+if(STUDIO_PREVIEW){
+ document.documentElement.classList.add("nt-cms-in-studio");
+ window.addEventListener("message",event=>{
+  if(event.origin!==ADMIN_ORIGIN||event.source!==window.parent)return;
+  const data=event.data;
+  if(!data||typeof data!=="object")return;
+  if(data.type==="nt3105:cms-preview-update"){
+   const payload=data.content;
+   if(!payload||typeof payload!=="object"||Array.isArray(payload))return;
+   // A bound stops oversized or malformed messages from freezing mobile previews.
+   try{if(JSON.stringify(payload).length>700000)return;apply(payload,null);}
+   catch(error){console.error("Studio preview update failed",error);return;}
+   window.parent.postMessage({type:"nt3105:cms-preview-applied"},ADMIN_ORIGIN);
+  }
+  if(data.type==="nt3105:cms-preview-navigate"){
+   const section=String(data.section||"");
+   const field=String(data.field||"");
+   previewNavigate(section,field);
+  }
+ });
+ document.addEventListener("click",event=>{
+   const node=event.target instanceof Element?event.target:null;
+   if(!node)return;
+   const section=previewSectionFromNode(node);
+   if(node.closest("a,button,form")){
+     event.preventDefault();
+     event.stopImmediatePropagation();
+   }
+   if(section){
+     window.parent.postMessage({type:"nt3105:cms-preview-select",section},ADMIN_ORIGIN);
+     previewNavigate(section,"");
+   }
+ },true);
+ const ready=()=>{
+   window.parent.postMessage({type:"nt3105:cms-preview-ready"},ADMIN_ORIGIN);
+ };
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ready,{once:true});
+ else ready();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
