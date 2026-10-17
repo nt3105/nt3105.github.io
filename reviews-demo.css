@@ -1,62 +1,111 @@
-/* Standalone restored comments demo: limited to this section only.
-   No changes to navigation, animation, skills, projects or icon styles. */
-#nt3105-cms-comments{padding-top:70px;padding-bottom:90px}
-#nt3105-cms-comments .section-heading{text-align:center;margin:0 auto 30px}
-#nt3105-cms-comments .nt-cms-comment-shell{
- display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:23px;
+/* Section-only Liquid Glass reviews. No header, gallery, skills or code overrides. */
+#contact.ntjr-review-section{padding-top:clamp(58px,8vw,108px);padding-bottom:clamp(70px,9vw,118px)}
+#nt3105-cms-comments{--rev-fg:#f6f5ff;--rev-muted:#b6bbd2;--rev-border:rgba(219,211,255,.21);--rev-panel:rgba(255,255,255,.075);--rev-field:rgba(6,9,23,.58);--rev-gold:#ffc95f;color:var(--rev-fg);position:relative;isolation:isolate;font-family:inherit}
+#nt3105-cms-comments *{box-sizing:border-box}
+#nt3105-cms-comments [hidden]{display:none!important}
+#nt3105-cms-comments .ntjr-visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#nt3105-cms-comments button,#nt3105-cms-comments input,#nt3105-cms-comments textarea,#nt3105-cms-comments select{font:inherit}
+#nt3105-cms-comments button{cursor:pointer}
+#nt3105-cms-comments :is(button,input,select,textarea,.ntjr-review-scroll):focus-visible{outline:2px solid #abdfff;outline-offset:3px}
+#nt3105-cms-comments .ntjr-reviews-heading{text-align:center;max-width:830px;margin:0 auto 30px}
+#nt3105-cms-comments .ntjr-reviews-heading .eyebrow{font-size:11px;letter-spacing:.18em;font-weight:800;color:#bcb2f5}
+#nt3105-cms-comments .ntjr-reviews-heading h2{color:#f9f8ff;font-size:clamp(2rem,5.3vw,3.75rem);font-weight:820;line-height:1.15;letter-spacing:-.055em;margin:12px 0}
+#nt3105-cms-comments .ntjr-reviews-glow{background:linear-gradient(95deg,#9eeaf1 4%,#cab9ff 57%,#f2bceb);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#nt3105-cms-comments .ntjr-reviews-heading>p:last-child{color:#aeb8d2;font-size:clamp(13px,1.5vw,15px);line-height:1.7}
+#nt3105-cms-comments .ntjr-reviews-layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(12px,1.8vw,22px);align-items:start}
+#nt3105-cms-comments .ntjr-review-glass{position:relative;min-width:0;padding:clamp(17px,2.3vw,27px);border-radius:clamp(18px,2.4vw,27px);border:1px solid var(--rev-border);background:radial-gradient(ellipse at 0 0,rgba(190,201,255,.11),transparent 48%),linear-gradient(140deg,rgba(255,255,255,.11),rgba(127,107,198,.045) 62%,rgba(255,255,255,.055));-webkit-backdrop-filter:blur(25px) saturate(1.45);backdrop-filter:blur(25px) saturate(1.45);box-shadow:0 15px 42px #0003,inset 0 1px 0 rgba(255,255,255,.19),inset 0 -1px 0 #ffffff08;overflow:visible;transition:border-color .25s,box-shadow .25s}
+@media(hover:hover) and (pointer:fine){#nt3105-cms-comments .ntjr-review-glass:hover{border-color:rgba(198,192,255,.36);box-shadow:0 18px 48px #0003,inset 0 1px 0 #ffffff30}}
+#nt3105-cms-comments .ntjr-review-card-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+#nt3105-cms-comments .ntjr-review-card-icon{display:grid;place-items:center;width:43px;height:43px;flex:none;border-radius:14px;border:1px solid #d7d4ff3b;background:linear-gradient(138deg,#ccbbff35,#8adce825);color:#e0d4ff;font-size:21px;box-shadow:inset 0 1px 0 #ffffff26}
+#nt3105-cms-comments .ntjr-review-card-head>div{min-width:0}
+#nt3105-cms-comments .ntjr-review-card-head h3{color:#f9f6ff;font-size:17px;letter-spacing:-.025em;font-weight:760;margin:0 0 5px}
+#nt3105-cms-comments .ntjr-review-card-head p{font-size:12px;color:var(--rev-muted);line-height:1.5;margin:0}
+#nt3105-cms-comments #nt3105-comment-form{display:flex;flex-direction:column;gap:14px}
+#nt3105-cms-comments .ntjr-rating-box{padding:0;margin:0;border:0;min-width:0}
+#nt3105-cms-comments .ntjr-rating-box legend{color:#d8d8eb;font-size:12px;font-weight:600;margin-bottom:5px}
+#nt3105-cms-comments .ntjr-rating-stars{display:flex;align-items:center;gap:4px;min-height:52px}
+#nt3105-cms-comments .ntjr-rating-stars button{border:0;background:transparent;padding:1px 3px;font:45px/1.14 Arial,sans-serif;color:#f5f5ff;text-shadow:0 1px 4px #fff2;transition:transform .18s,color .16s,text-shadow .18s}
+#nt3105-cms-comments .ntjr-rating-stars button.chosen{color:var(--rev-gold);text-shadow:0 0 18px #f1bc6d70}
+#nt3105-cms-comments .ntjr-rating-stars button:hover{transform:translateY(-3px) scale(1.04)}
+#nt3105-cms-comments .ntjr-rating-description{color:#ffdc96;min-height:18px;font-size:12px;font-weight:660;margin:4px 0 0}
+#nt3105-cms-comments .ntjr-anonymous{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:17px 0;border-top:1px solid #f0eaff20;border-bottom:1px solid #f0eaff20}
+#nt3105-cms-comments .ntjr-anonymous>div{display:flex;flex-direction:column;gap:4px}
+#nt3105-cms-comments .ntjr-anonymous strong{font-size:13px;color:var(--rev-fg)}
+#nt3105-cms-comments .ntjr-anonymous span{font-size:11px;color:var(--rev-muted)}
+#nt3105-cms-comments .ntjr-toggle{width:48px;height:28px;border:1px solid #ddd9ff41;border-radius:40px;background:rgba(128,133,162,.56);position:relative;flex:none;transition:background .18s}
+#nt3105-cms-comments .ntjr-toggle:before{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 6px #0004;transition:transform .2s}
+#nt3105-cms-comments .ntjr-toggle[aria-checked="true"]{background:#8575ec}
+#nt3105-cms-comments .ntjr-toggle[aria-checked="true"]:before{transform:translateX(20px)}
+#nt3105-cms-comments .ntjr-field{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#e0dff0;font-weight:600}
+#nt3105-cms-comments .ntjr-field input,#nt3105-cms-comments .ntjr-field textarea{width:100%;min-width:0;background:var(--rev-field);border:1px solid rgba(206,201,250,.34);border-radius:13px;padding:13px 14px;color:#f6f6ff!important;-webkit-text-fill-color:#f6f6ff;font-weight:450;font-size:13px;outline:none;transition:border-color .2s,background .2s}
+#nt3105-cms-comments .ntjr-field input:focus,#nt3105-cms-comments .ntjr-field textarea:focus{border-color:#b9b0f2;background:rgba(18,19,41,.85)}
+#nt3105-cms-comments .ntjr-field textarea{resize:vertical;min-height:112px;line-height:1.65}
+#nt3105-cms-comments .ntjr-field :is(input,textarea)::placeholder{color:#959db9!important;-webkit-text-fill-color:#959db9;opacity:1}
+#nt3105-cms-comments .ntjr-review-submit{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border:1px solid #f2eaff9c;border-radius:14px;padding:14px;background:linear-gradient(105deg,#b3e9f3,#c8baff 60%,#e9bef0);color:#202641;font-size:13px;font-weight:800;box-shadow:0 7px 25px #9d86ed30,inset 0 1px 0 #ffffffa3;transition:transform .2s,filter .2s}
+#nt3105-cms-comments .ntjr-review-submit:not(:disabled):hover{transform:translateY(-2px);filter:brightness(1.055)}
+#nt3105-cms-comments .ntjr-review-submit:disabled{opacity:.65;cursor:wait}
+#nt3105-cms-comments .ntjr-comment-status{min-height:17px;line-height:1.5;color:#a8edcb;font-size:12px;margin:0}
+#nt3105-cms-comments .ntjr-read-head{gap:11px}
+#nt3105-cms-comments .ntjr-review-overall{margin-left:auto;white-space:nowrap;color:#ffd27d;border-radius:12px;background:#ffe8a414;border:1px solid #ffebb231;padding:9px 10px;font-size:16px;font-weight:820;letter-spacing:.01em}
+#nt3105-cms-comments .ntjr-review-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.85fr);gap:9px;margin-bottom:14px}
+#nt3105-cms-comments .ntjr-review-dropdown{position:relative;display:block;min-width:0}
+#nt3105-cms-comments .ntjr-review-dropdown:after{content:"⌄";pointer-events:none;position:absolute;right:11px;top:50%;transform:translateY(-60%);font-size:17px;color:#d7d3f0}
+#nt3105-cms-comments .ntjr-review-dropdown select{appearance:none;-webkit-appearance:none;width:100%;min-width:0;height:45px;padding:0 28px 0 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #cbc3f449;border-radius:12px;background:linear-gradient(130deg,#ffffff1d,#ffffff0b),rgba(23,24,46,.85);color:#f4f1ff;font-size:12px;outline:none;cursor:pointer}
+#nt3105-cms-comments .ntjr-review-dropdown option{color:#f5f2ff;background:#28283e}
+#nt3105-cms-comments .ntjr-review-scroll{height:385px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#a6a1c270 transparent;padding-right:4px}
+#nt3105-cms-comments .nt-cms-comment{margin:0 0 10px;padding:14px;border-radius:16px;border:1px solid #dad2fa2d;background:linear-gradient(140deg,#ffffff14,#ffffff08);box-shadow:inset 0 1px 0 #ffffff13;color:#e9ebfa}
+#nt3105-cms-comments .ntjr-review-item-head{display:flex;align-items:center;gap:10px;min-width:0}
+#nt3105-cms-comments .ntjr-review-avatar{display:grid;place-items:center;flex:none;width:37px;height:37px;border-radius:12px;border:1px solid #d9caff34;background:linear-gradient(135deg,#bbabff35,#9edcec25);color:#eae1ff;font-weight:800;font-size:14px}
+#nt3105-cms-comments .ntjr-review-person{display:flex;flex-direction:column;min-width:0;gap:3px;flex:1}
+#nt3105-cms-comments .ntjr-review-person strong{font-size:13px;color:#f8f7ff;font-weight:750;overflow-wrap:anywhere}
+#nt3105-cms-comments .ntjr-review-person small{font-size:10px;color:#aab2ca}
+#nt3105-cms-comments .ntjr-comment-like{flex:none;border:1px solid #cbc5fa48;border-radius:10px;background:#ffffff10;padding:7px 9px;color:#d0d4e7;font-size:11px;transition:background .15s}
+#nt3105-cms-comments .ntjr-comment-like.is-liked{background:#fc8faa22;color:#ffadbe;border-color:#ffa6c357}
+#nt3105-cms-comments .ntjr-comment-stars{display:flex;gap:3px;line-height:1.2;margin:9px 0 8px;font-family:Arial,sans-serif;font-size:23px}
+#nt3105-cms-comments .ntjr-comment-stars .is-filled{color:var(--rev-gold)}
+#nt3105-cms-comments .ntjr-comment-stars .is-empty{color:#f1f1fa}
+#nt3105-cms-comments .nt-cms-comment>p{font-size:12px;line-height:1.7;color:#cfd3e6;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+#nt3105-cms-comments .ntjr-pin{display:block;color:#f7d295;font-size:10px;font-weight:650;margin-top:9px}
+#nt3105-cms-comments .ntjr-review-admin{margin-top:12px;padding:10px 12px;background:#aaa2ff18;border-left:2px solid #c4b7ff;border-radius:0 10px 10px 0}
+#nt3105-cms-comments .ntjr-review-admin strong{font-size:11px;color:#daccff}
+#nt3105-cms-comments .ntjr-review-admin p{font-size:12px;color:#dee0f0;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0 0}
+#nt3105-cms-comments .ntjr-review-empty{color:var(--rev-muted);font-size:13px;line-height:1.65;padding:20px 5px}
+#nt3105-cms-comments .ntjr-review-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:13px;font-size:11px;color:var(--rev-muted)}
+#nt3105-cms-comments #ntjr-review-to-top{border:1px solid #bbb0fa4b;border-radius:10px;background:#b3a1ff18;color:#eee8ff;padding:9px 12px;font-size:11px;font-weight:720;white-space:nowrap}
+html[data-appearance="light"] #nt3105-cms-comments{--rev-fg:#1f273e;--rev-muted:#65708a;--rev-border:#adb6d052;--rev-panel:#ffffffd0;--rev-field:#fbfcff}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-reviews-heading h2,html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-card-head h3,html[data-appearance="light"] #nt3105-cms-comments .ntjr-anonymous strong{color:#18223b}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-glass{background:linear-gradient(125deg,#ffffffea,#f5f6fff2);box-shadow:0 10px 28px #48587d18}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-card-head p,html[data-appearance="light"] #nt3105-cms-comments .ntjr-reviews-heading>p:last-child{color:#626d87}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-rating-box legend,html[data-appearance="light"] #nt3105-cms-comments .ntjr-field{color:#3c4963}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-field :is(input,textarea){color:#1d2740!important;-webkit-text-fill-color:#1d2740;border-color:#9eabc15f}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-field :is(input,textarea)::placeholder{color:#818da4!important;-webkit-text-fill-color:#818da4}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-rating-stars button:not(.chosen),html[data-appearance="light"] #nt3105-cms-comments .ntjr-comment-stars .is-empty{color:#b0bad0}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-anonymous{border-color:#7a86a82d}
+html[data-appearance="light"] #nt3105-cms-comments .nt-cms-comment{background:#ffffff;border-color:#bdc7dd}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-person strong,html[data-appearance="light"] #nt3105-cms-comments .nt-cms-comment>p{color:#283650}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-person small{color:#647189}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-dropdown select{background:#ffffff;color:#33415c;border-color:#a8b4cb}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-dropdown:after{color:#53617b}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-admin{background:#f2efff}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-admin strong{color:#6754a8}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-review-admin p{color:#43516d}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-comment-like{background:#f7f8fc;color:#46516b}
+html[data-appearance="light"] #nt3105-cms-comments .ntjr-comment-like.is-liked{background:#fff1f5;color:#c74271}
+html[data-appearance="light"] #nt3105-cms-comments #ntjr-review-to-top{background:#f0edff;color:#4e4483}
+@media(max-width:800px){
+ #nt3105-cms-comments .ntjr-reviews-layout{grid-template-columns:1fr;max-width:640px;margin:0 auto}
+ #nt3105-cms-comments .ntjr-review-scroll{height:330px}
 }
-#nt3105-comment-form,#nt3105-cms-comments .nt-cms-comment{
- border:1px solid rgba(180,196,255,.24);
- background:rgba(38,47,78,.38);
- backdrop-filter:blur(16px);
- -webkit-backdrop-filter:blur(16px);
- border-radius:21px;padding:19px;color:var(--text,#eaf0ff);
+@media(max-width:420px){
+ #contact.ntjr-review-section{padding-top:62px;padding-bottom:70px}
+ #nt3105-cms-comments .ntjr-reviews-heading{margin-bottom:20px}
+ #nt3105-cms-comments .ntjr-review-glass{padding:15px;border-radius:18px}
+ #nt3105-cms-comments .ntjr-review-controls{gap:6px}
+ #nt3105-cms-comments .ntjr-review-dropdown select{font-size:11px;padding-left:8px;padding-right:22px}
+ #nt3105-cms-comments .ntjr-rating-stars{gap:1px}
+ #nt3105-cms-comments .ntjr-rating-stars button{font-size:39px;padding:0 2px}
+ #nt3105-cms-comments .ntjr-review-overall{font-size:13px;padding:7px}
+ #nt3105-cms-comments .ntjr-review-card-head h3{font-size:15px}
 }
-#nt3105-comment-form{
- display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:12px;
-}
-#nt3105-comment-form label{
- font-size:12px;display:flex;flex-direction:column;gap:8px;min-width:0;
-}
-#nt3105-comment-form label.wide{grid-column:1/-1}
-#nt3105-comment-form input,
-#nt3105-comment-form select,
-#nt3105-comment-form textarea{
- width:100%;border:1px solid rgba(185,199,245,.3);border-radius:11px;
- padding:12px;background:rgba(3,8,23,.62);color:#f2f5ff;
- box-sizing:border-box;font:inherit;
-}
-#nt3105-comment-form input::placeholder,#nt3105-comment-form textarea::placeholder{color:#a4b2d0}
-#nt3105-comment-form button{
- border:0;border-radius:12px;background:linear-gradient(125deg,#eaf0ff,#b3c9ff);
- color:#16233c;font-weight:800;padding:13px 16px;
- grid-column:1/-1;cursor:pointer;font:inherit;
-}
-#nt3105-comment-form button:disabled{opacity:.7;cursor:wait}
-#nt3105-comment-form p{
- grid-column:1/-1;font-size:12px;margin:0;line-height:1.7;
- min-height:1em;color:#bad6ff;
-}
-#nt3105-comment-list{
- display:grid;gap:12px;max-height:650px;overflow-y:auto;align-content:start;
-}
-#nt3105-cms-comments .nt-cms-comment strong{
- display:block;font-size:13px;overflow-wrap:anywhere;
-}
-#nt3105-cms-comments .nt-cms-comment p{
- font-size:13px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;
-}
-#nt3105-cms-comments .nt-cms-comment small{color:#f2d8a9}
-#nt3105-cms-comments .nt-cms-comment blockquote{
- margin:10px 0 0;padding:10px 13px;border-left:2px solid #b8cdff;
- border-radius:0 10px 10px 0;background:#c0d0ff11;font-size:12px;
- white-space:pre-wrap;overflow-wrap:anywhere;
-}
-@media(max-width:760px){
- #nt3105-cms-comments .nt-cms-comment-shell{grid-template-columns:1fr}
- #nt3105-cms-comments{padding:40px 0}
- #nt3105-comment-form{grid-template-columns:1fr}
-}
-@media(prefers-reduced-motion:reduce){
- #nt3105-cms-comments *{transition:none!important;animation:none!important}
-}
+@media(prefers-reduced-motion:reduce){#nt3105-cms-comments *{transition:none!important;animation:none!important}}
+@media(prefers-reduced-transparency:reduce){#nt3105-cms-comments .ntjr-review-glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:#20243b}}
