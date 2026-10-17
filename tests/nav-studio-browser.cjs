@@ -67,7 +67,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1,reducedMotion:'reduce'});
   await mobile.goto('http://127.0.0.1:'+port+'/?intro=off',{waitUntil:'domcontentloaded'});
   const mobileNav=await mobile.locator('#nav-links > a').evaluateAll(links=>links.filter(a=>getComputedStyle(a).display!=='none').map(a=>({text:a.textContent.trim(),x:a.getBoundingClientRect().left,right:a.getBoundingClientRect().right})));
-  assert.deepEqual(mobileNav.map(x=>x.text),['Kỹ năng','Dự án','Ủng hộ','Liên hệ ✳'],'Mobile menu must contain exactly four links including Donate');
+  assert.deepEqual(mobileNav.map(x=>x.text),['Kỹ năng','Dự án','Ủng hộ','Đánh giá ✳'],'Mobile menu must contain exactly four links including Donate');
   const frame=await mobile.locator('#header').boundingBox();
   assert(frame&&mobileNav.every(x=>x.x>=frame.x-2&&x.right<=frame.x+frame.width+2),'Mobile nav pills overflow header');
   assert(await mobile.locator('#nt-theme-toggle').isVisible(),'Appearance switch must remain visible as fifth control');
