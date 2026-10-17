@@ -341,7 +341,6 @@ if(c.gallerySettings){
  if(c.code){
   if(typeof c.code.visible==="boolean")show("#code-corner",c.code.visible);
   setText("#code-heading",c.code.title);
-  setText("#code-corner .section-heading > p",c.code.description);
   if(window.ntCMSCodeSamples)window.ntCMSCodeSamples(c.code);
   const ntjrStudio=$("#nt-python-studio");
   if(ntjrStudio){
