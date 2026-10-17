@@ -82,6 +82,14 @@ html[data-appearance="light"] #header .brand-simple .brand-dot, html[data-appear
 @media(min-width:761px) and (max-width:1100px) { #header .brand-simple .brand-mark { width:40px; height:40px; border-radius:13px; font-size:25px; } }
 
 /* Pill navigation: a single moving selection replaces all per-link effects. */
+/* Center the five compact desktop pills within the entire glass capsule,
+   independently of the appearance switch at the far right. */
+@media(min-width:761px){
+ #header .nav{position:relative;justify-content:flex-end}
+ #header #nav-links{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max-content;flex:0 0 auto;gap:3px}
+ #header #nt-theme-toggle{position:relative;flex:0 0 auto;margin-left:auto}
+}
+
 #header, #header.scrolled, #header.menu-open {
  width:min(780px,calc(100% - 24px));
  border-radius:999px; border-color:#ffffff24 !important; background:linear-gradient(125deg,#ffffff0b,transparent 42%,#b8c8db06),rgba(18,19,22,.76) !important;
