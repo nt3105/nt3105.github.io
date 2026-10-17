@@ -920,6 +920,61 @@ function loadMusic(index, keepTime) {
   const trackSrc = track.src;
   probeTrackDuration(trackSrc).then(seconds => rememberDuration(trackSrc, seconds));
 }
+// CMS published playlist: replace the original tracks without adding a second player.
+window.addEventListener('nt3105:cms-music', event => {
+  const settings = event.detail || {};
+  if (settings.enabled === false) {
+    stopMusic();
+    musicWidget.hidden = true;
+    const heroMusic = document.querySelector('.nt-music-float');
+    if (heroMusic) heroMusic.hidden = true;
+    return;
+  }
+  musicWidget.hidden = false;
+  if (!Array.isArray(settings.tracks) || !settings.tracks.length) return;
+  const tracks = settings.tracks.filter(t => t && typeof t.src === 'string' && /^https:\/\//i.test(t.src));
+  if (!tracks.length) return;
+  stopMusic();
+  musicPlaylist.splice(0, musicPlaylist.length, ...tracks.map(t => ({
+    title: String(t.title || 'Không tên').slice(0, 100),
+    artist: String(t.artist || 'NT3105').slice(0, 100),
+    src: t.src, cover: typeof t.cover === 'string' && /^https:\/\//i.test(t.cover) ? t.cover : 'images/cover-preah-thorng.jpg'
+  })));
+  const list = musicEl('.music-playlist');
+  if (!list) return;
+  list.replaceChildren();
+  musicPlaylist.forEach((track, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'playlist-track';
+    button.dataset.track = String(index);
+    button.setAttribute('aria-label', 'Phát ' + track.title + ' — ' + track.artist);
+    button.setAttribute('aria-pressed', 'false');
+    const cover = document.createElement('img');
+    cover.src = track.cover;
+    cover.alt = '';
+    const info = document.createElement('span');
+    info.className = 'playlist-details';
+    const title = document.createElement('strong');
+    title.textContent = track.title;
+    const artist = document.createElement('small');
+    artist.textContent = track.artist;
+    info.append(title, artist);
+    const indicator = document.createElement('span');
+    indicator.className = 'playlist-indicator';
+    indicator.setAttribute('aria-hidden','true');
+    indicator.textContent = '▷';
+    button.append(cover, info, indicator);
+    button.addEventListener('click', () => {
+      if (musicIndex === index) toggleMusic();
+      else { musicByUser = true; loadMusic(index); playMusic(); }
+    });
+    list.append(button);
+  });
+  musicIndex = 0;
+  loadMusic(0);
+});
+
 let musicByUser = false;
 async function playMusic() {
   const request = ++musicRequest;
