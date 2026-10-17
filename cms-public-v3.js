@@ -122,7 +122,7 @@ function apply(content,client){
  updateGallery(c.gallery);
  updateCards("#skills .skills-grid",c.skills,"skills");
  updateCards("#projects .projects-grid",c.projects,"projects");
- if(c.journey){if(c.journey.visible===false)show("#journey",false);else{setText("#journey h2",c.journey.title);if(c.journey.body){let p=$("#journey .nt-cms-journey");if(!p){p=createNode("p",{class:"nt-cms-journey"});$("#journey")?.append(p)}p.textContent=trim(c.journey.body)}}}
+ if(c.journey){const heading=$("#journey .section-heading");if(heading)heading.hidden=c.journey.visible===false; if(c.journey.visible!==false){setText("#journey h2",c.journey.title);if(c.journey.body){let p=$("#journey .nt-cms-journey");if(!p){p=createNode("p",{class:"nt-cms-journey"});$("#journey")?.append(p)}p.textContent=trim(c.journey.body)}}}
  if(c.contact){if(c.contact.visible===false)show("#contact",false);else{
   setText("#contact .contact-copy h2",c.contact.title);
   setText("#contact .contact-copy > p:not(.eyebrow):not(.form-note)",c.contact.description);
