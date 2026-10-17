@@ -40,10 +40,11 @@ function updateGallery(items){
      card.append(img,caption);
    }
    const oldHref=card.getAttribute("href")||"";
+   const previewImg=card.querySelector("img");
+   if(previewImg&&!previewImg.dataset.cmsOriginalThumb)previewImg.dataset.cmsOriginalThumb=previewImg.getAttribute("src")||"";
    card.href=url;
-   if(!oldHref||(oldHref!==url && !url.endsWith(oldHref))||safeUrl(item.thumb)){
-     const img=card.querySelector("img");if(img)img.src=safeUrl(item.thumb)||url;
-   }
+   const nextThumb=safeUrl(item.thumb)||((oldHref===url||url.endsWith(oldHref))?previewImg?.dataset.cmsOriginalThumb||url:url);
+   if(previewImg&&previewImg.src!==nextThumb)previewImg.src=nextThumb;
    const caption=card.querySelector(".nt-memory-caption strong");
    if(caption)caption.textContent=trim(item.title||"Khoảnh khắc");
    const image=card.querySelector("img");if(image)image.alt=trim(item.title||"Ảnh kỷ niệm");
@@ -70,6 +71,13 @@ function updateCards(selector,items,kind){
   const reused=Boolean(card);
   if(card)remaining.delete(card);
   else card=createNode("article",{class:kind==="skills"?"skill-card reveal":"project-card reveal"});
+  if(!reused&&kind==="skills"){
+    const top=createNode("div",{class:"skill-top"});
+    top.append(createNode("span",{class:"skill-value"},"Đang học"));
+    const progress=createNode("div",{class:"progress"});
+    progress.append(createNode("span"));
+    card.append(top,createNode("h3"),createNode("p"),progress);
+  }
   if(!reused&&kind==="projects"){
     const art=createNode("div",{class:"project-art art-portfolio"});
     art.append(createNode("span",{class:"project-number"},"NT3105 / PROJECT"));
