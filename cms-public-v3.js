@@ -161,7 +161,7 @@ function renderMusic(music){
 function setSocial(kind,value){
  if(!safeUrl(value))return;
  if(window.ntSocialLinks)window.ntSocialLinks[kind]=value;
- $('[data-social="'+kind+'"]').forEach(a=>{if(a.tagName==="A"){a.href=value;a.rel="noopener noreferrer";a.target="_blank"}});
+ $$('[data-social="'+kind+'"]').forEach(a=>{if(a.tagName==="A"){a.href=value;a.rel="noopener noreferrer";a.target="_blank"}});
 }
 function renderComments(client,content){
  const existing=document.getElementById("nt3105-cms-comments");
