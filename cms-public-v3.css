@@ -1,0 +1,31 @@
+
+/* NT3105 CMS public extensions: only active once published CMS content is loaded. */
+.nt-cms-comments{padding-top:70px;padding-bottom:90px}
+.nt-cms-comments .section-heading{text-align:center;margin:0 auto 30px}
+.nt-cms-comment-shell{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:23px}
+#nt3105-comment-form,.nt-cms-comment{border:1px solid rgba(180,196,255,.24);background:rgba(38,47,78,.38);backdrop-filter:blur(16px);border-radius:21px;padding:19px;color:var(--text,#eaf0ff)}
+#nt3105-comment-form{display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:12px}
+#nt3105-comment-form label{font-size:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+#nt3105-comment-form label.wide{grid-column:1/-1}
+#nt3105-comment-form input,#nt3105-comment-form select,#nt3105-comment-form textarea{width:100%;border:1px solid rgba(185,199,245,.3);border-radius:11px;padding:12px;background:rgba(3,8,23,.62);color:#f2f5ff;box-sizing:border-box;font:inherit}
+#nt3105-comment-form button{border:0;border-radius:12px;background:linear-gradient(125deg,#eaf0ff,#b3c9ff);color:#16233c;font-weight:800;padding:13px 16px;grid-column:1/-1;cursor:pointer}
+#nt3105-comment-form p{grid-column:1/-1;font-size:12px;margin:0;line-height:1.7;min-height:1em;color:#bad6ff}
+#nt3105-comment-list{display:grid;gap:12px;max-height:650px;overflow-y:auto;align-content:start}
+.nt-cms-comment strong{display:block;font-size:13px;overflow-wrap:anywhere}
+.nt-cms-comment p{font-size:13px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.nt-cms-comment small{color:#f2d8a9}
+.nt-cms-comment blockquote{margin:10px 0 0;padding:10px 13px;border-left:2px solid #b8cdff;border-radius:0 10px 10px 0;background:#c0d0ff11;font-size:12px}
+.nt-cms-about-body,.nt-cms-journey{max-width:700px;margin:15px auto;white-space:pre-wrap;line-height:1.8;overflow-wrap:anywhere}
+.nt-gallery .nt-memory{scroll-snap-align:center}
+.nt-cms-light{color-scheme:light}
+.nt-cms-light body{filter:none;background:#eff2fb;color:#162337}
+.nt-cms-no-glow .scene .orb,.nt-cms-no-glow .spotlight-card:before{display:none!important}
+.nt-cms-no-glass .glass,.nt-cms-no-glass .contact-panel{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.nt-cms-no-reveal .reveal,.nt-cms-no-reveal .reveal-shell{opacity:1!important;transform:none!important;animation:none!important}
+.nt-cms-no-parallax .parallax,.nt-cms-no-parallax [data-parallax]{transform:none!important}
+.nt-cms-no-softMotion *{scroll-behavior:auto!important;transition-duration:.001ms!important}
+body .skill-card,body .project-card{border-radius:var(--cms-card-radius,22px)}
+body .skills-grid,body .projects-grid{gap:var(--cms-card-spacing,24px)}
+@media(min-width:850px){body .skills-grid,body .projects-grid{grid-template-columns:repeat(var(--cms-card-columns,3),minmax(0,1fr))}}
+@media(max-width:760px){.nt-cms-comment-shell{grid-template-columns:1fr}.nt-cms-comments{padding:40px 0}#nt3105-comment-form{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.nt-cms-comments *,body .nt-gallery{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
