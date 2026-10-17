@@ -1342,8 +1342,7 @@ shuffleButton.addEventListener('click', () => {
   const query = document.getElementById('explorer-query');
   const results = document.getElementById('explorer-results');
   const destinations = [
-    ['✧', 'Về mình', 'Một chút về Ngân Tú', '#about'],
-    ['⌨', 'Góc code', 'Ví dụ C, Objective-C và Swift', '#code-corner'],
+    ['⌨', 'Góc code', 'Python Studio tự chạy ba chương trình', '#code-corner'],
     ['★', 'Bảng điểm', 'Thành tích game rắn trên máy này', 'snake-scores'],
     ['⌘', 'Dự án', 'Website cá nhân & game con sâu', '#projects'],
     ['♫', 'Âm nhạc', 'Mở playlist của mình', 'music'],
