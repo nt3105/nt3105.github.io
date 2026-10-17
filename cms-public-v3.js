@@ -1,7 +1,7 @@
 /* NT3105 live-content CMS client. Public reads published only; no admin credentials. */
 (()=>{
 "use strict";
-const URL="https://oyogarwaylhfupcrrfyq.supabase.co";
+const SUPABASE_URL="https://oyogarwaylhfupcrrfyq.supabase.co";
 const KEY="sb_publishable_UWm-gQGorsvOGOksKL0BHg_rR265JRi";
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
@@ -229,7 +229,7 @@ async function boot(){
   }catch(error){console.warn("NT3105 CMS: backup SDK unavailable; keeping original site.",error)}
  }
  if(!window.supabase?.createClient){console.warn("NT3105 CMS: Supabase SDK unavailable; using original site.");return}
- publicClient=window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+ publicClient=window.supabase.createClient(SUPABASE_URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
  await refreshPublished();
  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshPublished();});
  window.addEventListener("focus",()=>{if(!document.hidden)refreshPublished();});
