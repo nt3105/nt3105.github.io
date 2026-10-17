@@ -29,3 +29,12 @@ body .skills-grid,body .projects-grid{gap:var(--cms-card-spacing,24px)}
 @media(min-width:850px){body .skills-grid,body .projects-grid{grid-template-columns:repeat(var(--cms-card-columns,3),minmax(0,1fr))}}
 @media(max-width:760px){.nt-cms-comment-shell{grid-template-columns:1fr}.nt-cms-comments{padding:40px 0}#nt3105-comment-form{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.nt-cms-comments *,body .nt-gallery{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+
+/* Owner-only Admin iframe preview – visually identical content with a focus marker. */
+html.nt-cms-in-studio,html.nt-cms-in-studio body{scroll-behavior:smooth}
+html.nt-cms-in-studio .loader,html.nt-cms-in-studio .intro-overlay{display:none!important}
+html.nt-cms-in-studio .nt-cms-spotlight{outline:4px solid rgba(110,203,255,.95)!important;outline-offset:8px!important;box-shadow:0 0 0 12px rgba(110,203,255,.17),0 0 70px rgba(110,203,255,.25)!important;position:relative;z-index:5}
+html.nt-cms-in-studio #home,html.nt-cms-in-studio #skills,html.nt-cms-in-studio #journey,html.nt-cms-in-studio #about,html.nt-cms-in-studio #memories{scroll-margin-top:105px}
+html.nt-cms-in-studio a,html.nt-cms-in-studio button{cursor:crosshair}
+@media(prefers-reduced-motion:reduce){html.nt-cms-in-studio,html.nt-cms-in-studio body{scroll-behavior:auto}}
