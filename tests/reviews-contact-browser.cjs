@@ -44,9 +44,21 @@ const source=[
   const nav=await desktop.evaluate(()=>{
    const h=document.querySelector('#header').getBoundingClientRect();
    const n=document.querySelector('#nav-links').getBoundingClientRect();
-   return {delta:Math.abs((h.left+h.right-n.left-n.right)/2)};
+   const t=document.querySelector('#nt-theme-toggle').getBoundingClientRect();
+   const eyebrow=document.querySelector('#nt3105-cms-comments .ntjr-reviews-heading .eyebrow');
+   return {
+    headerWidth:h.width,centerOffset:Math.abs((h.left+h.right)/2-innerWidth/2),
+    gap:t.left-n.right,leading:n.left-h.left,trailing:h.right-t.right,
+    fontSize:parseFloat(getComputedStyle(eyebrow).fontSize),
+    hasNavLinks:[...document.querySelectorAll('#nav-links > a')].every(a=>a.getBoundingClientRect().width>30)
+   };
   });
-  assert(nav.delta<7,'Desktop nav pills not centered in full capsule: '+nav.delta);
+  assert(nav.centerOffset<7,'Capsule not centered in viewport: '+JSON.stringify(nav));
+  assert(nav.headerWidth<670,'Capsule still contains excessive blank width: '+JSON.stringify(nav));
+  assert(nav.gap>=4,'Navigation overlaps theme button: '+JSON.stringify(nav));
+  assert(nav.leading>=4&&nav.trailing>=4,'Capsule content does not fit: '+JSON.stringify(nav));
+  assert(nav.hasNavLinks,'Some nav links collapsed or disappeared');
+  assert(nav.fontSize>=16,'06 / ĐÁNH GIÁ WEBSITE eyebrow still too small: '+nav.fontSize);
   await desktop.locator('#nav-links a[href="#contact"]').click();
   await desktop.waitForTimeout(2000);
   assert((await desktop.locator('#contact').boundingBox()).y<270,'Review section not reached from header menu');
