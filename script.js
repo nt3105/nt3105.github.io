@@ -270,69 +270,7 @@ if (!reducedMotion) {
   });
 }
 
-// Liên hệ: kiểm tra thông tin và mở bản nháp; người dùng xác nhận gửi trong hộp thư.
-const form = document.querySelector('#contact-form');
-const feedback = document.querySelector('#form-feedback');
-function setError(field, message) {
-  document.querySelector(`#${field.id}-error`).textContent = message;
-  field.setAttribute('aria-invalid', message ? 'true' : 'false');
-}
-form.addEventListener('submit', async event => {
-  event.preventDefault();
-  const name = form.elements.name;
-  const email = form.elements.email;
-  const message = form.elements.message;
-  setError(name, name.value.trim().length < 2 ? 'Vui lòng nhập họ tên, ít nhất 2 ký tự.' : '');
-  setError(email, !email.value.trim() || !email.validity.valid || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) ? 'Vui lòng nhập địa chỉ email hợp lệ.' : '');
-  setError(message, message.value.trim().length < 10 ? 'Vui lòng nhập nội dung ít nhất 10 ký tự.' : '');
-  const invalid = form.querySelector('[aria-invalid="true"]');
-  if (invalid) { feedback.hidden = true; invalid.focus(); return; }
-  const subject = 'Liên hệ Ngân Tú — ' + name.value.trim();
-  const body = 'Họ tên: ' + name.value.trim() + '\nEmail liên hệ: ' + email.value.trim() + '\n\n' + message.value.trim();
-  if (event.submitter?.value === 'copy') {
-    const text = subject + '\n\n' + body;
-    try {
-      if (!navigator.clipboard) throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(text);
-      feedback.textContent = 'Đã sao chép lời nhắn. Mở Telegram hoặc email và dán nội dung để gửi.';
-    } catch {
-      const copyField = document.createElement('textarea');
-      copyField.value = text;
-      copyField.readOnly = true;
-      copyField.setAttribute('aria-label', 'Lời nhắn để sao chép');
-      feedback.replaceChildren(copyField);
-      const note = document.createElement('p');
-      note.textContent = 'Trình duyệt chưa cho phép sao chép tự động. Chọn nội dung bên dưới để sao chép.';
-      feedback.prepend(note);
-      feedback.hidden = false;
-      copyField.focus();
-      copyField.select();
-      return;
-    }
-    feedback.hidden = false;
-    return;
-  }
-  const recipient = SOCIAL_LINKS.email;
-  const mailto = 'mailto:' + recipient + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  const gmail = 'https://mail.google.com/mail/?' + new URLSearchParams({view:'cm', fs:'1', to:recipient, su:subject, body}).toString();
-  feedback.replaceChildren();
-  const note = document.createElement('p');
-  note.textContent = 'Nội dung đã sẵn sàng. Tin nhắn chưa được gửi: hãy bấm Gửi trong Gmail hoặc ứng dụng Mail. Nếu hộp thư chưa mở, bấm liên kết bên dưới.';
-  const fallback = document.createElement('a');
-  const useMail = event.submitter && event.submitter.value === 'mail';
-  fallback.href = useMail ? mailto : gmail;
-  fallback.textContent = useMail ? 'Mở lại ứng dụng Mail' : 'Mở bản nháp Gmail';
-  fallback.className = 'accent';
-  if (!useMail) { fallback.target = '_blank'; fallback.rel = 'noopener noreferrer'; }
-  feedback.append(note, fallback);
-  feedback.hidden = false;
-  if (useMail) window.location.href = mailto;
-  else window.open(gmail, '_blank', 'noopener,noreferrer');
-});
-form.querySelectorAll('input, textarea').forEach(field => field.addEventListener('input', () => {
-  setError(field, '');
-  feedback.hidden = true;
-}));
+// Form gửi email cũ đã được thay bằng trang đánh giá tại #contact.
 
 // Sao chép số tài khoản; hỗ trợ cả khi mở trực tiếp file HTML.
 document.querySelector('#copy-account').addEventListener('click', async () => {
@@ -1349,7 +1287,7 @@ shuffleButton.addEventListener('click', () => {
     ['▧', 'Khoảnh khắc', 'Bộ ảnh và kỷ niệm', '#memories'],
     ['◇', 'Góc riêng', 'Code, game và những điều mình thích', '#personal-space'],
     ['♡', 'Ủng hộ', 'Góp gió thành bão', '#donate'],
-    ['go', 'Liên hệ', 'Gửi mình một lời chào', '#contact']
+    ['go', 'Đánh giá', 'Đọc và gửi nhận xét về website', '#contact']
   ];
   const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase();
   let opener = null;
