@@ -310,6 +310,7 @@ if(c.gallerySettings){
   if(typeof c.code.visible==="boolean")show("#code-corner",c.code.visible);
   setText("#code-heading",c.code.title);
   setText("#code-corner .section-heading > p",c.code.description);
+  if(window.ntCMSCodeSamples)window.ntCMSCodeSamples(c.code);
  }
  if(c.donate){
   if(typeof c.donate.visible==="boolean")show("#donate",c.donate.visible);
