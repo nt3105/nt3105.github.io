@@ -45,3 +45,16 @@ html.nt-cms-in-studio a,html.nt-cms-in-studio button{cursor:crosshair}
 @media(max-width:760px){#header .brand .nt-cms-brand-tagline{display:none}}
 body .project-card .project-art[style*="background-image"]{background-size:cover;background-position:center}
 body .project-card .project-art[style*="background-image"] .project-placeholder{background:rgba(4,9,25,.4);backdrop-filter:blur(2px)}
+
+
+/* CMS effect sliders now control real animation and glass strength. */
+html:not(.nt-cms-no-softMotion) .reveal,html:not(.nt-cms-no-softMotion) .reveal-shell,
+html:not(.nt-cms-no-softMotion) .project-card,html:not(.nt-cms-no-softMotion) .skill-card{
+ transition-duration:var(--cms-motion-duration,.43s)!important
+}
+html:not(.nt-cms-no-glass) .glass,html:not(.nt-cms-no-glass) .glass-card{
+ backdrop-filter:blur(var(--cms-blur,18px));
+ -webkit-backdrop-filter:blur(var(--cms-blur,18px))
+}
+html.nt-cms-no-parallax .nt-float,html.nt-cms-no-parallax .parallax-layer{transform:none!important}
+@media(prefers-reduced-motion:reduce){html .reveal,html .project-card,html .skill-card{transition-duration:0s!important}}
