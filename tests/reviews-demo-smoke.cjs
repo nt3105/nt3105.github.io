@@ -10,7 +10,7 @@ const {JSDOM}=require('jsdom');
  assert(!html.includes('id="contact-form"'),'Old mail form must be absent');
  assert.equal((html.match(/id="contact"/g)||[]).length,1,'One contact anchor');
  const dom=new JSDOM(html,{url:'https://nt3105.io.vn/#contact',runScripts:'outside-only'});
- const {window}=dom,document=window;
+ const {window}=dom,document=window.document;
  const old={
   nav:document.querySelector('#header')?.outerHTML,
   skills:document.querySelector('#skills .skills-grid')?.outerHTML,
