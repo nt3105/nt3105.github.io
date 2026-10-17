@@ -32,10 +32,11 @@ const studioWin={
   parent, addEventListener(name,handler){listeners[name]=handler},
   matchMedia(){return {matches:false}}
 };
+const previewListeners={};
 const previewDoc={
   readyState:'complete',
   documentElement:{classList:{add(){},toggle(){},remove(){}},style:{setProperty(){}}},
-  addEventListener(){},
+  addEventListener(name,fn){previewListeners[name]=fn},
   querySelector(){return null},querySelectorAll(){return []},
   getElementById(){return null}
 };
@@ -43,7 +44,15 @@ vm.runInNewContext(fs.readFileSync('cms-public-v3.js','utf8'),{
   window:studioWin,document:previewDoc,location:{search:'?nt3105_preview=1'},
   URL,URLSearchParams,console,
   CustomEvent:class CustomEvent{},
-  Element:class Element{},
+  Element:class Element{
+    constructor(kind){this.kind=kind}
+    closest(selector){
+      if(selector.includes("#nt-motion-notice .nt-motion-enable")&&this.kind==="enable")return this;
+      if(selector.includes("#nt-motion-notice .nt-motion-later")&&this.kind==="later")return this;
+      if(selector==="a,button,form")return this;
+      return null;
+    }
+  },
   clearTimeout, setTimeout
 },{filename:'cms-public-v3.js'});
 assert(messages.some(({msg,origin})=>msg.type==='nt3105:cms-preview-ready'&&origin==='https://admin.nt3105.io.vn'),'Preview should signal ready only to Admin origin');
@@ -60,6 +69,36 @@ const readyBefore=messages.filter(({msg})=>msg.type==='nt3105:cms-preview-ready'
 listeners.message({origin:'https://admin.nt3105.io.vn',source:parent,data:{type:'nt3105:cms-preview-ping'}});
 assert.equal(messages.filter(({msg})=>msg.type==='nt3105:cms-preview-ready').length,readyBefore+1,'Iframe must recover preview readiness on retry');
 assert.equal(messages.at(-1).origin,'https://admin.nt3105.io.vn','Owner-only messages must target Admin origin');
+
+// The Admin preview intercepts edit-selection clicks, but the two 3D intro actions
+// must pass through to enhance.js. This branch never runs on ordinary public visits.
+assert(typeof previewListeners.click==='function','Admin preview capture listener must be available');
+const makeClick=kind=>{
+  let prevented=false,stopped=false;
+  const target={
+    kind,closest(selector){
+      if(selector.includes("#nt-motion-notice .nt-motion-enable")&&kind==='enable')return this;
+      if(selector.includes("#nt-motion-notice .nt-motion-later")&&kind==='later')return this;
+      if(selector==='a,button,form')return this;
+      return null;
+    }
+  };
+  return {target,preventDefault(){prevented=true},stopImmediatePropagation(){stopped=true},
+    result:()=>({prevented,stopped})};
+};
+const enableClick=makeClick('enable');
+previewListeners.click(enableClick);
+assert.deepEqual(enableClick.result(),{prevented:false,stopped:false},'Explore now button should work in Admin preview');
+const laterClick=makeClick('later');
+previewListeners.click(laterClick);
+assert.deepEqual(laterClick.result(),{prevented:false,stopped:false},'Later button should dismiss notice in Admin preview');
+const otherClick=makeClick('other');
+previewListeners.click(otherClick);
+assert.deepEqual(otherClick.result(),{prevented:true,stopped:true},'Other controls remain protected from accidental CMS preview interaction');
+const index=fs.readFileSync('index.html','utf8');
+assert(index.includes("cms-public-v3.js?v=admin-preview-motion-click-1"),'Admin preview script must use fresh cache version');
+assert(index.includes("get('nt3105_preview') === '1'"),'Preview bridge remains conditionally loaded only for Admin');
+
 console.log('NT3105 cross-origin live preview bridge checks passed.');
 
 console.log('NT3105 CMS public smoke checks passed.');
