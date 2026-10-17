@@ -5,7 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1021">
   <title>Python Studio — ntjr</title>
-  <script>if(new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');</script>
+  <script>
+    // Embedded studio follows the parent page's appearance without changing its standalone design.
+    if (new URLSearchParams(location.search).has('embed')) {
+      const root = document.documentElement;
+      root.classList.add('embed');
+      if (window.parent !== window) {
+        try {
+          const parentRoot = window.parent.document.documentElement;
+          const syncAppearance = () => {
+            root.dataset.appearance = parentRoot.dataset.appearance === 'light' ? 'light' : 'dark';
+          };
+          syncAppearance();
+          new MutationObserver(syncAppearance).observe(parentRoot, {
+            attributes: true, attributeFilter: ['data-appearance']
+          });
+        } catch (_) { root.dataset.appearance = 'dark'; }
+      }
+    }
+  </script>
   <style>
     :root{color-scheme:dark;--text:#e7edfc;--muted:#9baecc;--border:rgba(181,204,255,.18);--panel:rgba(18,26,45,.79);--blue:#88b8ff;--purple:#c29afa;--green:#a1e5bd;--gold:#efce91}
     *{box-sizing:border-box}
@@ -74,6 +92,39 @@
     html.embed .editor,html.embed .output-wrap{background:transparent;scrollbar-width:none}
     html.embed .terminal-head{background:transparent}
     html.embed::-webkit-scrollbar,html.embed body::-webkit-scrollbar,html.embed .editor::-webkit-scrollbar,html.embed .output-wrap::-webkit-scrollbar{display:none;width:0;height:0}
+    /* Light appearance ONLY for embedded studio. Keep all dark/standalone styling unchanged. */
+    html.embed[data-appearance="light"] {
+      color-scheme:light;
+      --text:#253a40;--muted:#586d72;
+    }
+    html.embed[data-appearance="light"] .window {background:#f8faf8;color:#253a40}
+    html.embed[data-appearance="light"] .titlebar {background:#f8faf8;border-bottom-color:#dbe4df}
+    html.embed[data-appearance="light"] .titlebar .title {color:#3e5660}
+    html.embed[data-appearance="light"] .tabrow {background:#f1f6f2;border-bottom-color:#d9e2dc}
+    html.embed[data-appearance="light"] .tab {background:#f5f9f5;color:#2b424a;border-right-color:#d9e2dc;border-top-color:#5d8b8a}
+    html.embed[data-appearance="light"] .tab-meta {color:#5e7983}
+    html.embed[data-appearance="light"] .editor {background:#fbfdfb}
+    html.embed[data-appearance="light"] .code-line.active {background:linear-gradient(90deg,#dbeae9,#f8fbf9);border-left-color:#699da3}
+    html.embed[data-appearance="light"] .line-num {color:#71868b}
+    html.embed[data-appearance="light"] .active .line-num {color:#38636c}
+    html.embed[data-appearance="light"] .code-text {color:#25373d}
+    html.embed[data-appearance="light"] .code-text .kw {color:#7653a4}
+    html.embed[data-appearance="light"] .code-text .fn {color:#245f99}
+    html.embed[data-appearance="light"] .code-text .str {color:#9a5a21}
+    html.embed[data-appearance="light"] .code-text .num {color:#2d7952}
+    html.embed[data-appearance="light"] .code-text .comment {color:#6b8185}
+    html.embed[data-appearance="light"] .code-text .var {color:#25373d}
+    html.embed[data-appearance="light"] .code-text .operator {color:#4b687b}
+    html.embed[data-appearance="light"] .caret {background:#3b8795;box-shadow:0 0 8px #3b879544}
+    html.embed[data-appearance="light"] .divider {border-top-color:#dae5df}
+    html.embed[data-appearance="light"] .terminal-head {background:#f1f6f2;border-bottom-color:#d9e3de}
+    html.embed[data-appearance="light"] .terminal-label {color:#466069}
+    html.embed[data-appearance="light"] .terminal-label:before {color:#31846b}
+    html.embed[data-appearance="light"] .runtime {color:#657e85}
+    html.embed[data-appearance="light"] .output-wrap {background:#f8fbf9}
+    html.embed[data-appearance="light"] .output {color:#23644d}
+    html.embed[data-appearance="light"] .output .caret {background:#39866c;box-shadow:0 0 8px #39866c44}
+
   </style>
 </head>
 <body>
