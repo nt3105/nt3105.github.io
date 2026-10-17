@@ -312,13 +312,23 @@ if(STUDIO_PREVIEW){
   if(event.origin!==ADMIN_ORIGIN||event.source!==window.parent)return;
   const data=event.data;
   if(!data||typeof data!=="object")return;
+  if(data.type==="nt3105:cms-preview-ping"){
+   window.parent.postMessage({type:"nt3105:cms-preview-ready"},ADMIN_ORIGIN);
+   return;
+  }
   if(data.type==="nt3105:cms-preview-update"){
    const payload=data.content;
+   const revision=Number(data.revision);
    if(!payload||typeof payload!=="object"||Array.isArray(payload))return;
-   // A bound stops oversized or malformed messages from freezing mobile previews.
-   try{if(JSON.stringify(payload).length>700000)return;apply(payload,null);}
-   catch(error){console.error("Studio preview update failed",error);return;}
-   window.parent.postMessage({type:"nt3105:cms-preview-applied"},ADMIN_ORIGIN);
+   try{
+     if(JSON.stringify(payload).length>700000)throw Error("Nội dung quá lớn để xem trước.");
+     apply(payload,null);
+   }catch(error){
+     console.error("Studio preview update failed",error);
+     window.parent.postMessage({type:"nt3105:cms-preview-error",revision,message:String(error?.message||error).slice(0,150)},ADMIN_ORIGIN);
+     return;
+   }
+   window.parent.postMessage({type:"nt3105:cms-preview-applied",revision},ADMIN_ORIGIN);
   }
   if(data.type==="nt3105:cms-preview-navigate"){
    const section=String(data.section||"");
