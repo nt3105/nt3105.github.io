@@ -571,3 +571,37 @@ html[data-fx="calm"] .depth-shine {
 @media print {
   .tsm-scroll-progress, .tsm-drawline { display: none; }
 }
+
+/* Living aurora for the hero name; inherited colors preserve letter reveals. */
+@property --nt-name-a { syntax: "<color>"; inherits: true; initial-value: #8cecf2; }
+@property --nt-name-b { syntax: "<color>"; inherits: true; initial-value: #baabff; }
+@property --nt-name-c { syntax: "<color>"; inherits: true; initial-value: #f4b5df; }
+#hero-title .hero-name {
+  animation: nt-name-aurora 12s linear infinite;
+}
+#hero-title :is(.name-first, .dev-name),
+#hero-title .tsm-copy .tsm-letter {
+  background-image: linear-gradient(115deg, var(--nt-name-a), var(--nt-name-b) 52%, var(--nt-name-c));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+#hero-title :is(.name-first, .dev-name):has(.tsm-copy) { background-image: none; }
+@keyframes nt-name-aurora {
+  0%, 100% { --nt-name-a: #8cecf2; --nt-name-b: #baabff; --nt-name-c: #f4b5df; }
+  33.333% { --nt-name-a: #baabff; --nt-name-b: #f4b5df; --nt-name-c: #8cecf2; }
+  66.667% { --nt-name-a: #f4b5df; --nt-name-b: #8cecf2; --nt-name-c: #baabff; }
+}
+html[data-appearance="light"] #hero-title .hero-name { animation-name: nt-name-aurora-light; }
+@keyframes nt-name-aurora-light {
+  0%, 100% { --nt-name-a: #087e91; --nt-name-b: #7350c5; --nt-name-c: #b43d81; }
+  33.333% { --nt-name-a: #7350c5; --nt-name-b: #b43d81; --nt-name-c: #087e91; }
+  66.667% { --nt-name-a: #b43d81; --nt-name-b: #087e91; --nt-name-c: #7350c5; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hero-title .hero-name { animation: none; }
+  html[data-appearance="light"] #hero-title .hero-name {
+    --nt-name-a: #087e91; --nt-name-b: #7350c5; --nt-name-c: #b43d81;
+  }
+}
