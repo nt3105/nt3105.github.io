@@ -514,9 +514,9 @@ styleControls.innerHTML = `
   <button class="style-toggle" type="button" aria-expanded="false" aria-controls="style-panel" aria-label="Tùy chỉnh giao diện"><span aria-hidden="true"></span></button>
   <div class="style-panel" id="style-panel" hidden><div class="style-panel-head"><p class="eyebrow">GIAO DIỆN</p><h3>Tinh chỉnh</h3><button class="style-close" type="button" aria-label="Đóng bảng màu">×</button></div><p class="style-lead">Màu, ánh sáng và nhịp chuyển động. Lưu ngay trên máy bạn.</p><h4 class="fx-label">Màu nhấn</h4>
     <div class="accent-options" role="group" aria-label="Màu nhấn">
-      <button type="button" data-accent-choice="violet" aria-pressed="true"><i style="--swatch:linear-gradient(135deg,#7ee8ee,#bb8cff)" aria-hidden="true"></i>Tím</button>
+      <button type="button" data-accent-choice="violet" aria-pressed="false"><i style="--swatch:linear-gradient(135deg,#7ee8ee,#bb8cff)" aria-hidden="true"></i>Tím</button>
       <button type="button" data-accent-choice="ice" aria-pressed="false"><i style="--swatch:linear-gradient(135deg,#9bf7e6,#66cfff)" aria-hidden="true"></i>Xanh băng</button>
-      <button type="button" data-accent-choice="rose" aria-pressed="false"><i style="--swatch:linear-gradient(135deg,#ffc1de,#d99aff)" aria-hidden="true"></i>Hồng</button>
+      <button type="button" data-accent-choice="rose" aria-pressed="true"><i style="--swatch:linear-gradient(135deg,#ffc1de,#d99aff)" aria-hidden="true"></i>Hồng</button>
     </div>
   </div>`;
 document.body.append(styleControls);
@@ -530,12 +530,12 @@ const themePresets = {
 };
 stylePanel.insertAdjacentHTML('beforeend', `
   <div class="custom-colors"><p>Phối màu của bạn</p>
-    <label>Màu chính<input type="color" id="theme-first" value="#7ee8ee"></label>
-    <label>Màu phụ<input type="color" id="theme-second" value="#bb8cff"></label>
-    <label>Sắc nền tối<input type="color" id="theme-base" value="#18112e"></label>
+    <label>Màu chính<input type="color" id="theme-first" value="#ffc1de"></label>
+    <label>Màu phụ<input type="color" id="theme-second" value="#d99aff"></label>
+    <label>Sắc nền tối<input type="color" id="theme-base" value="#301329"></label>
     <small>Dùng nút mặt trời trên thanh điều hướng để chuyển nền trắng. Sắc nền ở đây áp dụng cho chế độ tối.</small>
   </div>`);
-stylePanel.insertAdjacentHTML('beforeend', '<h4 class="fx-label">Ánh sáng</h4><label class="glow-option glow-shortcut" title="Bật/tắt ánh sáng theo chuột"><span aria-hidden="true">✧</span> Ánh sáng theo chuột<input type="checkbox" id="global-glow-toggle" aria-label="Ánh sáng theo chuột" checked><span class="glow-switch" aria-hidden="true"></span></label>');
+stylePanel.insertAdjacentHTML('beforeend', '<h4 class="fx-label">Ánh sáng</h4><label class="glow-option glow-shortcut" title="Bật/tắt ánh sáng theo chuột"><span aria-hidden="true">✧</span> Ánh sáng theo chuột<input type="checkbox" id="global-glow-toggle" aria-label="Ánh sáng theo chuột"><span class="glow-switch" aria-hidden="true"></span></label>');
 styleControls.querySelector('.style-close').addEventListener('click', () => { closeStylePanel(); styleToggle.focus({ preventScroll: true }); });
 const colorInputs = ['theme-first', 'theme-second', 'theme-base'].map(id => document.getElementById(id));
 function hexRGB(hex) { return [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16)); }
@@ -569,11 +569,11 @@ function pickVisitAccent() {
     const saved = localStorage.getItem('ngan-tu-accent');
     if (themePresets[saved]) return { choice: saved };
   } catch {}
-  return { choice: 'violet' };
+  return { choice: 'rose' };
 }
 const visitAccent = pickVisitAccent();
 if (visitAccent.custom) applyTheme(visitAccent.custom, 'custom');
-else setAccent(visitAccent.choice);
+else applyTheme(themePresets[visitAccent.choice], visitAccent.choice);
 colorInputs.forEach(input => input.addEventListener('input', () => {
   const colors = colorInputs.map(field => field.value);
   applyTheme(colors);
@@ -1036,8 +1036,8 @@ globalGlow.setAttribute('aria-hidden', 'true');
 document.body.append(globalGlow);
 const glowToggle = document.getElementById('global-glow-toggle');
 const glowMotion = matchMedia('(prefers-reduced-motion: reduce)');
-let glowEnabled = true;
-try { glowEnabled = localStorage.getItem('ngan-tu-global-glow') !== 'off'; } catch {}
+let glowEnabled = false;
+try { glowEnabled = localStorage.getItem('ngan-tu-global-glow') === 'on'; } catch {}
 glowToggle.checked = glowEnabled;
 let glowTimer;
 let glowX = innerWidth / 2;
