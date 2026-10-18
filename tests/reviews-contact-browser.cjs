@@ -36,8 +36,21 @@ const source=[
    }
    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(source)});
   });
+  // Even if the reviews script fails, the section must render from HTML.
+  const fallback=await browser.newPage({viewport:{width:1280,height:820},reducedMotion:'reduce'});
+  await fallback.route('**/reviews-demo.js*',route=>route.abort('failed'));
+  await fallback.goto(base,{waitUntil:'domcontentloaded'});
+  const staticTitle=fallback.locator('#contact #nt3105-reviews-title');
+  assert(await staticTitle.isVisible(),'Review section disappears when JS asset fails to load');
+  assert((await staticTitle.innerText()).includes('Để lại một chút'),'Fallback review title missing');
+  assert.equal(await fallback.locator('#contact #nt3105-comment-form').count(),1,'Form is not in static HTML');
+  assert(await fallback.locator('#contact .ntjr-review-submit').isDisabled(),'Submit must remain disabled until JS handlers exist');
+  await fallback.screenshot({path:'reviews-fallback-ci.png'});
+  await fallback.close();
   await desktop.goto(base,{waitUntil:'domcontentloaded'});
   await desktop.locator('#nt3105-cms-comments .nt-cms-comment').first().waitFor();
+  assert(await desktop.locator('#nt3105-reviews-title').isVisible(),'Review heading not visible even after JS loading');
+  assert(await desktop.locator('#nt3105-comment-form').isVisible(),'Review form invisible');
   assert.equal(await desktop.locator('#nt3105-cms-comments').count(),1,'Only one review section');
   assert.equal(await desktop.locator('#contact-form').count(),0,'Old email form should be gone');
   assert(await desktop.locator('#ntjr-review-count').innerText().then(s=>s.includes('3 bình luận')));
