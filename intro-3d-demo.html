@@ -402,17 +402,15 @@
       if (result.error) throw result.error;
       const doc = new DOMParser().parseFromString(result.html, 'text/html');
       if (!doc.querySelector('#main')) throw new Error('Invalid main page');
-      await Promise.all(['style.css?v=motion-9', 'enhance.css?v=motion-9', 'polish.css', 'features.css', 'menu-ios.css', 'design.css', 'ios-effects.css?v=motion-14', 'ios-preview.css', 'selected.css?v=motion-15', 'appearance.css?v=motion-9', 'game-menu.css?v=motion-9', 'titanium-scroll-effects.css?v=motion-14', 'app-icons.css?v=icons-11'].map(addStyle));
+      // Keep the intro handoff in sync with the main page, including asset versions.
+      const styles = [...doc.head.querySelectorAll('link[rel="stylesheet"][href]')];
+      await Promise.all(styles.map(link => addStyle(link.getAttribute('href'))));
       document.getElementById('intro-css')?.remove();
 
       const mainTitle = doc.querySelector('title');
       if (mainTitle?.textContent) document.title = mainTitle.textContent;
       const fix = doc.getElementById('nav-fix');
       if (fix && !document.getElementById('nav-fix')) document.head.append(document.importNode(fix, true));
-      document.head.append(document.querySelector('link[href="appearance.css?v=motion-9"]'));
-      document.head.append(document.querySelector('link[href="game-menu.css?v=motion-9"]'));
-      document.head.append(document.querySelector('link[href="titanium-scroll-effects.css?v=motion-14"]'));
-      document.head.append(document.querySelector('link[href="app-icons.css?v=icons-11"]'));
       stage.remove();
       handoff.remove();
       cancelAnimationFrame(frame);
@@ -424,7 +422,11 @@
       });
       document.body.append(nodes);
       window.ntMainLoading = true;
-      for (const src of ['script.js?v=clock-1', 'enhance.js?v=motion-14', 'features.js?v=motion-14', 'snake.js?v=depth-1', 'ios-effects.js?v=motion-14', 'ios-preview.js', 'selected.js?v=motion-15', 'game-menu.js', 'app-icons.js?v=motion-14', 'titanium-scroll-site.js?v=motion-14', 'titanium-scroll-effects.js?v=icons-11']) await addScript(src);
+      // Only run the main page's deferred app scripts, in their declared order.
+      // Inline navigation/preview scripts must not rerun during this handoff.
+      for (const script of doc.head.querySelectorAll('script[src][defer]')) {
+        await addScript(script.getAttribute('src'));
+      }
       try { sessionStorage.setItem('nt-skip-intro', '1'); } catch (error) {}
       try { history.replaceState(null, '', pageBase + location.search + location.hash); } catch (error) {}
       window.ntMainLoading = false;
@@ -446,4 +448,5 @@
 <noscript><style>#stage{display:none}.handoff{display:grid!important}</style></noscript>
 </body>
 </html>
+
 
