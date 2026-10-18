@@ -4,11 +4,15 @@ const assert=require('node:assert/strict');
 const {JSDOM}=require('jsdom');
 (async()=>{
  const html=fs.readFileSync('index.html','utf8');
- assert(html.includes('reviews-demo.js?v=review-contact-v1'),'Reviews JS reference must be cache refreshed');
+ assert(html.includes('reviews-demo.js?v=reviews-static-20261018'),'Reviews JS reference must be cache refreshed');
  assert(html.includes('reviews-demo.css?v=review-eyebrow-20261017'),'Reviews CSS reference must be cache refreshed');
  assert(!html.includes('06 / SAY HELLO'),'Former contact page must be replaced');
  assert(!html.includes('id="contact-form"'),'Old mail form must be absent');
  assert.equal((html.match(/id="contact"/g)||[]).length,1,'One contact anchor');
+ assert(html.includes('id="nt3105-reviews-title"'),'Review title must exist in static HTML');
+ assert(html.includes('id="nt3105-comment-form"'),'Review form must exist without JS');
+ assert(html.includes('id="nt3105-comment-list"'),'Review list must exist without JS');
+ assert(!html.includes('<div id="nt3105-cms-comments" class="nt-cms-comments"></div>'),'Review section must never be empty in raw HTML');
  const dom=new JSDOM(html,{url:'https://nt3105.io.vn/#contact',runScripts:'outside-only'});
  const {window}=dom,document=window.document;
  const old={
@@ -41,6 +45,9 @@ const {JSDOM}=require('jsdom');
  const settle=()=>new Promise(r=>setTimeout(r,50));
  await settle();
  const root=document.querySelector('#nt3105-cms-comments');
+ assert(root.querySelector('#nt3105-reviews-title').textContent.includes('Để lại một chút'));
+ assert.equal(root.querySelectorAll('#nt3105-comment-form').length,1,'Exactly one rendered static form');
+ assert(!root.querySelector('.ntjr-review-submit').disabled,'Enhancement must enable submit button');
  assert(root&&document.querySelector('#contact').contains(root),'Must render inside existing #contact anchor');
  assert.equal(document.querySelectorAll('#nt3105-cms-comments').length,1);
  assert(root.textContent.includes('Để lại một chút'));
