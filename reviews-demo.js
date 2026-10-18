@@ -61,7 +61,7 @@ function dateText(raw){
 function render(reset=true){
  const top=list.scrollTop;
  const visible=comments.filter(c=>filter.value==="all"||(filter.value==="low"?Number(c.rating)<=3:Number(c.rating)===Number(filter.value)));
- visible.sort((a,b)=>sort.value==="rating"?Number(b.rating)-Number(a.rating)||new Date(b.created_at)-new Date(a.created_at):sort.value==="liked"?Number(likedIds.has(String(b.id)))-Number(likedIds.has(String(a.id)))||new Date(b.created_at)-new Date(a.created_at):new Date(b.created_at)-new Date(a.created_at));
+ visible.sort((a,b)=>Number(b.is_pinned)-Number(a.is_pinned)||(sort.value==="rating"?Number(b.rating)-Number(a.rating)||new Date(b.created_at)-new Date(a.created_at):sort.value==="liked"?Number(likedIds.has(String(b.id)))-Number(likedIds.has(String(a.id)))||new Date(b.created_at)-new Date(a.created_at):new Date(b.created_at)-new Date(a.created_at)));
  const frag=document.createDocumentFragment();
  for(const item of visible){
   const n=Math.min(5,Math.max(1,Number(item.rating)||1));
@@ -90,7 +90,7 @@ function render(reset=true){
   if(item.is_pinned)article.append(el("small","✦ Bình luận được ghim","ntjr-pin"));
   if(item.admin_reply){
    const reply=el("div",undefined,"ntjr-review-admin");
-   reply.append(el("strong","NTJR phản hồi"),el("p",item.admin_reply));article.append(reply);
+   reply.append(el("strong",(item.admin_reply_author||"NT3105")+" · Admin phản hồi"),el("p",item.admin_reply));article.append(reply);
   }
   frag.append(article);
  }
@@ -103,12 +103,12 @@ function render(reset=true){
  else overall.hidden=true;
  list.scrollTop=reset?0:top;
 }
-async function fetchComments(){
- const url=REST+"?select=id,author,body,rating,is_pinned,admin_reply,created_at&is_hidden=eq.false&order=created_at.desc&limit="+MAX_COMMENTS;
+async function fetchComments(reset=true){
+ const url=REST+"?select=id,author,body,rating,is_pinned,admin_reply,admin_reply_author,created_at&is_hidden=eq.false&order=is_pinned.desc,created_at.desc&limit="+MAX_COMMENTS;
  const response=await fetch(url,{headers,cache:"no-store"});
  if(!response.ok)throw Error("Read failed: "+response.status);
  const json=await response.json();if(!Array.isArray(json))throw Error("Invalid response");
- comments=json;render();
+ comments=json;render(reset);
 }
 async function refresh(){
  try{await fetchComments()}catch(error){
@@ -139,5 +139,8 @@ form.addEventListener("submit",async event=>{
  finally{send.disabled=false}
 });
 send.disabled=false;
+window.addEventListener("focus",()=>fetchComments(false).catch(()=>{}));
+setInterval(()=>{if(!document.hidden)fetchComments(false).catch(()=>{})},15000);
 refresh();
 })();
+

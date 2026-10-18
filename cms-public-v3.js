@@ -223,14 +223,14 @@ function renderComments(client,content){
    return;
  }
  const load=async()=>{
-  const {data,error}=await client.from("site_comments").select("author,body,rating,is_pinned,admin_reply,created_at").eq("is_hidden",false).order("created_at",{ascending:false}).limit(100);
+  const {data,error}=await client.from("site_comments").select("author,body,rating,is_pinned,admin_reply,admin_reply_author,created_at").eq("is_hidden",false).order("created_at",{ascending:false}).limit(100);
   if(error){list.textContent="Chưa thể tải bình luận.";return}
   const frag=document.createDocumentFragment();
   for(const c of (data||[]).sort((a,b)=>Number(b.is_pinned)-Number(a.is_pinned))){
    const article=createNode("article",{class:"nt-cms-comment"});
    article.append(createNode("strong",{},trim(c.author)+" · "+"★".repeat(Math.max(1,Math.min(5,Number(c.rating)||5)))) ,createNode("p",{},trim(c.body)));
    if(c.is_pinned)article.append(createNode("small",{},"✦ Đã ghim"));
-   if(c.admin_reply)article.append(createNode("blockquote",{},"NT3105: "+trim(c.admin_reply)));
+   if(c.admin_reply)article.append(createNode("blockquote",{},(trim(c.admin_reply_author)||"NT3105")+": "+trim(c.admin_reply)));
    frag.append(article);
   }
   list.replaceChildren(frag.childNodes.length?frag:createNode("p",{},"Chưa có nhận xét. Hãy là người đầu tiên!"));
@@ -561,3 +561,4 @@ if(STUDIO_PREVIEW){
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
+
