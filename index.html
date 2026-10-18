@@ -81,7 +81,7 @@
   <script src="app-icons.js?v=motion-13" defer></script>
   <script src="titanium-scroll-site.js?v=gallery-20" defer></script>
   <script src="titanium-scroll-effects.js?v=gallery-20" defer></script>
-  <script src="reviews-demo.js?v=review-contact-v1" defer></script>
+  <script src="reviews-demo.js?v=reviews-static-20261018" defer></script>
   <script>
     try {
       if (sessionStorage.getItem('nt-from-intro') === '1') {
@@ -200,7 +200,39 @@
 
     <section class="section container" id="donate"><div class="donate-panel reveal"><div class="donate-copy"><p class="eyebrow">05 / MỘT CHÚT ĐỘNG LỰC</p><h2>Góp gió<br><span class="gradient-text">thành bão.</span></h2><dl class="bank-details"><div><dt>Ngân hàng</dt><dd>Techcombank</dd></div><div><dt>Chủ tài khoản</dt><dd>KIEN NGAN TU</dd></div><div><dt>Số tài khoản</dt><dd id="bank-account">19076415749012</dd></div></dl><div id="donate-form" class="amount-form" style="display:block"><label for="donate-amount">Số tiền ủng hộ</label><div class="amount-input-wrap"><input id="donate-amount" name="amount" inputmode="numeric" autocomplete="off" placeholder="Nhập số tiền" maxlength="15" aria-describedby="amount-error" required><span>VNĐ</span></div><div class="amount-presets" aria-label="Chọn nhanh số tiền"><button type="button" data-amount="20000">20.000đ</button><button type="button" data-amount="50000">50.000đ</button><button type="button" data-amount="100000">100.000đ</button></div><p id="amount-error" class="field-error" role="alert"></p><button id="generate-qr" type="button" class="button primary">Tạo QR ủng hộ</button></div><div class="hero-actions"><button class="button primary" type="button" id="copy-account">Sao chép số tài khoản</button><a id="qr-open" class="button secondary" href="images/qr-techcombank-card.png" target="_blank" rel="noopener">Mở ảnh QR</a></div></div><figure class="qr-panel"><div id="qr-status" class="qr-status" role="status">QR tài khoản · Chưa có số tiền</div><div class="qr-crop qr-static"><img loading="lazy" id="donation-qr" src="images/qr-techcombank-card.png" alt="Mã QR Techcombank của KIEN NGAN TU, số tài khoản 19076415749012" decoding="async"></div><figcaption id="qr-caption">Nhập số tiền và bấm tạo QR, hoặc quét mã tài khoản để tự nhập tiền.</figcaption></figure></div></section>
     <section class="section container ntjr-review-section" id="contact" aria-labelledby="nt3105-reviews-title">
-      <div id="nt3105-cms-comments" class="nt-cms-comments"></div>
+      <div id="nt3105-cms-comments" class="nt-cms-comments">
+<div class="ntjr-reviews-heading">
+<p class="eyebrow">06 / ĐÁNH GIÁ WEBSITE</p>
+<h2 id="nt3105-reviews-title">Để lại một chút <span class="ntjr-reviews-glow">cảm nhận.</span></h2>
+<p>Mỗi lời góp ý đều đáng quý. Chia sẻ trải nghiệm thật của bạn tại đây.</p>
+</div>
+<div class="ntjr-reviews-layout">
+<section class="ntjr-review-glass ntjr-review-write" aria-labelledby="ntjr-write-title">
+<div class="ntjr-review-card-head"><span class="ntjr-review-card-icon" aria-hidden="true">✦</span><div><h3 id="ntjr-write-title">Viết đánh giá</h3><p>Chọn số sao và gửi lời nhắn.</p></div></div>
+<form id="nt3105-comment-form" novalidate>
+<fieldset class="ntjr-rating-box"><legend>Bạn chấm bao nhiêu sao?</legend>
+<div id="ntjr-rating-chooser" class="ntjr-rating-stars" role="radiogroup" aria-label="Chọn số sao">
+<button type="button" role="radio" aria-checked="false" aria-label="1 sao" data-rating="1">★</button>
+<button type="button" role="radio" aria-checked="false" aria-label="2 sao" data-rating="2">★</button>
+<button type="button" role="radio" aria-checked="false" aria-label="3 sao" data-rating="3">★</button>
+<button type="button" role="radio" aria-checked="false" aria-label="4 sao" data-rating="4">★</button>
+<button type="button" role="radio" aria-checked="false" aria-label="5 sao" data-rating="5">★</button></div>
+<input type="hidden" name="rating" value=""><p id="ntjr-rating-description" class="ntjr-rating-description" aria-live="polite">Chọn từ 1 đến 5 sao</p></fieldset>
+<div class="ntjr-anonymous"><div><strong>Đánh giá ẩn danh</strong><span>Không cần hiển thị tên của bạn</span></div><button type="button" id="ntjr-anonymous-switch" class="ntjr-toggle" role="switch" aria-checked="false" aria-label="Đánh giá ẩn danh"></button></div>
+<label id="ntjr-author-row" class="ntjr-field">Tên hiển thị<input name="author" maxlength="40" autocomplete="nickname" placeholder="Tên bạn muốn hiển thị"></label>
+<label class="ntjr-field">Lời nhắn<textarea name="body" rows="4" maxlength="500" placeholder="Bạn thấy website như thế nào?"></textarea></label>
+<button type="submit" class="ntjr-review-submit" disabled>Gửi đánh giá <span aria-hidden="true">↗</span></button>
+<p id="nt3105-comment-status" class="ntjr-comment-status" role="status" aria-live="polite"></p>
+</form></section>
+<section class="ntjr-review-glass ntjr-review-read" aria-labelledby="ntjr-list-title">
+<div class="ntjr-review-card-head ntjr-read-head"><span class="ntjr-review-card-icon" aria-hidden="true">✧</span><div><h3 id="ntjr-list-title">Bình luận công khai</h3><p id="ntjr-review-count">Đang tải đánh giá...</p></div><div class="ntjr-review-overall" id="ntjr-review-overall" aria-label="Điểm đánh giá trung bình" hidden></div></div>
+<div class="ntjr-review-controls">
+<label class="ntjr-review-dropdown"><span class="ntjr-visually-hidden">Sắp xếp bình luận</span><select id="ntjr-review-sort" aria-label="Sắp xếp bình luận"><option value="recent">Mới nhất trước</option><option value="rating">Đánh giá cao nhất</option><option value="liked">Đã thích trên máy này</option></select></label>
+<label class="ntjr-review-dropdown"><span class="ntjr-visually-hidden">Lọc số sao</span><select id="ntjr-review-filter" aria-label="Lọc số sao"><option value="all">Tất cả số sao</option><option value="5">5 sao</option><option value="4">4 sao</option><option value="low">3 sao trở xuống</option></select></label></div>
+<div id="nt3105-comment-list" class="ntjr-review-scroll" role="region" tabindex="0" aria-label="Danh sách bình luận, có thể cuộn"><p>Đang tải bình luận...</p></div>
+<div class="ntjr-review-bottom"><span id="ntjr-review-visible-count">Bình luận mới nhất hiển thị trước</span><button type="button" id="ntjr-review-to-top">↑ Lên đầu</button></div></section></div>
+<noscript><p class="ntjr-review-empty">Để gửi đánh giá và xem bình luận mới, hãy bật JavaScript.</p></noscript>
+</div>
     </section>
     <section class="closing-scene container" aria-labelledby="closing-title">
       <div class="closing-lines" aria-hidden="true"></div><p class="eyebrow">CẢM ƠN VÌ ĐÃ GHÉ QUA</p>
