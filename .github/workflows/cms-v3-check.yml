@@ -45,4 +45,5 @@ jobs:
             nav-mobile-ci.png
             reviews-desktop-ci.png
             reviews-mobile-ci.png
+            reviews-fallback-ci.png
           if-no-files-found: ignore
