@@ -1,3 +1,13 @@
+function relativeTime(raw){
+ const date=new Date(raw),ms=date.getTime();if(!Number.isFinite(ms))return '';
+ const seconds=Math.max(0,Math.floor((Date.now()-ms)/1000));
+ if(seconds<60)return 'Vừa xong';
+ if(seconds<3600)return Math.floor(seconds/60)+' phút trước';
+ if(seconds<86400)return Math.floor(seconds/3600)+' giờ trước';
+ if(seconds<2592000)return Math.floor(seconds/86400)+' ngày trước';
+ if(seconds<31536000)return Math.floor(seconds/2592000)+' tháng trước';
+ return Math.floor(seconds/31536000)+' năm trước';
+}
 /* NT3105 live-content CMS client. Public reads published only; no admin credentials. */
 (()=>{
 "use strict";
@@ -223,12 +233,13 @@ function renderComments(client,content){
    return;
  }
  const load=async()=>{
-  const {data,error}=await client.from("site_comments").select("author,body,rating,is_pinned,admin_reply,admin_reply_author,created_at").eq("is_hidden",false).order("created_at",{ascending:false}).limit(100);
+  const {data,error}=await client.from("site_comments").select("author,body,rating,is_pinned,admin_reply,admin_reply_author,likes_count,created_at").eq("is_hidden",false).order("created_at",{ascending:false}).limit(100);
   if(error){list.textContent="Chưa thể tải bình luận.";return}
   const frag=document.createDocumentFragment();
   for(const c of (data||[]).sort((a,b)=>Number(b.is_pinned)-Number(a.is_pinned))){
    const article=createNode("article",{class:"nt-cms-comment"});
    article.append(createNode("strong",{},trim(c.author)+" · "+"★".repeat(Math.max(1,Math.min(5,Number(c.rating)||5)))) ,createNode("p",{},trim(c.body)));
+   article.append(createNode("small",{},relativeTime(c.created_at)+" · ♥ "+Number(c.likes_count||0)));
    if(c.is_pinned)article.append(createNode("small",{},"✦ Đã ghim"));
    if(c.admin_reply)article.append(createNode("blockquote",{},(trim(c.admin_reply_author)||"NT3105")+": "+trim(c.admin_reply)));
    frag.append(article);

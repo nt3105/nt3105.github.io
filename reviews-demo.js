@@ -23,8 +23,14 @@ const sort=root.querySelector("#ntjr-review-sort"),filter=root.querySelector("#n
 const anon=root.querySelector("#ntjr-anonymous-switch"),authorRow=root.querySelector("#ntjr-author-row");
 const labels=["","Chưa hài lòng","Cần cải thiện","Bình thường","Rất tốt","Đẳng cấp"];
 let rating=0,anonymous=false,comments=[];
-const key="ntjr-review-liked-ids-v1";let likedIds=new Set();
+const key="ntjr-review-liked-ids-v2";let likedIds=new Set();
 try{const saved=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(saved))likedIds=new Set(saved.filter(x=>typeof x==="string").slice(0,100))}catch{}
+let visitorId;
+try{visitorId=localStorage.getItem('ntjr-review-visitor-v1')}catch{}
+if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(visitorId||'')){
+ visitorId=crypto.randomUUID();try{localStorage.setItem('ntjr-review-visitor-v1',visitorId)}catch{}
+}
+const pendingLikes=new Set();
 const buttons=[...select.querySelectorAll("[data-rating]")];
 function paintStars(){
  for(const b of buttons){
@@ -54,14 +60,20 @@ anon.addEventListener("click",()=>{
  authorRow.hidden=anonymous;
  if(anonymous)form.elements.namedItem("author").value="";
 });
-function dateText(raw){
- const date=new Date(raw);if(!Number.isFinite(date.getTime()))return "";
- return new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"2-digit",year:"numeric"}).format(date);
+function relativeTime(raw){
+ const date=new Date(raw),ms=date.getTime();if(!Number.isFinite(ms))return '';
+ const seconds=Math.max(0,Math.floor((Date.now()-ms)/1000));
+ if(seconds<60)return 'Vừa xong';
+ if(seconds<3600)return Math.floor(seconds/60)+' phút trước';
+ if(seconds<86400)return Math.floor(seconds/3600)+' giờ trước';
+ if(seconds<2592000)return Math.floor(seconds/86400)+' ngày trước';
+ if(seconds<31536000)return Math.floor(seconds/2592000)+' tháng trước';
+ return Math.floor(seconds/31536000)+' năm trước';
 }
 function render(reset=true){
  const top=list.scrollTop;
  const visible=comments.filter(c=>filter.value==="all"||(filter.value==="low"?Number(c.rating)<=3:Number(c.rating)===Number(filter.value)));
- visible.sort((a,b)=>Number(b.is_pinned)-Number(a.is_pinned)||(sort.value==="rating"?Number(b.rating)-Number(a.rating)||new Date(b.created_at)-new Date(a.created_at):sort.value==="liked"?Number(likedIds.has(String(b.id)))-Number(likedIds.has(String(a.id)))||new Date(b.created_at)-new Date(a.created_at):new Date(b.created_at)-new Date(a.created_at)));
+ visible.sort((a,b)=>Number(b.is_pinned)-Number(a.is_pinned)||(sort.value==="rating"?Number(b.rating)-Number(a.rating)||new Date(b.created_at)-new Date(a.created_at):sort.value==="liked"?Number(b.likes_count||0)-Number(a.likes_count||0)||new Date(b.created_at)-new Date(a.created_at):new Date(b.created_at)-new Date(a.created_at)));
  const frag=document.createDocumentFragment();
  for(const item of visible){
   const n=Math.min(5,Math.max(1,Number(item.rating)||1));
@@ -70,17 +82,28 @@ function render(reset=true){
   const avatar=el("div",safe(item.author||"?").trim().slice(0,1).toUpperCase(),"ntjr-review-avatar");
   avatar.setAttribute("aria-hidden","true");
   const person=el("div",undefined,"ntjr-review-person");
-  person.append(el("strong",item.author||"Khách ẩn danh"),el("small",dateText(item.created_at)));
+  person.append(el("strong",item.author||"Khách ẩn danh"),el("small",relativeTime(item.created_at)));
   head.append(avatar,person);
   if(item.id!==null&&item.id!==undefined){
    const id=String(item.id),on=likedIds.has(id);
-   const like=el("button",on?"♥ Đã thích":"♡ Thích","ntjr-comment-like"+(on?" is-liked":""));
-   like.type="button";like.setAttribute("aria-pressed",String(on));
+   const like=el("button",(on?"♥ Đã thích":"♡ Thích")+" · "+Number(item.likes_count||0),"ntjr-comment-like"+(on?" is-liked":""));
+   like.disabled=pendingLikes.has(id);like.type="button";like.setAttribute("aria-pressed",String(on));
    like.setAttribute("aria-label",(on?"Bỏ thích":"Thích")+" bình luận của "+safe(item.author).slice(0,40));
-   like.addEventListener("click",()=>{
-    if(likedIds.has(id))likedIds.delete(id);else likedIds.add(id);
-    try{localStorage.setItem(key,JSON.stringify([...likedIds].slice(0,100)))}catch{}
-    render(false);
+   like.addEventListener("click",async()=>{
+    if(pendingLikes.has(id))return;pendingLikes.add(id);like.disabled=true;
+    const next=!likedIds.has(id);
+    try{
+     const response=await fetch(REST.replace('/rest/v1/site_comments','/rest/v1/rpc/set_comment_like'),{
+      method:'POST',headers:{...headers,'Content-Type':'application/json'},
+      body:JSON.stringify({p_comment_id:id,p_visitor_id:visitorId,p_liked:next})
+     });
+     if(!response.ok)throw Error('Like failed');
+     const count=await response.json();
+     const current=comments.find(c=>String(c.id)===id);if(current)current.likes_count=Number(count);
+     if(next)likedIds.add(id);else likedIds.delete(id);
+     try{localStorage.setItem(key,JSON.stringify([...likedIds]))}catch{}
+    }catch{status.textContent='Chưa cập nhật được lượt thích. Bạn thử lại nhé.'}
+    finally{pendingLikes.delete(id);render(false)}
    });
    head.append(like);
   }
@@ -104,7 +127,7 @@ function render(reset=true){
  list.scrollTop=reset?0:top;
 }
 async function fetchComments(reset=true){
- const url=REST+"?select=id,author,body,rating,is_pinned,admin_reply,admin_reply_author,created_at&is_hidden=eq.false&order=is_pinned.desc,created_at.desc&limit="+MAX_COMMENTS;
+ const url=REST+"?select=id,author,body,rating,is_pinned,admin_reply,admin_reply_author,likes_count,created_at&is_hidden=eq.false&order=is_pinned.desc,created_at.desc&limit="+MAX_COMMENTS;
  const response=await fetch(url,{headers,cache:"no-store"});
  if(!response.ok)throw Error("Read failed: "+response.status);
  const json=await response.json();if(!Array.isArray(json))throw Error("Invalid response");
