@@ -627,15 +627,10 @@ musicAudio.preload = 'metadata';
 musicAudio.playsInline = true;
 musicAudio.setAttribute('playsinline', '');
 musicAudio.volume = defaultVolume;
-let musicIndex = 3;
+let musicIndex = 0;
 try {
-  const storedTrack = sessionStorage.getItem('nt-visit-track');
-  const saved = storedTrack === null ? NaN : Number(storedTrack);
-  if (Number.isInteger(saved) && saved >= 0 && saved < musicPlaylist.length) musicIndex = saved;
-  else {
-    localStorage.setItem('nt-last-track', String(musicIndex));
-    sessionStorage.setItem('nt-visit-track', String(musicIndex));
-  }
+  localStorage.setItem('nt-last-track', String(musicIndex));
+  sessionStorage.setItem('nt-visit-track', String(musicIndex));
 } catch (error) {}
 let shuffleMusic = false;
 function nextMusicIndex() {
