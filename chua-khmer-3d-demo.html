@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#151e23"><title>Chùa Khmer 3D — NTJR • Bản demo riêng</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#152b34;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#f8f7ef;touch-action:none}canvas#world{display:block;width:100%;height:100%;outline:0}button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:2px solid #f4cd89;outline-offset:3px}.glass{background:rgba(15,28,30,.52);border:1px solid rgba(248,238,208,.22);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 15px 35px #0015}#hud{pointer-events:none;position:absolute;inset:0}#hud>*{pointer-events:auto}.brand{position:absolute;left:37px;top:30px;text-shadow:0 3px 24px #0007}.eyebrow{font-size:10px;letter-spacing:.36em;font-weight:700;color:#f5d99a}.brand h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;letter-spacing:-.045em;font-size:clamp(30px,3.3vw,55px);margin:9px 0 5px}.brand .sub{font-size:12px;color:#efdfbc;letter-spacing:.07em}.brand .line{width:85px;height:1px;background:linear-gradient(90deg,#f2c57a,transparent);margin-top:18px}.topbuttons{position:absolute;right:30px;top:27px;display:flex;gap:8px;align-items:center}.pill{border:1px solid #ffffff28;border-radius:13px;background:#162c2bbb;padding:12px 15px;backdrop-filter:blur(14px);font-size:12px;transition:.2s}.pill:hover,.pill.active{background:#e9bf6d;color:#253333}.sidePanel{position:absolute;right:30px;top:90px;width:274px;padding:18px 20px;border-radius:16px}.sidePanel .eyebrow{font-size:9px}.progress{font-size:13px;margin:15px 0 12px;display:flex;justify-content:space-between;gap:10px}.progress b{color:#ead1a0}.track{height:3px;background:#fff2;border-radius:4px}.bar{width:20%;height:100%;background:#efc579;border-radius:4px}.place{position:absolute;left:38px;bottom:33px;display:flex;flex-direction:column;gap:10px}.minimap{width:188px;height:188px;border-radius:50%;background:rgba(13,43,38,.83);border:5px solid #bcac895e;box-shadow:0 8px 32px #0007;position:relative;overflow:hidden}.mini-grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0px,transparent 22px,#e8efce10 23px),repeating-linear-gradient(90deg,transparent 0px,transparent 22px,#e8efce10 23px)}.mini-hall{position:absolute;width:35px;height:52px;background:#be8957;left:78px;top:42px;box-shadow:0 0 0 4px #d8bb8050}.mini-path{position:absolute;left:88px;top:92px;width:16px;height:86px;background:#d9c3a36f}.mini-dot{position:absolute;left:91px;top:133px;width:14px;height:14px;background:#fff3cc;border:3px solid #ffbd62;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 0 15px #ffc76e}.mini-n{position:absolute;top:8px;left:87px;font-size:10px;color:#fff0c4;font-weight:bold}.mini-buddha{position:absolute;left:36px;top:29px;width:26px;height:12px;background:#e3ca7b;border-radius:7px}.placeLabel{font-size:10px;letter-spacing:.2em;font-weight:800;text-shadow:0 3px 14px #000}.bottomControls{position:absolute;bottom:24px;left:255px;right:250px;display:flex;justify-content:center;gap:15px;align-items:center;flex-wrap:wrap;font-size:11px;text-shadow:0 2px 5px #000}.key{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:25px;padding:0 5px;border-radius:5px;border:1px solid #ffffff49;background:#10252388;font-size:10px;font-weight:600;margin:0 4px 0 0}.keyset{white-space:nowrap}.interact{position:absolute;bottom:113px;left:50%;transform:translateX(-50%);padding:13px 19px;display:none;align-items:center;gap:10px;border-radius:12px;font-size:13px;min-width:195px;justify-content:center}.interact.show{display:flex}.interact .key{height:34px;min-width:34px}.toast{position:absolute;top:116px;left:50%;transform:translateX(-50%);background:#152a27de;border:1px solid #f9d9a955;border-radius:12px;max-width:min(450px,90vw);padding:14px 18px;text-align:center;font-size:13px;line-height:1.6;display:none}.toast.show{display:block}.footer{position:absolute;bottom:29px;right:34px;font-size:10px;font-weight:700;letter-spacing:.15em;color:#f9ead3}.overlay{position:absolute;inset:0;background:#0b1a20b9;display:flex;align-items:center;justify-content:center;z-index:20;backdrop-filter:blur(11px)}.modal{width:min(480px,calc(100vw - 35px));border:1px solid #efdcaa45;background:linear-gradient(135deg,#253831f5,#112528f8);padding:36px;border-radius:24px;box-shadow:0 30px 100px #0009;text-align:center}.modal .symbol{font-size:34px;color:#eec778}.modal h2{font:normal 35px Georgia,serif;margin:12px 0}.modal p{font-size:13px;line-height:1.9;color:#dae1d5}.modal .notice{color:#efd9a6;font-size:12px}.primary{background:#e9bf73;color:#18282a;padding:13px 26px;border:0;border-radius:12px;font-weight:800;margin-top:15px}.primary:hover{background:#ffe4a5}#loading{position:absolute;inset:0;z-index:30;background:#132a2b;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:15px}.spinner{width:35px;height:35px;border:3px solid #ffffff33;border-top-color:#eccc84;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}#loading p{font-size:13px;opacity:.9}#joystick{display:none;position:absolute;left:30px;bottom:85px;width:126px;height:126px;border-radius:50%;border:2px solid #fff4;background:#142d2d80;touch-action:none;pointer-events:auto}#knob{position:absolute;width:50px;height:50px;border-radius:50%;background:#f3d392aa;left:36px;top:36px;box-shadow:0 3px 12px #0006}#mobileActions{display:none;position:absolute;right:22px;bottom:92px;gap:10px;pointer-events:auto}.mobBtn{width:58px;height:58px;background:#233d3acb;border:1px solid #fff7;border-radius:50%;font-size:12px}#photo{position:absolute;right:30px;bottom:66px;display:none}#menu{display:none}#menu.show{display:block}@media(max-width:780px){.brand{top:17px;left:18px}.brand h1{font-size:29px;margin:4px 0}.brand .sub,.brand .line{display:none}.eyebrow{font-size:8px}.topbuttons{top:17px;right:15px;gap:4px}.pill{font-size:10px;padding:9px}.sidePanel{right:15px;top:98px;padding:10px 12px;width:177px}.sidePanel .eyebrow{font-size:8px}.progress{font-size:10px;margin:8px 0}.minimap{width:112px;height:112px;transform:scale(1);transform-origin:left bottom}.mini-hall{transform:scale(.65);left:37px;top:23px}.mini-path{left:46px;top:52px;height:45px}.mini-dot{left:48px;top:82px}.mini-n{left:47px}.mini-buddha{left:14px;top:15px;transform:scale(.7)}.place{bottom:219px;left:18px}.placeLabel{display:none}.bottomControls,.footer{display:none}#joystick,#mobileActions{display:flex}#joystick{display:block}.interact{bottom:63px}.modal{padding:25px}.modal h2{font-size:29px}#photo{bottom:22px;right:18px}}@media(max-height:590px){.sidePanel{display:none}.place{bottom:18px;left:14px}.minimap{width:110px;height:110px}.bottomControls{bottom:8px}.brand h1{font-size:30px}.interact{bottom:60px}}
+
+/* Additional viewing mode and mobile refinements, scoped to this standalone demo. */
+#focusBtn.active{background:#e9bf6d;color:#253333}
+#hud .brand h1{filter:drop-shadow(0 2px 14px #0005)}
+@media(max-width:780px){
+ .topbuttons{top:75px;right:14px;left:14px;justify-content:flex-end;gap:5px}
+ .topbuttons .pill{padding:9px 10px;font-size:10px}
+ .sidePanel{top:123px}
+}
+@media(max-width:420px){
+ .topbuttons{top:76px}
+ .topbuttons .pill{padding:8px 7px;font-size:9px}
+ .sidePanel{top:116px;width:160px}
+ .brand h1{font-size:27px}
+}
+</style></head>
+<body><canvas id="world"></canvas><div id="loading"><div class="spinner"></div><p id="loadingText">Đang dựng không gian chùa 3D…</p></div>
+<div id="hud"><div class="brand"><div class="eyebrow">HÀNH TRÌNH DI SẢN KHMER</div><h1>Chùa Khmer</h1><div class="sub">Bản dựng tham khảo kiến trúc Khmer · Demo riêng NTJR</div><div class="line"></div></div>
+<div class="topbuttons"><button class="pill" id="dayBtn" title="Đổi ánh sáng">☀ Ngày</button><button class="pill" id="focusBtn" title="Xem toàn cảnh chùa">◉ Toàn cảnh</button><button class="pill" id="mapBtn" title="Bản đồ (M)">M · Bản đồ</button><button class="pill" id="pauseBtn" title="Menu (Esc)">☰ Menu</button></div>
+<div class="sidePanel glass"><div class="eyebrow">HÀNH TRÌNH CỦA BẠN</div><div class="progress"><span id="objective">Khám phá chánh điện</span><b id="progress">0 / 5</b></div><div class="track"><div class="bar" id="progressBar"></div></div></div>
+<div class="toast" id="toast"></div><div class="interact glass" id="interact"><span class="key">E</span><span id="interactText">Khám phá địa điểm</span></div>
+<div class="place"><div class="minimap" id="minimap"><div class="mini-grid"></div><div class="mini-hall"></div><div class="mini-path"></div><div class="mini-buddha"></div><div class="mini-dot" id="miniDot"></div><div class="mini-n">N</div></div><div class="placeLabel">● SÂN CHÙA KHMER</div></div>
+<div class="bottomControls"><span class="keyset"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> Đi bộ</span><span class="keyset"><span class="key">Shift</span> Chạy</span><span class="keyset"><span class="key">Chuột</span> Xoay nhìn</span><span class="keyset"><span class="key">Space</span> Nhảy</span><span class="keyset"><span class="key">E</span> Tương tác</span><span class="keyset"><span class="key">V</span> Đổi góc nhìn</span></div>
+<div class="footer">NTJR ✦ KHÔNG GIAN CHÙA KHMER 3D</div><div id="joystick"><div id="knob"></div></div><div id="mobileActions"><button class="mobBtn" id="mobRun">Chạy</button><button class="mobBtn" id="mobInteract">E</button><button class="mobBtn" id="mobJump">Nhảy</button></div></div>
+<div class="overlay" id="menu"><div class="modal"><div class="symbol">✧</div><div class="eyebrow">TRẢI NGHIỆM DI SẢN</div><h2>Khám phá ngôi chùa</h2><p>Bước qua sân chùa, ngắm mái chánh điện Khmer, những cột cờ chim thần và tượng Phật nằm phía sau. Đi đến các điểm đánh dấu và nhấn <b>E</b> để khám phá.</p><p class="notice">Mô hình 3D lấy cảm hứng từ kiến trúc chùa Khmer, chưa phải bản sao đo đạc chính xác của một ngôi chùa cụ thể.</p><button class="primary" id="startBtn">Bắt đầu tham quan →</button><p style="font-size:11px;opacity:.7;margin-bottom:0">WASD di chuyển · Kéo chuột xoay nhìn · M mở bản đồ · Esc menu</p></div></div>
+<script type="module">
+const loadingText=document.querySelector('#loadingText');let THREE;
+try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js')}catch(e){try{THREE=await import('https://unpkg.com/three@0.160.1/build/three.module.js')}catch(err){loadingText.textContent='Không tải được thư viện 3D. Hãy kết nối Internet rồi mở lại file.';document.querySelector('.spinner').style.display='none';throw err}}
+const canvas=document.querySelector('#world'),scene=new THREE.Scene();scene.background=new THREE.Color('#8cc8df');scene.fog=new THREE.Fog('#a8cbd4',70,175);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.36;renderer.outputColorSpace=THREE.SRGBColorSpace;
+const camera=new THREE.PerspectiveCamera(63,innerWidth/innerHeight,.1,350);camera.position.set(0,6,30);
+scene.add(new THREE.HemisphereLight(0xdaf3ff,0x715236,2.1));const sun=new THREE.DirectionalLight(0xffe5b4,3.05);sun.position.set(-30,47,30);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-78;sun.shadow.camera.right=78;sun.shadow.camera.top=78;sun.shadow.camera.bottom=-78;sun.shadow.camera.near=1;sun.shadow.camera.far=180;sun.shadow.bias=-.0002;scene.add(sun);let lamps=[];
+const C={gold:0xd4a636,palegold:0xffdf7b,red:0x983c32,roof:0x5a3030,roof2:0x773e35,stone:0xc5b9a4,teal:0x62afc5,pink:0xd99894,white:0xe7ddc7,brown:0x554d40};
+const mat=(color,rough=.85,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal,side:THREE.DoubleSide});
+const mats={gold:mat(C.gold,.35,.45),yellow:mat(C.palegold,.42,.25),red:mat(C.red),roof:mat(C.roof),roof2:mat(C.roof2),stone:mat(C.stone),teal:mat(C.teal),pink:mat(C.pink),white:mat(C.white),dark:mat(C.brown),wood:mat(0x6b4030),green:mat(0x285f37),leaf2:mat(0x367e44),black:mat(0x1c2a2e),glow:new THREE.MeshStandardMaterial({color:0xffc765,emissive:0xffa32b,emissiveIntensity:1.3})};
+function mesh(geo,material,x=0,y=0,z=0,parent=scene,shadow=true){const o=new THREE.Mesh(geo,material);o.position.set(x,y,z);o.castShadow=shadow;o.receiveShadow=true;parent.add(o);return o}
+function box(w,h,d,m,x,y,z,p=scene){return mesh(new THREE.BoxGeometry(w,h,d),m,x,y,z,p)}
+function cylinder(rt,rb,h,m,x,y,z,p=scene,seg=12){return mesh(new THREE.CylinderGeometry(rt,rb,h,seg),m,x,y,z,p)}
+function sphere(r,m,x,y,z,p=scene,segments=10){return mesh(new THREE.SphereGeometry(r,segments,8),m,x,y,z,p)}
+function cone(r,h,m,x,y,z,p=scene,n=6){return mesh(new THREE.ConeGeometry(r,h,n),m,x,y,z,p)}
+function torus(r,t,m,x,y,z,p=scene){const o=mesh(new THREE.TorusGeometry(r,t,6,16),m,x,y,z,p);o.rotation.x=Math.PI/2;return o}
+function line(a,b,m,r=.07,p=scene){const d=new THREE.Vector3().subVectors(b,a);const o=mesh(new THREE.CylinderGeometry(r,r,d.length(),7),m,(a.x+b.x)/2,(a.y+b.y)/2,(a.z+b.z)/2,p);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return o}
+function vec(x,y,z){return new THREE.Vector3(x,y,z)}
+const world=new THREE.Group();scene.add(world);
+// Courtyard and patterned paving
+box(190,.18,190,mat(0x6f8a68),0,-.22,-12,world);box(68,.14,90,mat(0xbdb3a3),0,-.06,-8,world);
+const random=(a)=>{let x=Math.sin(a*43.71+1.3)*43758.5453;return x-Math.floor(x)};
+const tileMat=[mat(0x9f9184),mat(0xae9c8e),mat(0xbeb0a0),mat(0xcbb59c),mat(0xb6aaa0)];
+// Instanced tile pavers (efficient)
+for(let mi=0;mi<tileMat.length;mi++){let transform=new THREE.Object3D(),poses=[];for(let x=-32;x<=32;x+=1.56)for(let z=-45;z<=34;z+=1.56){if((Math.floor((x+32)/1.56)*11+Math.floor((z+45)/1.56)*3)%5!==mi)continue;if(z<1.6&&z>-37&&Math.abs(x)<13.5)continue;poses.push([x,z]);}const inst=new THREE.InstancedMesh(new THREE.BoxGeometry(1.48,.03,1.48),tileMat[mi],poses.length);inst.receiveShadow=true;poses.forEach(([x,z],j)=>{transform.position.set(x,.025,z);transform.updateMatrix();inst.setMatrixAt(j,transform.matrix)});world.add(inst)}
+// Temple foundation, perimeter wall and Khmer balustrades
+const t=new THREE.Group();t.position.set(0,0,-11);world.add(t);
+box(25,1.2,34,mats.stone,0,.6,-2,t);box(24.5,.23,33.6,mats.teal,0,1.27,-2,t);box(23.9,.25,33,mats.pink,0,1.42,-2,t);box(23.5,.18,32.6,mats.white,0,1.57,-2,t);
+for(let x of [-12.5,12.5]){box(.35,1.4,34,mats.white,x,2.18,-2,t);box(.5,.2,34,mats.pink,x,2.93,-2,t);for(let z=-18;z<=14;z+=3.7){cylinder(.35,.44,2.65,mats.white,x,2.75,z,t);cylinder(.29,.37,.3,mats.pink,x,4.13,z,t);cone(.31,.8,mats.gold,x,4.57,z,t)}}
+for(let z of [-19,15]){for(let x=-11;x<=11;x+=3.7){if(z===15&&Math.abs(x)<3.6)continue;cylinder(.35,.44,2.45,mats.white,x,2.65,z,t);box(3.7,.18,.32,mats.pink,x,2.8,z,t);cone(.25,.67,mats.gold,x,4.17,z,t)}}
+// Hall body: x width 17, long z depth 27
+box(18.4,5.3,27,mats.white,0,4.43,-2,t);box(19.8,.4,28.4,mats.gold,0,2.1,-2,t);box(19.8,.22,28.4,mats.red,0,6.7,-2,t);for(let z=-15;z<=11;z+=4.4)for(let side of [-1,1]){box(.85,5.8,.85,mats.gold,side*9.3,4.5,z,t);cylinder(.49,.6,.45,mats.red,side*9.3,2.2,z,t);cylinder(.5,.5,.23,mats.palegold??mats.yellow,side*9.3,7.4,z,t)}
+// Windows framed with gold
+for(let z=-12.7;z<=9;z+=5.1){for(const side of [-1,1]){box(.09,3.4,2.45,mats.gold,side*9.28,4.3,z,t);box(.12,2.9,1.85,mats.wood,side*9.35,4.3,z,t);box(.14,2.4,.16,mats.gold,side*9.42,4.3,z,t);for(let k=-1;k<=1;k++){box(.13,2.55,.07,mats.gold,side*9.45,4.3,z+k*.5,t)}}}
+// Front entrance portal
+box(5.9,5.25,.22,mats.gold,0,4.46,11.67,t);box(4.75,4.65,.26,mats.wood,0,4.32,11.81,t);for(const x of [-1.12,1.12])box(.07,4.35,.12,mats.gold,x,4.3,12.01,t);for(let y=3;y<=6;y+=.65)box(4.6,.075,.1,mats.gold,0,y,12.01,t);
+// Sloped pitched roofs: triangles front/back + roof slopes
+function roof(parent,w,d,eave,peak,z0,material,trimMaterial){const a=w/2,front=z0+d/2,back=z0-d/2,geo=new THREE.BufferGeometry();const pts=[-a,eave,front,0,peak,front,-a,eave,back,0,peak,front,0,peak,back,-a,eave,back,0,peak,front,a,eave,front,0,peak,back,0,peak,front,a,eave,back,a,eave,front,a,eave,back,0,peak,back];geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));geo.computeVertexNormals();mesh(geo,material,0,0,0,parent);
+for(const end of [front,back]){const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute([-a,eave,end,0,peak,end,a,eave,end],3));gg.computeVertexNormals();mesh(gg,mats.teal,0,0,0,parent);let p0=vec(-a,eave,end+.08),p1=vec(0,peak,end+.08),p2=vec(a,eave,end+.08);line(p0,p1,trimMaterial,.17,parent);line(p1,p2,trimMaterial,.17,parent);for(let k=1;k<=6;k++){let xx=-a+2*a*k/7;let yy=eave+(peak-eave)*(1-Math.abs(xx)/a);line(vec(xx,eave+.2,end+.12),vec(xx,yy-.25,end+.12),trimMaterial,.045,parent)}
+// ornate ridge tip/gable crowns
+cone(.27,1.7,trimMaterial,0,peak+.5,end,parent,7);for(const s of [-1,1]){line(vec(s*a,eave,end),vec(s*(a+.55),eave+.9,end+.02),trimMaterial,.15,parent);cone(.16,.72,trimMaterial,s*(a+.57),eave+1.2,end+.02,parent,5)}}
+for(const s of [-1,1]){line(vec(s*a,eave,front),vec(s*a,eave,back),trimMaterial,.115,parent);for(let zz=back+.75;zz<front;zz+=.9){const xo=s*a*.55,yy=eave+(peak-eave)*.45;line(vec(s*a,eave+.015,zz),vec(xo,yy,zz),mats.red,.024,parent)}}
+line(vec(0,peak+.05,back),vec(0,peak+.05,front),trimMaterial,.12,parent);
+}
+roof(t,24,31,7.35,12.5,-2,mats.roof,mats.gold);roof(t,19.5,27.8,9.55,15.85,-2,mats.roof2,mats.gold);
+
+/* More expressive roof tiles and Khmer-inspired decorative relief.
+   Decorative geometry is made from instanced meshes to limit draw calls. */
+function roofTiles(parent,w,d,eave,peak,z0){
+  const a=w/2, run=(peak-eave)/a,rows=Math.floor(d/.92),cols=Math.floor(a/.98);
+  const palette=[mat(0x5a2725),mat(0x75403a),mat(0x925149)];
+  const groups=[[],[],[]];
+  for(const side of [-1,1])for(let ix=0;ix<cols;ix++){
+    const x=side*(.51+ix*.98);
+    for(let iz=0;iz<rows;iz++){
+      const z=z0-d/2+.55+iz*.92;
+      const y=peak-run*Math.abs(x)+.075;
+      groups[(ix+iz*2+(side>0?1:0))%3].push([x,y,z,side]);
+    }
+  }
+  const tileGeo=new THREE.BoxGeometry(.9,.065,.88),dummy=new THREE.Object3D();
+  groups.forEach((items,k)=>{
+    const tiles=new THREE.InstancedMesh(tileGeo,palette[k],items.length);
+    tiles.receiveShadow=true;tiles.castShadow=false;
+    items.forEach(([x,y,z,side],i)=>{
+      dummy.position.set(x,y,z);
+      dummy.rotation.set(0,0,side>0?-Math.atan(run):Math.atan(run));
+      dummy.updateMatrix();tiles.setMatrixAt(i,dummy.matrix);
+    });
+    tiles.instanceMatrix.needsUpdate=true;parent.add(tiles);
+  });
+}
+function gableRelief(parent,w,eave,peak,z){
+  const front=z>0?1:-1,face=z+front*.19,a=w/2;
+  // Three bands of gilded diamonds under the gable peak.
+  for(let row=0;row<5;row++){
+    const y=eave+.55+row*(peak-eave-.95)/5;
+    const half=a*(1-(y-eave)/(peak-eave))-.55;
+    for(let x=-half;x<=half;x+=.78){
+      const med=mesh(new THREE.OctahedronGeometry(.19,0),row%2?mats.yellow:mats.gold,x,y,face,parent,false);
+      med.scale.set(1.05,1.3,.31);
+    }
+  }
+  const circle=torus(.78,.09,mats.gold,0,peak-1.38,face+.11,parent);
+  circle.rotation.set(0,0,0);
+  for(let j=0;j<10;j++){
+    const a=j*Math.PI*2/10;
+    line(vec(Math.sin(a)*.30,peak-1.38+Math.cos(a)*.30,face+.13),
+         vec(Math.sin(a)*.7,peak-1.38+Math.cos(a)*.7,face+.13),mats.yellow,.05,parent);
+  }
+  for(const side of [-1,1]){
+    const points=[
+      vec(side*w/2,eave,z),vec(side*(w/2+.55),eave+.48,z+front*.12),
+      vec(side*(w/2+.78),eave+1.3,z+front*.18),
+      vec(side*(w/2+.57),eave+2.23,z+front*.16)
+    ];
+    for(let i=0;i<points.length-1;i++)line(points[i],points[i+1],mats.gold,.15,parent);
+    sphere(.15,mats.yellow,points.at(-1).x,points.at(-1).y,points.at(-1).z,parent);
+  }
+}
+roofTiles(t,24,31,7.35,12.5,-2);
+roofTiles(t,19.5,27.8,9.55,15.85,-2);
+gableRelief(t,19.5,9.55,15.85,11.95);
+gableRelief(t,19.5,9.55,15.85,-15.95);
+// A three-headed ornamental naga motif on both sides of the entrance steps.
+for(const side of [-1,1]){
+  const snakePoints=[];
+  for(let k=0;k<=12;k++){
+    const v=k/12;
+    snakePoints.push(vec(side*(3.65+.35*Math.sin(v*Math.PI)),.55+v*2.1,23.6-v*8.6));
+  }
+  snakePoints.forEach((p,i)=>{
+    if(i)line(snakePoints[i-1],p,i%3===0?mats.yellow:mats.gold,.13,t);
+    if(i%3===0)sphere(.17,mats.gold,p.x,p.y,p.z,t);
+  });
+  const head=snakePoints[0];
+  sphere(.45,mats.yellow,head.x,head.y+.36,head.z+.07,t);
+  for(let k=-1;k<=1;k++){
+    const x=head.x+side*k*.22;
+    cone(.15,.64,mats.gold,x,head.y+.85,head.z+.1,t,5);
+  }
+}
+
+for(let zz=-11;zz<=8;zz+=4.6)for(const xx of [-9.4,9.4]){cylinder(.11,.17,1.6,mats.gold,xx,9.5,zz,t);cone(.5,1.5,mats.gold,xx,10.8,zz,t,7)}
+// Stairway toward entry center
+for(let k=0;k<8;k++)box(5.5,.27,1.07,mats.stone,0,.13+k*.21,22-k*.98,t);
+for(const side of [-1,1]){const points=[];for(let i=0;i<=10;i++){let z=23-i*.81;points.push(vec(side*(3.45+.2*Math.sin(i*.3)),.35+i*.18,z))}for(let i=0;i<points.length-1;i++)line(points[i],points[i+1],mats.teal,.21,t);for(let i=0;i<10;i++){line(vec(side*3.25,.21+i*.18,23-i*.81),vec(side*3.25,1.25+i*.18,23-i*.81),mats.white,.1,t)}sphere(.37,mats.gold,side*3.42,2.4,15.7,t);cone(.47,.9,mats.gold,side*3.42,3.04,15.7,t,7)}
+// Khmer ceremonial columns and bird finials
+function ceremonialColumn(x,z,scale=1){const p=new THREE.Group();p.position.set(x,0,z);p.scale.setScalar(scale);world.add(p);cylinder(1.05,1.4,.85,mats.gold,0,.45,0,p,12);cylinder(.74,1.1,.72,mats.red,0,1.22,0,p,12);cylinder(.83,.87,.34,mats.yellow,0,1.75,0,p,12);for(let j=0;j<4;j++){cylinder(.41,.43,2.7,j%2?mats.yellow:mats.gold,0,3.2+j*2.7,0,p,10);for(let i=0;i<3;i++)torus(.43,.067,mats.red,0,2.17+j*2.7+i*.8,0,p)}cylinder(.58,.49,.65,mats.red,0,13.9,0,p,12);cylinder(.68,.52,.24,mats.gold,0,14.36,0,p,12);
+// golden stylized bird on top (wings, head, tail)
+sphere(.58,mats.gold,0,15.0,0,p);sphere(.23,mats.gold,.32,15.65,.05,p);cone(.2,.4,mats.yellow,.62,15.65,.05,p,5);for(let s of [-1,1]){const wing=mesh(new THREE.ConeGeometry(.45,2,4),mats.gold,s*.9,15.45,0,p);wing.rotation.z=s*1.1}for(let i=0;i<3;i++)line(vec(-.32,15.1,i*.12-.12),vec(-.75,16.15+i*.1,i*.12-.12),mats.gold,.09,p);
+// hanging Buddhist flag
+const flagCols=[0x1f53a8,0xf8c82e,0xd83b43,0xffffff,0xff9d31];let fg=new THREE.Group();fg.position.set(1.24,12.8,0);p.add(fg);line(vec(0,0,0),vec(0,2.4,0),mats.dark,.034,fg);const strips=[];for(let i=0;i<5;i++){const m=mat(flagCols[i]);strips.push(box(.07,.33,1.05,m,.18,2-i*.35,.55,fg))}return {p,strips}}
+let flags=[];for(let x of [-17,17])for(let z of [-27,-4,19])flags.push(ceremonialColumn(x,z,.78+random(x+z)*.12));
+// Small golden Khmer shrines / stupas
+function stupa(x,z,s=1){let p=new THREE.Group();p.position.set(x,0,z);p.scale.setScalar(s);world.add(p);box(2,.35,2,mats.gold,0,.2,0,p);box(1.65,.4,1.65,mats.pink,0,.55,0,p);cylinder(.7,.75,1.8,mats.yellow,0,1.6,0,p,8);cylinder(.68,.68,.3,mats.gold,0,2.65,0,p,8);cone(.75,2.2,mats.gold,0,3.75,0,p,8);sphere(.14,mats.red,0,4.9,0,p);return p}for(const [x,z,s] of [[-20,12,.8],[20,11,.8],[-21,-18,1],[22,-22,1],[-27,-9,.75]])stupa(x,z,s);
+// Ornate pavilion near side
+function pavilion(x,z){const p=new THREE.Group();p.position.set(x,0,z);world.add(p);box(5.3,.4,5.3,mats.gold,0,.25,0,p);for(let dx of [-2.2,2.2])for(let dz of [-2.2,2.2]){cylinder(.22,.27,3,mats.red,dx,1.85,dz,p);cylinder(.4,.32,.25,mats.yellow,dx,3.52,dz,p)}roof(p,6.6,6.6,3.6,6.8,0,mats.roof2,mats.gold);for(let side of [-1,1]){cone(.16,.75,mats.gold,side*3.3,4.4,side*3.3,p)}cylinder(.85,.95,1.15,mats.gold,0,.95,0,p,8);sphere(.48,mats.yellow,0,1.95,0,p);return p}pavilion(-24,4);
+// Rear reclining Buddha and golden canopy
+const bud=new THREE.Group();bud.position.set(-24,0,-38);world.add(bud);box(16,1.25,7,mats.gold,0,.6,0,bud);for(const x of [-7,7])for(const z of [-2.7,2.7])cylinder(.44,.5,6,mats.gold,x,4,z,bud);box(17,.36,7.6,mats.red,0,7.3,0,bud);roof(bud,18,8,7.6,9.75,0,mats.roof2,mats.gold);
+const robe=mat(0xebbe44,.65,.1),skin=mat(0xf1c7a7);const reclining=bud;const torso=mesh(new THREE.CapsuleGeometry(1.0,7,6,12),robe,0,2.4,0,reclining);torso.rotation.z=Math.PI/2;sphere(1.1,skin,-5.2,2.55,0,reclining);sphere(.9,robe,4.5,2.4,0,reclining);box(1.1,.3,1.3,robe,-5.75,1.65,0,reclining);cylinder(.18,.18,.6,mats.yellow,-5.55,3.7,0,reclining);
+// Outbuilding
+const sideB=new THREE.Group();sideB.position.set(28,0,-27);world.add(sideB);box(14,4.4,13,mats.white,0,2.25,0,sideB);roof(sideB,17,16,4.7,9.2,0,mats.roof2,mats.gold);for(let xx=-5;xx<=5;xx+=5)box(2.3,2.3,.13,mats.teal,xx,2.3,6.57,sideB);
+// Tall lush trees, spaced around the courtyard, procedural clustered foliage
+function tree(x,z,s=1,i=0){const p=new THREE.Group();p.position.set(x,0,z);p.scale.setScalar(s);world.add(p);const trunk=mat(0x66543d);cylinder(.35,.55,5.9,trunk,0,3.0,0,p,7);for(let j=0;j<6;j++){const ang=2*Math.PI*j/6;line(vec(0,4.3+j*.22,0),vec(Math.cos(ang)*2.2,6.2+j*.17,Math.sin(ang)*2.2),trunk,.15,p)}const crown=[[-1,6.4,0,2.3],[1.4,6.1,1,2.15],[0,7.9,0,2.75],[-1.2,7.0,-1.8,1.85],[2.1,7.1,-1.4,2.1]];crown.forEach(([a,b,c,r],n)=>{const obj=mesh(new THREE.IcosahedronGeometry(r,1),n%2?mats.leaf2:mats.green,a,b,c,p);obj.rotation.set(i*.2,n*.8,0)});return p}
+for(let i=0;i<62;i++){const ang=i*2.399,r=39+random(i*2)*39,x=Math.sin(ang)*r,z=Math.cos(ang)*r-12;if(Math.abs(x)<27&&z>0&&z<27)continue;tree(x,z,1.3+random(i+12)*.72,i)}for(const [x,z,s] of [[-25,29,1.4],[25,30,1.3],[-29,-2,1],[27,6,.85],[-29,-29,1.2],[29,-42,1.4],[-8,34,.65],[13,33,.8]])tree(x,z,s,x+z);
+// Decorative bushes and ceremonial pots
+for(let i=0;i<40;i++){let z=-30+random(i*2.13)*68;let x=(i%2?1:-1)*(14+random(i*9.7)*16);if(x>25&&z<-21&&z>-35)continue;if(x<-18&&z<-35)continue;const pot=cylinder(.48,.36,.85,mats.red,x,.43,z,world,10);cylinder(.54,.5,.15,mats.gold,x,.86,z,world,10);sphere(.95,(i%3?mats.green:mats.leaf2),x,1.55,z,world,8)}
+// Hanging flags across front
+for(let j=0;j<16;j++){const x=-24+j*3.2,z=4+Math.sin(j*.4)*.4;const colors=[0x1852c4,0xffc430,0xd52d30,0xffffff,0xf49f37];for(let i=0;i<5;i++)box(.52,.3,.045,mat(colors[i]),x,6.5-i*.32,z,world)}
+// Sky ground/haze and sun disk
+const sunDisk=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffe6b6,transparent:true,opacity:.25,depthWrite:false}));sunDisk.position.set(-83,48,-140);sunDisk.scale.set(28,28,1);scene.add(sunDisk);
+// Third-person avatar; locally animated arms and legs
+const player=new THREE.Group();world.add(player);const body=new THREE.Group();player.add(body);const jacket=mat(0x192326),pants=mat(0x171d24),face=mat(0xc59b7b),hair=mat(0x101517);box(.95,1.35,.54,jacket,0,1.83,0,body);box(.88,.34,.57,jacket,0,2.52,0,body);sphere(.41,face,0,2.96,0,body);const hairCap=sphere(.43,hair,0,3.19,-.05,body);hairCap.scale.y=.6;box(.58,.9,.26,mat(0x252f30),0,1.92,.37,body);const arms=[],legs=[];for(let s of [-1,1]){const arm=new THREE.Group();arm.position.set(s*.64,2.34,0);body.add(arm);box(.27,1.05,.3,jacket,0,-.53,0,arm);sphere(.16,face,0,-1.09,.01,arm);arms.push(arm);const leg=new THREE.Group();leg.position.set(s*.28,1.16,0);body.add(leg);box(.34,1.08,.36,pants,0,-.5,0,leg);box(.39,.21,.72,mats.black,0,-1.12,-.13,leg);legs.push(leg)}player.position.set(0,.07,30);
+// Collision zones (approximate)
+const obstacles=[{x:0,z:-13,w:23.8,d:33},{x:-24,z:-38,w:17,d:8},{x:28,z:-27,w:15,d:14},{x:-24,z:4,w:6,d:6}];
+function blocked(x,z){if(Math.abs(x)>83||Math.abs(z)>86)return true;return obstacles.some(o=>Math.abs(x-o.x)<o.w/2+.27&&Math.abs(z-o.z)<o.d/2+.27)}
+// Visit locations
+const stops=[{x:0,z:13.5,r:8,name:'Chánh điện',detail:'Ngắm mái nhiều tầng với đầu đao Khmer và hoa văn trang trí. Mô hình tái dựng theo ảnh.',done:false},{x:17,z:18,r:8,name:'Cột cờ chim thần',detail:'Các cột cờ cao trang trí chim thần, họa tiết vàng và cờ Phật giáo.',done:false},{x:-20,z:-27,r:9,name:'Tượng Phật nằm',detail:'Khu tượng Phật nằm đặt phía sau chánh điện, dựng phác họa từ ảnh chụp.',done:false},{x:-24,z:8,r:8,name:'Nhà thờ nhỏ',detail:'Gian nhà có mái trang trí và chi tiết kiến trúc Khmer truyền thống.',done:false},{x:20,z:-21,r:8,name:'Khu nhà phụ',detail:'Lối tham quan công trình phía bên phải khuôn viên chùa.',done:false}];
+const $=id=>document.getElementById(id),keys={},cam={yaw:0,pitch:.26,dist:8},velocity=new THREE.Vector3(),clock=new THREE.Clock();let focusMode=false,focusAngle=0;let started=false,paused=true,third=true,near=null,jumpV=0,vy=0,stepTime=0,mobileVec={x:0,z:0},mobileRun=false,mapBig=false,dayMode=0,toastTimer=0;
+function message(msg,duration=3800){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),duration)}
+function menu(open){paused=open;$('menu').classList.toggle('show',open);document.exitPointerLock?.();$('startBtn').textContent=started?'Tiếp tục tham quan →':'Bắt đầu tham quan →'}
+$('startBtn').onclick=()=>{started=true;menu(false);message('Dùng WASD để đi quanh chùa. Tiến đến địa điểm và nhấn E.');};$('pauseBtn').onclick=()=>menu(!paused);$('mapBtn').onclick=()=>{mapBig=!mapBig;$('minimap').style.transform=mapBig?'scale(1.35)':'scale(1)';message(mapBig?'Bản đồ được phóng to.':'Bản đồ thu nhỏ. ',1500)};
+function timeMode(){dayMode=(dayMode+1)%3;const options=[{bg:'#8cc8df',fog:'#a8cbd4',sun:0xffe3b0,pos:[-30,47,30],sunI:3.05,label:'☀ Ngày'},{bg:'#cc8c75',fog:'#c5a58f',sun:0xffa35a,pos:[-50,19,-26],sunI:2.35,label:'◕ Hoàng hôn'},{bg:'#172c4a',fog:'#3b4a5c',sun:0x9ab4e6,pos:[25,35,-20],sunI:.8,label:'☾ Đêm'}];const q=options[dayMode];scene.background.set(q.bg);scene.fog.color.set(q.fog);sun.color.setHex(q.sun);sun.position.set(...q.pos);sun.intensity=q.sunI;renderer.toneMappingExposure=dayMode===2?.9:1.36;$('dayBtn').textContent=q.label} $('dayBtn').onclick=timeMode;
+$('focusBtn').onclick=()=>{focusMode=!focusMode;$('focusBtn').classList.toggle('active',focusMode);$('focusBtn').textContent=focusMode?'◉ Đi bộ':'◉ Toàn cảnh';message(focusMode?'Đang xem toàn cảnh chùa. Nhấn lại để quay về đi bộ.':'Đã quay về chế độ đi bộ.',2200)};
+function interact(){if(!near)return;if(!near.done){near.done=true;const d=stops.filter(s=>s.done).length;$('progress').textContent=`${d} / 5`;$('progressBar').style.width=(d/5*100)+'%';if(d===5)message('Bạn đã khám phá đủ 5 địa điểm! Cứ tiếp tục tham quan tự do.',6000)}message(`${near.name} — ${near.detail}`,5400)}
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys[e.code]=true;if(e.repeat)return;if(e.code==='Escape'){menu(!paused)}if(e.code==='KeyE'&&!paused)interact();if(e.code==='KeyM')$('mapBtn').click();if(e.code==='KeyV'){third=!third;message(third?'Camera góc nhìn thứ ba':'Camera góc nhìn thứ nhất',1600)}if(e.code==='KeyF')$('dayBtn').click()});window.addEventListener('keyup',e=>keys[e.code]=false);window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
+let dragging=false,lastX=0,lastY=0,gesture=false;canvas.addEventListener('pointerdown',e=>{if(paused)return;dragging=true;gesture=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointermove',e=>{if(!dragging||paused)return;cam.yaw-=(e.clientX-lastX)*.005;cam.pitch=Math.max(-.3,Math.min(1.1,cam.pitch+(e.clientY-lastY)*.004));lastX=e.clientX;lastY=e.clientY});canvas.addEventListener('wheel',e=>{cam.dist=Math.min(17,Math.max(3.3,cam.dist+Math.sign(e.deltaY)*.8));e.preventDefault()},{passive:false});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+const joy=$('joystick'),knob=$('knob');joy.addEventListener('pointerdown',e=>{joy.setPointerCapture(e.pointerId);moveJoy(e)});joy.addEventListener('pointermove',e=>{if(e.buttons)moveJoy(e)});joy.addEventListener('pointerup',()=>{mobileVec={x:0,z:0};knob.style.transform='translate(0px,0px)'});function moveJoy(e){const rect=joy.getBoundingClientRect(),x=(e.clientX-rect.left-rect.width/2)/(rect.width*.32),z=(e.clientY-rect.top-rect.height/2)/(rect.height*.32);let len=Math.max(1,Math.hypot(x,z));mobileVec={x:x/len,z:-z/len};knob.style.transform=`translate(${mobileVec.x*38}px,${-mobileVec.z*38}px)`}
+$('mobRun').onclick=()=>{mobileRun=!mobileRun;$('mobRun').style.background=mobileRun?'#e4c176':'#233d3acb'};$('mobInteract').onclick=interact;$('mobJump').onclick=()=>{if(vy===0)vy=5.5};
+const up=new THREE.Vector3(0,1,0),target=new THREE.Vector3(),desired=new THREE.Vector3();const temp=new THREE.Vector3();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.045);if(!paused){let mx=Number(keys.KeyD||keys.ArrowRight)-Number(keys.KeyA||keys.ArrowLeft)+mobileVec.x,mz=Number(keys.KeyW||keys.ArrowUp)-Number(keys.KeyS||keys.ArrowDown)+mobileVec.z;if(focusMode){mx=0;mz=0;}let len=Math.hypot(mx,mz);if(len>1){mx/=len;mz/=len};const speed=(keys.ShiftLeft||keys.ShiftRight||mobileRun)?8.0:4.4;const sin=Math.sin(cam.yaw),cos=Math.cos(cam.yaw),dx=(-sin*mz+cos*mx)*speed*dt,dz=(-cos*mz-sin*mx)*speed*dt;
+if(Math.abs(mx)+Math.abs(mz)>.01){const px=player.position.x,pz=player.position.z;if(!blocked(px+dx,pz))player.position.x+=dx;if(!blocked(player.position.x,pz+dz))player.position.z+=dz;let ang=Math.atan2(dx,dz)+Math.PI;let turn=Math.atan2(Math.sin(ang-player.rotation.y),Math.cos(ang-player.rotation.y));player.rotation.y+=turn*Math.min(1,dt*8);stepTime+=dt*speed*1.65;const swing=Math.sin(stepTime)*.48;arms[0].rotation.x=swing;arms[1].rotation.x=-swing;legs[0].rotation.x=-swing;legs[1].rotation.x=swing;body.position.y=Math.abs(Math.sin(stepTime))*.038;}else{arms.forEach(a=>a.rotation.x*=.85);legs.forEach(l=>l.rotation.x*=.85);body.position.y*=.82}
+if((keys.Space||keys.Spacebar)&&vy===0)vy=5.5;vy-=14.5*dt;jumpV+=vy*dt;if(jumpV<0){jumpV=0;vy=0}player.position.y=jumpV+.07;
+near=null;let closest=Infinity;for(const stop of stops){let d=Math.hypot(stop.x-player.position.x,stop.z-player.position.z);if(d<stop.r&&d<closest){near=stop;closest=d}}$('interact').classList.toggle('show',!!near);if(near)$('interactText').textContent=near.name+(near.done?' · Đã xem':' · Khám phá');
+const d=stops.filter(s=>s.done).length;const next=stops.find(s=>!s.done);$('objective').textContent=next?`Khám phá ${next.name}`:'Hoàn thành tham quan';
+// camera follows player, allowing free orbital look
+const cameraDist=third?cam.dist:.12;target.set(player.position.x,player.position.y+(third?2:2.9),player.position.z);desired.set(target.x+Math.sin(cam.yaw)*cameraDist*Math.cos(cam.pitch),target.y+Math.sin(cam.pitch)*cameraDist+(third?1.0:0),target.z+Math.cos(cam.yaw)*cameraDist*Math.cos(cam.pitch));if(focusMode){focusAngle+=dt*.13;const orbit=new THREE.Vector3(Math.sin(focusAngle)*38,16,-11+Math.cos(focusAngle)*38);camera.position.lerp(orbit,Math.min(1,dt*2.4));camera.lookAt(0,8,-11);body.visible=false;}else{camera.position.lerp(desired,Math.min(1,dt*8));camera.lookAt(target);body.visible=third;}
+const md=$('miniDot');md.style.left=(88+player.position.x*1.0)+'px';md.style.top=(90+player.position.z*.95)+'px';if(innerWidth<=780){md.style.left=(49+player.position.x*.62)+'px';md.style.top=(52+player.position.z*.56)+'px'}
+for(let i=0;i<flags.length;i++)for(let j=0;j<flags[i].strips.length;j++){flags[i].strips[j].rotation.y=Math.sin(performance.now()*.0018+i+j*.4)*.17}
+}renderer.render(scene,camera)}
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<780?1.3:1.7))}addEventListener('resize',resize);$('loading').style.display='none';menu(true);animate();
+</script></body></html>
