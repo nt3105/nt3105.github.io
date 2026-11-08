@@ -1,5 +1,5 @@
-import { $, escapeHtml as e, icon, copy } from './ui.js?v=download-even-v1';
-import { BASE } from './api.js?v=download-even-v1';
+import { $, escapeHtml as e, icon, copy } from './ui.js?v=detail-clean-v1';
+import { BASE } from './api.js?v=detail-clean-v1';
 
 export function downloadHref(item) {
   try {

@@ -1,4 +1,4 @@
-import { $ } from './ui.js?v=download-even-v1';
+import { $ } from './ui.js?v=detail-clean-v1';
 
 export function initCarousel(){
   const root=$('#home-carousel');

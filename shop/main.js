@@ -1,9 +1,9 @@
-import { $ , showPage } from './ui.js?v=download-even-v1';
-import { initCatalog, loadCatalog } from './catalog.js?v=download-even-v1';
-import { initCheckout, purchase } from './checkout.js?v=download-even-v1';
-import { initOrders, loadOrders } from './orders.js?v=download-even-v1';
-import { initAnnouncements } from './announcements.js?v=download-even-v1';
-import { initCarousel } from './carousel.js?v=download-even-v1';
+import { $ , showPage } from './ui.js?v=detail-clean-v1';
+import { initCatalog, loadCatalog } from './catalog.js?v=detail-clean-v1';
+import { initCheckout, purchase } from './checkout.js?v=detail-clean-v1';
+import { initOrders, loadOrders } from './orders.js?v=detail-clean-v1';
+import { initAnnouncements } from './announcements.js?v=detail-clean-v1';
+import { initCarousel } from './carousel.js?v=detail-clean-v1';
 function navigate(page) { showPage(page); if (page === 'orders') loadOrders(); }
 initAnnouncements(); initCarousel(); initCatalog(); initCheckout(); initOrders();
 document.querySelectorAll('.main-nav button[data-page]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.page)));

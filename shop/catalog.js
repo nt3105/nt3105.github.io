@@ -1,8 +1,8 @@
-import { api } from './api.js?v=download-even-v1';
-import { $, escapeHtml as e, icon, money, showPage } from './ui.js?v=download-even-v1';
-import { openDetail, initDetails, productArtwork } from './product-detail.js?v=download-even-v1';
-import { setAnnouncement } from './announcements.js?v=download-even-v1';
-import { renderDownloads } from './downloads.js?v=download-even-v1';
+import { api } from './api.js?v=detail-clean-v1';
+import { $, escapeHtml as e, icon, money, showPage } from './ui.js?v=detail-clean-v1';
+import { openDetail, initDetails, productArtwork } from './product-detail.js?v=detail-clean-v1';
+import { setAnnouncement } from './announcements.js?v=detail-clean-v1';
+import { renderDownloads } from './downloads.js?v=detail-clean-v1';
 
 let catalog;
 let filter = 'all';

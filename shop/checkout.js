@@ -1,5 +1,5 @@
-import { api } from './api.js?v=download-even-v1';
-import { $, escapeHtml as e, icon, money, duration, dateTime, toast, copy } from './ui.js?v=download-even-v1';
+import { api } from './api.js?v=detail-clean-v1';
+import { $, escapeHtml as e, icon, money, duration, dateTime, toast, copy } from './ui.js?v=detail-clean-v1';
 let activeOrder;
 let polling;
 let generation = 0;

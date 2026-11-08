@@ -1,4 +1,4 @@
-import { $, escapeHtml as e } from './ui.js?v=download-even-v1';
+import { $, escapeHtml as e } from './ui.js?v=detail-clean-v1';
 
 const STORAGE = 'ntjr-announcement-snooze-v1';
 let revision = '';
