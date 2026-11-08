@@ -1,0 +1,18 @@
+import { $ , showPage } from './ui.js?v=download-even-v1';
+import { initCatalog, loadCatalog } from './catalog.js?v=download-even-v1';
+import { initCheckout, purchase } from './checkout.js?v=download-even-v1';
+import { initOrders, loadOrders } from './orders.js?v=download-even-v1';
+import { initAnnouncements } from './announcements.js?v=download-even-v1';
+import { initCarousel } from './carousel.js?v=download-even-v1';
+function navigate(page) { showPage(page); if (page === 'orders') loadOrders(); }
+initAnnouncements(); initCarousel(); initCatalog(); initCheckout(); initOrders();
+document.querySelectorAll('.main-nav button[data-page]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.page)));
+document.querySelectorAll('[data-open-orders]').forEach(button => button.addEventListener('click', () => navigate('orders')));
+document.querySelectorAll('[data-open-guide]').forEach(button => button.addEventListener('click', () => navigate('guide')));
+document.querySelectorAll('[data-home]').forEach(button => button.addEventListener('click', () => navigate('home')));
+document.querySelectorAll('[data-shop]').forEach(button => button.addEventListener('click', () => navigate('catalog')));
+document.querySelectorAll('[data-page-link]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.pageLink)));
+document.querySelectorAll('[data-restore]').forEach(button => button.addEventListener('click', () => {navigate('orders');$('#import-access').click();}));
+loadCatalog(purchase);
+const route=location.hash.slice(1);
+navigate(['catalog','orders','guide','certificates','games','downloads','contact','policy','terms'].includes(route)?route:'home');
