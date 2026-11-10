@@ -1,6 +1,6 @@
 import { api, accessToken, restoreAccess } from './api.js?v=detail-clean-v1';
 import { $, escapeHtml as e, icon, money, dateTime, stateLabels, toast, showPage } from './ui.js?v=detail-clean-v1';
-import { openOrder } from './checkout.js?v=detail-clean-v1';
+import { openOrder } from './checkout.js?v=activation-clock-v1';
 let orders = [];
 export async function loadOrders() {
   $('#orders').innerHTML = '<div class="loading-card">Đang lấy đơn hàng của bạn…</div>';
