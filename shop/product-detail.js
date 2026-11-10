@@ -1,5 +1,5 @@
 import { $, escapeHtml as e, icon, money, duration } from './ui.js?v=detail-clean-v1';
-import { detailDownload } from './downloads.js?v=detail-clean-v1';
+import { detailDownload } from './downloads.js?v=android-b16-download-v1';
 let returnContext=null;
 export function productArtwork(product) {
   return new URL('./assets/' + (/pubg/i.test(product.id) ? 'pubg-menu-v3.jpg' : /zsm|zingspeed/i.test(product.id) ? 'zingspeed-menu-v3.jpg' : 'hero-gaming-v2.png'), import.meta.url).href;
