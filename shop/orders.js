@@ -1,6 +1,7 @@
-import { api, accessToken, restoreAccess } from './api.js?v=detail-clean-v1';
+import {downloadRecovery} from './access-store.js?v=history-v2';
+import { api, restoreAccess } from './api.js?v=history-v2';
 import { $, escapeHtml as e, icon, money, dateTime, stateLabels, toast, showPage } from './ui.js?v=detail-clean-v1';
-import { openOrder } from './checkout.js?v=activation-clock-v1';
+import { openOrder } from './checkout.js?v=history-v2';
 let orders = [];
 export async function loadOrders() {
   $('#orders').innerHTML = '<div class="loading-card">Đang lấy đơn hàng của bạn…</div>';
@@ -17,18 +18,15 @@ export function initOrders() {
     const order = button && orders.find(o => o.id === button.dataset.order);
     if (order) openOrder(order);
   });
-  $('#export-access').addEventListener('click', () => {
-    const token = accessToken();
-    const blob = new Blob(['MA KHOI PHUC DON HANG NTJR\nGiu rieng tu: ma nay cho phep xem key cua ban.\n\n' + token + '\n'], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob); const link = document.createElement('a');
-    link.href = url; link.download = 'NTJR-ma-khoi-phuc.txt'; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $('#export-access').addEventListener('click', async () => {
+    try{await downloadRecovery();toast('Đã tải mã khôi phục lịch sử key.');}
+    catch(error){toast(error.message);}
   });
   $('#import-access').addEventListener('click', () => { $('#restore-error').textContent = ''; $('#restore-dialog').showModal(); });
   $('#close-restore').addEventListener('click', () => $('#restore-dialog').close());
-  $('#restore-form').addEventListener('submit', event => {
+  $('#restore-form').addEventListener('submit', async event => {
     event.preventDefault();
-    try { restoreAccess($('#restore-token').value.trim()); $('#restore-token').value = ''; $('#restore-dialog').close(); loadOrders(); toast('Đã khôi phục quyền truy cập'); }
+    try { await restoreAccess($('#restore-token').value.trim()); $('#restore-token').value = ''; $('#restore-dialog').close(); loadOrders(); toast('Đã khôi phục quyền truy cập'); }
     catch (error) { $('#restore-error').textContent = error.message; }
   });
 }

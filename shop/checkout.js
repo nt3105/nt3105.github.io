@@ -1,4 +1,5 @@
-import { api } from './api.js?v=detail-clean-v1';
+import {downloadRecovery} from './access-store.js?v=history-v2';
+import { api } from './api.js?v=history-v2';
 import { $, escapeHtml as e, icon, money, duration, dateTime, toast, copy } from './ui.js?v=detail-clean-v1';
 let activeOrder;
 let polling;
@@ -55,7 +56,7 @@ function render(order) {
   const summary = `<div class="checkout-summary"><div><strong>${e(order.plan.title)}</strong><span>${duration(order.plan,true)} · ${order.plan.max_devices} thiết bị · ${e(order.plan.platform)}</span></div><strong>${money(order.amount)}</strong></div>`;
   let content;
   if (done) {
-    content = `<div class="success-panel"><div class="success-icon">${icon('check')}</div><h3>Đã cấp key thành công</h3><p>${order.demo ? 'Đây là key thử nghiệm, không dùng trong game thật.' : 'Sao chép key và nhập vào ứng dụng của bạn.'}</p><div class="key-field"><code>${e(order.key)}</code><button class="icon-button" data-copy="key" aria-label="Sao chép key">${icon('copy')}</button></div><div class="key-details"><span>Thời hạn</span><strong>${order.activation_pending ? 'Chưa kích hoạt · chưa tính hạn' : (order.license_never_expires ?? order.plan.never_expires) ? 'Vĩnh viễn' : order.key_expires ? dateTime(order.key_expires) : 'Chưa có thời điểm hết hạn'}</strong></div><p class="small">Thời hạn chỉ bắt đầu khi bạn nhập key và xác thực thành công lần đầu. Chưa dùng thì chưa tính giờ.</p>${order.license_enabled === false ? '<p class="field-error">Key đã bị khóa. Liên hệ hỗ trợ để kiểm tra.</p>' : ''}<button class="primary" id="done-checkout">Đã lưu key ${icon('check')}</button></div>`;
+    content = `<div class="success-panel"><div class="success-icon">${icon('check')}</div><h3>Đã cấp key thành công</h3><p>${order.demo ? 'Đây là key thử nghiệm, không dùng trong game thật.' : 'Sao chép key và nhập vào ứng dụng của bạn.'}</p><div class="key-field"><code>${e(order.key)}</code><button class="icon-button" data-copy="key" aria-label="Sao chép key">${icon('copy')}</button></div><div class="key-details"><span>Thời hạn</span><strong>${order.activation_pending ? 'Chưa kích hoạt · chưa tính hạn' : (order.license_never_expires ?? order.plan.never_expires) ? 'Vĩnh viễn' : order.key_expires ? dateTime(order.key_expires) : 'Chưa có thời điểm hết hạn'}</strong></div><p class="small">Thời hạn chỉ bắt đầu khi bạn nhập key và xác thực thành công lần đầu. Chưa dùng thì chưa tính giờ.</p>${order.license_enabled === false ? '<p class="field-error">Key đã bị khóa. Liên hệ hỗ trợ để kiểm tra.</p>' : ''}<p class="small">Key đã được lưu trong lịch sử trên trình duyệt này. Tải mã khôi phục để lấy lại khi đổi máy hoặc xóa dữ liệu web.</p><button class="secondary" id="backup-checkout">Lưu key &amp; mã khôi phục</button><button class="primary" id="done-checkout">Đóng ${icon('check')}</button></div>`;
   } else if (order.state === 'review' || order.state === 'expired') {
     content = `<div class="waiting-panel">${icon('help')}<h3>${order.state === 'review' ? 'Thông tin chuyển khoản chưa khớp' : 'Không chuyển tiền vào đơn này nữa'}</h3><p>${order.state === 'review' ? 'Hệ thống đã ghi nhận giao dịch. Gửi mã đơn cho hỗ trợ để kiểm tra số tiền và thời gian nhận.' : 'Bạn có thể tạo một đơn mới. Nếu đã chuyển tiền, liên hệ hỗ trợ và gửi mã đơn này.'}</p></div>`;
   } else if (order.state === 'paid') {
@@ -66,6 +67,9 @@ function render(order) {
   $('#checkout-content').innerHTML = steps + summary + content + `<p class="poll-error" id="poll-error" role="status" hidden></p><div class="order-code"><span>Mã đơn <code>${e(order.id)}</code></span><button class="text-button" data-copy="id">Sao chép mã đơn</button></div>`;
   updateCountdown();
   $('#payment-qr')?.addEventListener('error', () => { $('#qr-fallback').hidden = false; $('#payment-qr').hidden = true; });
+  $('#backup-checkout')?.addEventListener('click', async () => {
+    try{await downloadRecovery(order);toast('Đã lưu key và mã khôi phục.');}catch(error){toast(error.message);}
+  });
   $('#done-checkout')?.addEventListener('click', () => $('#checkout').close());
   $('#demo-confirm')?.addEventListener('click', async event => {
     event.currentTarget.disabled = true;

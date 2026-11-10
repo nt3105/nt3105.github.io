@@ -1,27 +1,12 @@
-const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
-export const BASE = local ? location.origin : 'https://key.nt3105.io.vn';
-let memoryToken;
-export function accessToken() {
-  if (memoryToken) return memoryToken;
-  try { memoryToken = localStorage.getItem('ntjr-shop-access-v1'); } catch {}
-  if (!/^[a-f0-9]{64}$/.test(memoryToken || '')) {
-    memoryToken = [...crypto.getRandomValues(new Uint8Array(32))].map(x => x.toString(16).padStart(2, '0')).join('');
-    try { localStorage.setItem('ntjr-shop-access-v1', memoryToken); } catch {}
-  }
-  return memoryToken;
-}
-export function restoreAccess(token) {
-  if (!/^[a-f0-9]{64}$/.test(token)) throw new Error('Mã khôi phục cần đúng 64 ký tự.');
-  localStorage.setItem('ntjr-shop-access-v1', token);
-  memoryToken = token;
-}
+import {BASE,accessToken,restoreAccess} from './access-store.js?v=history-v2';
+export {BASE,accessToken,restoreAccess};
 export async function api(path, body, method) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
   try {
     const response = await fetch(BASE + '/api/shop' + path, {
       method: method || (body ? 'POST' : 'GET'), signal: controller.signal,
-      headers: { Authorization: 'Bearer ' + accessToken(), ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      headers: { ...(path==='/catalog'?{}:{Authorization:'Bearer '+await accessToken()}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
       body: body ? JSON.stringify(body) : undefined, cache: 'no-store', credentials: 'omit',
     });
     const result = await response.json().catch(() => ({}));

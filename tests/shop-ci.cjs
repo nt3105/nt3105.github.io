@@ -7,6 +7,10 @@ const products=['PUBG VNG 4.6.0','ZSM v14'].map((name,i)=>({id:i?'zsm':'pubg',na
 const orders=new Map();let lastOrder;
 const server=http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://localhost');const json=(value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
+ if(url.pathname==='/api/shop/access/session'&&req.method==='POST'){
+  let raw='';for await(const chunk of req)raw+=chunk;const input=JSON.parse(raw);
+  return json({access_token:input.token||'1'.repeat(64),remember_days:365,restored_from_cookie:false});
+ }
  if(url.pathname==='/api/shop/catalog')return json({products,brand:'NTJR',sales_enabled:true,demo:false,support_url:'https://t.me/neverdierrr',announcement:{enabled:true,title:'Thông báo',message:'',links:[{label:'Telegram NTJR',url:'https://t.me/neverdierrr'}]}});
  if(url.pathname==='/api/shop/orders'&&req.method==='POST'){
   let raw='';for await(const chunk of req)raw+=chunk;const input=JSON.parse(raw);const plan=products.flatMap(p=>p.plans).find(p=>p.sku===input.sku);assert(plan);
