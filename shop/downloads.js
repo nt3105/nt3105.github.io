@@ -1,5 +1,5 @@
 import { $, escapeHtml as e, icon, copy } from './ui.js?v=detail-clean-v1';
-import { BASE } from './api.js?v=history-v2';
+import { BASE } from './api.js?v=auto-history-v3';
 
 export function downloadHref(item) {
   try {

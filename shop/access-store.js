@@ -67,6 +67,8 @@ export async function restoreAccess(value){
     .finally(()=>{restoring=null;});
   return restoring;
 }
+
+// Compatibility for tabs opened before automatic-history UI.
 export async function downloadRecovery(order=null){
   const token=await accessToken();
   const lines=['MA KHOI PHUC DON HANG NTJR','Giu rieng tu: ma nay cho phep xem key cua ban.','',

@@ -6,3 +6,7 @@
 @import url('./product-detail.css?v=download-even-v1');
 @import url('./direct.css?v=download-even-v1');
 @import url('./downloads.css?v=download-even-v1');
+
+.history-pages{display:flex;align-items:center;justify-content:center;gap:18px;margin:25px 0;font-size:13px}.legacy-recovery{margin:14px 0 22px;font-size:13px;color:var(--muted,#a0a8b8)}.legacy-recovery summary{cursor:pointer}.legacy-recovery p{line-height:1.7;max-width:720px}.legacy-recovery .text-button{margin-top:10px}@media(max-width:500px){.history-pages{gap:8px;flex-wrap:wrap}}
+
+.history-pages[hidden]{display:none}
