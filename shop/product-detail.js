@@ -1,10 +1,23 @@
-import { $, escapeHtml as e, icon, money, duration } from './ui.js?v=detail-clean-v1';
+import { $, escapeHtml as e, icon, money, duration, toast } from './ui.js?v=detail-clean-v1';
 import { detailDownload } from './downloads.js?v=history-v2';
 let returnContext=null;
+let current=null;
+export function syncDetail(catalog){
+  if(!current||!$('#product-detail').open)return;
+  const product=catalog.products.find(p=>p.id===current.product);
+  if(!product||!product.plans.length){
+    $('#product-detail').close();toast('Gói của game này đã tạm ngừng bán.');return;
+  }
+  const plan=product.plans.find(p=>p.sku===current.sku)||product.plans[0],scroll=$('#product-detail').scrollTop;
+  openDetail(product,plan,catalog,current.onBuy);
+  $('#product-detail').scrollTop=scroll;
+}
 export function productArtwork(product) {
   return new URL('./assets/' + (/pubg/i.test(product.id) ? 'pubg-menu-v3.jpg' : /zsm|zingspeed/i.test(product.id) ? 'zingspeed-menu-v3.jpg' : 'hero-gaming-v2.png'), import.meta.url).href;
 }
 export function openDetail(product,selected,catalog,onBuy,trigger=document.activeElement) {
+  if(!product||!selected)return;
+  current={product:product.id,sku:selected.sku,onBuy};
   const dialog=$('#product-detail');
   if(!dialog.open){
     returnContext={x:window.scrollX,y:window.scrollY,page:document.body.dataset.page,trigger};
@@ -20,6 +33,7 @@ export function openDetail(product,selected,catalog,onBuy,trigger=document.activ
     $('#detail-content').querySelectorAll('[data-detail-plan]').forEach(button=>button.addEventListener('click',()=>{
       const sku=button.dataset.detailPlan;
       plan=product.plans.find(p=>p.sku===sku); render();
+      current.sku=plan.sku;
       $(`[data-detail-plan="${CSS.escape(sku)}"]`)?.focus({preventScroll:true});
     }));
   }
@@ -32,6 +46,7 @@ export function initDetails() {
   $('#close-detail').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',()=>{
     if(dialog.open)return;
+    current=null;
     const context=returnContext;
     returnContext=null;
     document.documentElement.classList.remove('detail-open');

@@ -1,20 +1,29 @@
 import { api } from './api.js?v=history-v2';
 import { $, escapeHtml as e, icon, money, showPage } from './ui.js?v=detail-clean-v1';
-import { openDetail, initDetails, productArtwork } from './product-detail.js?v=history-v2';
+import { openDetail, initDetails, productArtwork, syncDetail } from './product-detail.js?v=plan-fix-v2';
 import { setAnnouncement } from './announcements.js?v=detail-clean-v1';
 import { renderDownloads } from './downloads.js?v=history-v2';
 
 let catalog;
 let filter = 'all';
 let onBuy;
+let loading=false,lastSignature='';
 const mark = new URL('./assets/mark.svg', import.meta.url).href;
 export function catalogData() { return catalog; }
 
-export async function loadCatalog(buy) {
+export async function loadCatalog(buy,{silent=false}={}) {
   if (buy) onBuy = buy;
-  $('#catalog-error').hidden = true;
+  if(loading)return;
+  loading=true;
+  if(!silent)$('#catalog-error').hidden = true;
   try {
-    catalog = await api('/catalog');
+    const latest=await api('/catalog');
+    // Defence for older cached API responses: never render a disabled plan.
+    latest.products=latest.products.map(p=>({...p,plans:p.plans.filter(x=>x.enabled&&x.price>=1000)})).filter(p=>p.plans.length);
+    const signature=JSON.stringify(latest);
+    if(silent&&signature===lastSignature)return;
+    catalog=latest;lastSignature=signature;
+    $('#catalog-error').hidden=true;
     $('#demo-banner').hidden = !catalog.demo;
     if (catalog.support_url && /^https:\/\//.test(catalog.support_url)) {
       document.querySelectorAll('.contact-link').forEach(link => {link.href=catalog.support_url;});
@@ -24,13 +33,16 @@ export async function loadCatalog(buy) {
     $('#zsm-count').textContent = catalog.products.filter(p=>/zsm|zingspeed/i.test(p.id)).length;
     $('#game-choices').innerHTML=catalog.products.map(product=>`<button data-game="${/pubg/i.test(product.id)?'pubg':'zsm'}"><img src="${productArtwork(product)}" alt="" width="1280" height="589"><span>${e(product.name)}</span>${icon('arrow')}</button>`).join('');
     render();
+    syncDetail(catalog);
     renderDownloads(catalog);
     setAnnouncement(catalog);
   } catch (error) {
-    $('#catalog-error').hidden = false;
-    $('#catalog-error span').textContent = error.message;
-    $('#catalog').innerHTML = '';
-  }
+    if(!silent||!catalog){
+      $('#catalog-error').hidden = false;
+      $('#catalog-error span').textContent = error.message;
+      if(!catalog)$('#catalog').innerHTML = '';
+    }
+  }finally{loading=false;}
 }
 
 function render() {
@@ -52,6 +64,10 @@ function chooseFilter(value) {
 }
 export function initCatalog() {
   initDetails();
+  const refresh=()=>{if(!document.hidden&&!$('#checkout').open)loadCatalog(null,{silent:true});};
+  setInterval(refresh,15000);
+  document.addEventListener('visibilitychange',refresh);
+  window.addEventListener('focus',refresh);
   $('#search').addEventListener('input', () => { if (catalog) render(); });
   $('#retry-catalog').addEventListener('click', () => loadCatalog());
   $('#show-all-products').addEventListener('click',()=>{$('#search').value='';chooseFilter('all');});
