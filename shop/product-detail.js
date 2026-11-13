@@ -1,5 +1,5 @@
 import { $, escapeHtml as e, icon, money, duration, toast } from './ui.js?v=detail-clean-v1';
-import { detailDownload } from './downloads.js?v=auto-history-v3';
+import { detailDownload } from './downloads.js?v=current-key-v1';
 let returnContext=null;
 let current=null;
 export function syncDetail(catalog){

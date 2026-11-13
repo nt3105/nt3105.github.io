@@ -1,4 +1,4 @@
-import { api } from './api.js?v=auto-history-v3';
+import { api } from './api.js?v=current-key-v1';
 import { $, escapeHtml as e, icon, money, duration, dateTime, toast, copy } from './ui.js?v=detail-clean-v1';
 let activeOrder;
 let polling;
@@ -15,12 +15,26 @@ export async function purchase(sku, button) {
   } catch (error) { toast(error.message); }
   finally { if (button?.isConnected) button.disabled = false; }
 }
-export function openOrder(order) {
+export async function openOrder(order) {
   generation++;
   clearTimeout(polling);
+  const version=generation;
   activeOrder = order;
-  render(order);
   if (!$('#checkout').open) $('#checkout').showModal();
+  if(order.state==='delivered'){
+    $('#checkout-title').textContent='Đang đồng bộ key';
+    $('#checkout-content').innerHTML='<div class="loading-card">Đang lấy mã key hiện tại từ máy chủ…</div>';
+    try{
+      order=await api('/orders/'+order.id);
+      if(version!==generation)return;
+      activeOrder=order;
+    }catch(error){
+      if(version!==generation)return;
+      $('#checkout-content').innerHTML='<div class="notice error">'+e(error.message)+'</div><button class="primary" id="retry-current-key">Thử đồng bộ lại</button>';
+      $('#retry-current-key').onclick=()=>openOrder(activeOrder);return;
+    }
+  }
+  render(order);
   if (['pending', 'paid', 'expired'].includes(order.state)) schedule(generation);
 }
 function schedule(version) {
@@ -54,8 +68,11 @@ function render(order) {
   const steps = `<div class="checkout-steps"><span class="complete">${icon('check')}Chọn gói</span><i></i><span class="${done ? 'complete' : 'current'}">${done ? icon('check') : '<b>02</b>'}Thanh toán</span><i></i><span class="${done ? 'complete' : ''}"><b>03</b>Nhận key</span></div>`;
   const summary = `<div class="checkout-summary"><div><strong>${e(order.plan.title)}</strong><span>${duration(order.plan,true)} · ${order.plan.max_devices} thiết bị · ${e(order.plan.platform)}</span></div><strong>${money(order.amount)}</strong></div>`;
   let content;
-  if (done) {
-    content = `<div class="success-panel"><div class="success-icon">${icon('check')}</div><h3>Đã cấp key thành công</h3><p>${order.demo ? 'Đây là key thử nghiệm, không dùng trong game thật.' : 'Sao chép key và nhập vào ứng dụng của bạn.'}</p><div class="key-field"><code>${e(order.key)}</code><button class="icon-button" data-copy="key" aria-label="Sao chép key">${icon('copy')}</button></div><div class="key-details"><span>Thời hạn</span><strong>${order.activation_pending ? 'Chưa kích hoạt · chưa tính hạn' : (order.license_never_expires ?? order.plan.never_expires) ? 'Vĩnh viễn' : order.key_expires ? dateTime(order.key_expires) : 'Chưa có thời điểm hết hạn'}</strong></div><p class="small">Thời hạn chỉ bắt đầu khi bạn nhập key và xác thực thành công lần đầu. Chưa dùng thì chưa tính giờ.</p>${order.license_enabled === false ? '<p class="field-error">Key đã bị khóa. Liên hệ hỗ trợ để kiểm tra.</p>' : ''}<p class="small">Key đã được ghi nhớ tự động trong Lịch sử. Mở lại bằng trình duyệt này để lấy key; không cần lưu file.</p><button class="secondary" id="view-purchase-history">Xem lịch sử mua key</button><button class="primary" id="done-checkout">Đóng ${icon('check')}</button></div>`;
+  if(done&&!order.key){
+    $('#checkout-title').textContent='Cần kiểm tra mã key';
+    content='<div class="notice error">'+e(order.key_message||'Chưa đọc được mã key hiện tại. Liên hệ hỗ trợ với mã đơn bên dưới.')+'</div><button class="primary" id="done-checkout">Đóng</button>';
+  } else if (done) {
+    content = `<div class="success-panel"><div class="success-icon">${icon('check')}</div><h3>Đã cấp key thành công</h3><p>${order.demo ? 'Đây là key thử nghiệm, không dùng trong game thật.' : 'Sao chép key và nhập vào ứng dụng của bạn.'}</p><div class="key-field"><code>${e(order.key)}</code><button class="icon-button" data-copy="key" aria-label="Sao chép key">${icon('copy')}</button></div><div class="key-details"><span>Thời hạn</span><strong>${order.clock_paused ? 'Tạm dừng tính giờ' : order.activation_pending ? 'Chưa kích hoạt · chưa tính hạn' : (order.license_never_expires ?? order.plan.never_expires) ? 'Vĩnh viễn' : order.key_expires ? dateTime(order.key_expires) : 'Chưa có thời điểm hết hạn'}</strong></div><p class="small">${order.clock_start_mode === "creation" ? "Key không giới hạn thiết bị tính thời hạn từ lúc được cấp." : "Thời hạn tính từ lần nhập key và xác thực thành công đầu tiên."}</p>${order.key_source === "current" ? '<p class="notice">Key đã được cập nhật. Dùng mã hiện tại hiển thị ở trên.</p>' : ''}${order.license_enabled === false ? '<p class="field-error">Key đã bị khóa. Liên hệ hỗ trợ để kiểm tra.</p>' : ''}<p class="small">Key đã được ghi nhớ tự động trong Lịch sử. Mở lại bằng trình duyệt này để lấy key; không cần lưu file.</p><button class="secondary" id="view-purchase-history">Xem lịch sử mua key</button><button class="primary" id="done-checkout">Đóng ${icon('check')}</button></div>`;
   } else if (order.state === 'review' || order.state === 'expired') {
     content = `<div class="waiting-panel">${icon('help')}<h3>${order.state === 'review' ? 'Thông tin chuyển khoản chưa khớp' : 'Không chuyển tiền vào đơn này nữa'}</h3><p>${order.state === 'review' ? 'Hệ thống đã ghi nhận giao dịch. Gửi mã đơn cho hỗ trợ để kiểm tra số tiền và thời gian nhận.' : 'Bạn có thể tạo một đơn mới. Nếu đã chuyển tiền, liên hệ hỗ trợ và gửi mã đơn này.'}</p></div>`;
   } else if (order.state === 'paid') {

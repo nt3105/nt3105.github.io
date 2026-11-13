@@ -1,8 +1,8 @@
-import { api } from './api.js?v=auto-history-v3';
+import { api } from './api.js?v=current-key-v1';
 import { $, escapeHtml as e, icon, money, showPage } from './ui.js?v=detail-clean-v1';
-import { openDetail, initDetails, productArtwork, syncDetail } from './product-detail.js?v=zsm-platform-v1';
+import { openDetail, initDetails, productArtwork, syncDetail } from './product-detail.js?v=current-key-v1';
 import { setAnnouncement } from './announcements.js?v=detail-clean-v1';
-import { renderDownloads } from './downloads.js?v=auto-history-v3';
+import { renderDownloads } from './downloads.js?v=current-key-v1';
 
 let catalog;
 let filter = 'all';

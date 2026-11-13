@@ -1,10 +1,10 @@
 import { $ , showPage } from './ui.js?v=detail-clean-v1';
-import { initCatalog, loadCatalog } from './catalog.js?v=auto-history-v3';
-import { initCheckout, purchase } from './checkout.js?v=auto-history-v3';
-import { initOrders, loadOrders } from './orders.js?v=auto-history-v3';
+import { initCatalog, loadCatalog } from './catalog.js?v=current-key-v1';
+import { initCheckout, purchase } from './checkout.js?v=current-key-v1';
+import { initOrders, loadOrders } from './orders.js?v=current-key-v1';
 import { initAnnouncements } from './announcements.js?v=detail-clean-v1';
 import { initCarousel } from './carousel.js?v=detail-clean-v1';
-import { accessToken } from './api.js?v=auto-history-v3';
+import { accessToken } from './api.js?v=current-key-v1';
 function navigate(page) { showPage(page); if (page === 'orders') loadOrders(); }
 initAnnouncements(); initCarousel(); initCatalog(); initCheckout(); initOrders();
 // Refresh the persistent purchase identity automatically on every visit.

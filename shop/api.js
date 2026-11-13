@@ -1,4 +1,4 @@
-import {BASE,accessToken,restoreAccess} from './access-store.js?v=auto-history-v3';
+import {BASE,accessToken,restoreAccess} from './access-store.js?v=current-key-v1';
 export {BASE,accessToken,restoreAccess};
 export async function api(path, body, method) {
   const token=path==='/catalog'?'':await accessToken();

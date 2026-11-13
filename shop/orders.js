@@ -1,6 +1,6 @@
-import { api, restoreAccess } from './api.js?v=auto-history-v3';
+import { api, restoreAccess } from './api.js?v=current-key-v1';
 import { $, escapeHtml as e, icon, money, dateTime, stateLabels, toast, showPage } from './ui.js?v=detail-clean-v1';
-import { openOrder } from './checkout.js?v=auto-history-v3';
+import { openOrder } from './checkout.js?v=current-key-v1';
 let orders=[],page=1,sequence=0,loading=false;
 export async function loadOrders(next=1){
   page=Number.isInteger(next)?next:1;const current=++sequence;loading=true;
