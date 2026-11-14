@@ -13,3 +13,14 @@ html.detail-open{overflow:hidden;overscroll-behavior:none}
 .detail-plans .plan-button.selected:before{display:none}
 .detail-plans .plan-button small{font-size:11px;font-weight:700;color:#d7edf9}
 @media(max-width:760px){.detail-plans .plan-button small{font-size:10px}}
+
+/* ZSM iOS: image 2 is the default; every screenshot remains uncropped. */
+.screenshot-detail .detail-art.has-gallery{aspect-ratio:auto}
+.screenshot-detail .detail-gallery-image{aspect-ratio:1280/590;object-fit:contain}
+.detail-thumbnails{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px;background:#102438}
+.detail-thumbnails button{display:block;min-width:0;padding:4px;border:2px solid transparent;border-radius:8px;background:#132d42;color:#c8e2f0;cursor:pointer}
+.detail-thumbnails button[aria-pressed="true"]{border-color:#40d9dc;background:#1b3f51;color:#fff}
+.detail-thumbnails button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.screenshot-detail .detail-thumbnails img{position:static;width:100%;height:auto;aspect-ratio:1280/590;object-fit:contain;border-radius:4px}
+.detail-thumbnails span{display:block;padding:5px 0 2px;font-size:11px;font-weight:700}
+@media(max-width:500px){.detail-thumbnails{gap:6px;padding:9px}.detail-thumbnails button{padding:3px}.detail-thumbnails span{font-size:10px}}

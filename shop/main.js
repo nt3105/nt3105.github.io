@@ -1,5 +1,5 @@
 import { $ , showPage } from './ui.js?v=detail-clean-v1';
-import { initCatalog, loadCatalog } from './catalog.js?v=current-key-v1';
+import { initCatalog, loadCatalog } from './catalog.js?v=ios-gallery-20261114';
 import { initCheckout, purchase } from './checkout.js?v=current-key-v1';
 import { initOrders, loadOrders } from './orders.js?v=current-key-v1';
 import { initAnnouncements } from './announcements.js?v=detail-clean-v1';

@@ -1,5 +1,6 @@
 import { $, escapeHtml as e, icon, copy } from './ui.js?v=detail-clean-v1';
 import { BASE } from './api.js?v=current-key-v1';
+import { productArtwork } from './product-gallery.js?v=ios-gallery-20261114';
 
 export function downloadHref(item) {
   try {
@@ -21,7 +22,7 @@ export function renderDownloads(catalog){
   const items=catalog.downloads||[];
   $('#ipa-downloads').innerHTML=items.map(item=>{
     const kind=fileKind(item),android=kind!=='IPA';
-    const artwork=new URL('./assets/'+(android?'racing-v2.png':/pubg/i.test(item.product_id)?'pubg-menu-v3.jpg':'zingspeed-menu-v3.jpg'),import.meta.url).href;
+    const artwork=android?new URL('./assets/racing-v2.png',import.meta.url).href:productArtwork({id:item.product_id});
     const href=downloadHref(item);
     return `<article class="download-card"><img class="download-cover" src="${artwork}" alt="${e(item.title)}" width="1280" height="589"><div class="download-content"><div class="download-title"><h2>${e(item.title)}</h2><span>${android?'Android':'iOS'} · ${kind}</span></div><dl><div><dt>Phiên bản</dt><dd>${e(item.version||'Đang cập nhật')}</dd></div><div><dt>Tệp</dt><dd>${e(item.filename||'Đang cập nhật')}</dd></div></dl>${android?'<p>Gói Android 64-bit. Cài theo hướng dẫn đi kèm bản tải; dùng key ZINGSPEED MOBILE ADR.</p>':''}<div class="download-actions">${href?`<a class="direct-buy" href="${e(href)}" target="_blank" rel="noopener noreferrer">Tải ${kind} ${icon('arrow')}</a><button class="secondary" data-copy-ipa="${e(item.product_id)}" aria-label="Sao chép link ${e(item.title)}">${icon('copy')}</button>`:'<button class="direct-buy" disabled>Đang cập nhật link tải</button>'}</div></div></article>`;
   }).join('')||'<div class="empty"><h2>Đang cập nhật ứng dụng</h2><p>Liên hệ NTJR nếu cần hỗ trợ lấy tệp.</p></div>';
