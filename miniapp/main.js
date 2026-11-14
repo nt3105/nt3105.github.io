@@ -1,7 +1,9 @@
-import * as api from './api.js?v=bank-2';
-import {$,e,money,date,duration,artwork,groups,cards,empty,keyState,toast,safeOpen} from './ui.js?v=bank-2';
-const state={route:'home',catalog:null,me:null,query:'',page:1,items:[],busy:false,serial:0,product:null,sku:null,requests:{}};
+import * as api from './api.js?v=inline-qr-1';
+import {$,e,money,date,duration,artwork,groups,cards,empty,keyState,toast,safeOpen} from './ui.js?v=inline-qr-1';
+import {createCheckoutView} from './checkout-view.js?v=inline-qr-1';
+const state={route:'home',catalog:null,me:null,query:'',page:1,items:[],busy:false,serial:0,product:null,sku:null,requests:{},paymentCode:''};
 const tg=window.Telegram?.WebApp;
+const checkoutView=createCheckoutView({element:$('#content'),load:api.payment,onBack:()=>nav('orders'),onDelivered:async()=>{try{state.me=await api.account();identity();}catch{}}});
 try{tg?.ready();tg?.expand();tg?.setHeaderColor('#0b1220');tg?.setBackgroundColor('#0b1220');}catch{}
 if(api.PREVIEW)$('#preview').hidden=false;
 function identity(){
@@ -10,8 +12,9 @@ function identity(){
  $('#account-id').textContent=(u.username?'@'+u.username+' · ':'')+'ID: '+u.id;
 }
 function nav(route){
+ checkoutView.close();if(route!=='payment')state.paymentCode='';
  state.route=route;state.page=1;
- document.querySelectorAll('.bottom [data-route]').forEach(b=>{if(b.dataset.route===route)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+ document.querySelectorAll('.bottom [data-route]').forEach(b=>{if(b.dataset.route===(route==='payment'?'orders':route))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
  render();window.scrollTo(0,0);
 }
 function renderList(){
@@ -33,6 +36,7 @@ function profile(){
 }
 async function render(){
  const serial=++state.serial;
+ if(state.route==='payment')return checkoutView.open(state.paymentCode);
  if(state.route==='home')return home();
  if(state.route==='profile')return profile();
  const keys=state.route==='keys';$('#content').innerHTML='<h1>'+(keys?'Key của tôi':'Lịch sử đơn')+'</h1><p class="loading">Đang tải…</p>';
@@ -59,12 +63,13 @@ function detail(id){
  if(state.product!==id){state.product=id;state.sku=p.plans[0]?.sku;}
  $('#product-body').innerHTML='<img class="detail-image" src="'+artwork(p)+'" alt="'+e(p.name)+'" width="1280" height="590"><div class="detail-info"><span class="tag">THÔNG TIN SẢN PHẨM</span><h2 id="product-name">'+e(p.name)+'</h2>'+
  p.plans.map(x=>'<button class="plan-row plan-option" data-plan="'+e(x.sku)+'" aria-pressed="'+(x.sku===state.sku)+'"><span>'+duration(x)+'<small class="small"><br>'+e(x.platform.toUpperCase())+' · '+x.max_devices+' thiết bị</small></span><strong>'+money(x.price)+'</strong></button>').join('')+
- '<button class="primary checkout-button" data-buy '+(!state.catalog.sales_enabled?'disabled':'')+'>Chuyển khoản ngân hàng</button><p class="detail-note">Thanh toán trên website. Sau khi nhận tiền, key tự lưu vào tài khoản Telegram của bạn.</p>'+((state.catalog.downloads||[]).some(d=>d.product_id===id&&d.enabled!==false&&downloadUrl(d))?'<button class="secondary checkout-button" data-download="'+e(id)+'">'+downloadName(id)+'</button>':'')+'</div>';
+ '<button class="primary checkout-button" data-buy '+(!state.catalog.sales_enabled?'disabled':'')+'>Chuyển khoản ngân hàng</button><p class="detail-note">Mã QR hiện ngay trong cửa hàng. Khi ngân hàng xác nhận, key tự hiện và lưu vào tài khoản Telegram của bạn.</p>'+((state.catalog.downloads||[]).some(d=>d.product_id===id&&d.enabled!==false&&downloadUrl(d))?'<button class="secondary checkout-button" data-download="'+e(id)+'">'+downloadName(id)+'</button>':'')+'</div>';
  if(!$('#product-dialog').open)$('#product-dialog').showModal();
 }
 async function openCheckout(orderId){
  if(api.PREVIEW)return toast('Bản xem trước: không tạo đơn hoặc thanh toán thật.');
  if(state.busy)return;state.busy=true;
+ const serial=state.serial;let requestedSku='';
  const button=document.querySelector(orderId?'[data-pay-order="'+orderId+'"]':'[data-buy]');
  if(button){button.disabled=true;button.textContent='Đang mở thanh toán…';}
  try{
@@ -74,12 +79,14 @@ async function openCheckout(orderId){
    const plan=state.catalog.products.find(p=>p.id===state.product)?.plans.find(p=>p.sku===state.sku);
    if(!plan)throw Error('Chọn lại gói muốn mua.');
    state.requests[plan.sku]??=crypto.randomUUID();
+   requestedSku=plan.sku;
    value=await api.checkout(plan.sku,state.requests[plan.sku],plan.price);
   }
   const url=new URL(value.checkout_url);
   if(url.origin!=='https://nt3105.io.vn'||url.pathname!=='/miniapp/pay.html'||!/^#[a-f0-9]{64}$/.test(url.hash))throw Error('Link thanh toán không hợp lệ.');
-  if(!orderId&&state.sku)delete state.requests[state.sku];
-  $('#product-dialog').close();safeOpen(url.href);nav('orders');
+  if(requestedSku)delete state.requests[requestedSku];
+  if(serial!==state.serial){toast('Đơn đã lưu. Mở Lịch sử đơn để xem QR.');return;}
+  $('#product-dialog').close();state.paymentCode=url.hash.slice(1);nav('payment');
  }catch(error){toast(error.message);}
  finally{state.busy=false;if(button){button.disabled=false;button.textContent=orderId?'Mở thanh toán':'Chuyển khoản ngân hàng';}}
 }
