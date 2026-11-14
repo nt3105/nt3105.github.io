@@ -22,3 +22,5 @@ export const catalog=()=>call('/catalog');
 export const account=()=>call('/telegram/me');
 export const orders=(page=1,keysOnly=false)=>call('/telegram/orders?page='+page+'&keys_only='+keysOnly);
 export const pairing=()=>call('/telegram/pairing',{});
+export const checkout=(sku,request_id,expected_price)=>call('/telegram/checkout',{sku,request_id,expected_price});
+export const resumeCheckout=order_id=>call('/telegram/checkout/resume',{order_id});

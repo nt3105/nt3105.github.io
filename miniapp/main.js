@@ -1,6 +1,6 @@
-import * as api from './api.js?v=compact-2';
-import {$,e,money,date,duration,artwork,groups,cards,empty,keyState,toast,safeOpen} from './ui.js?v=compact-2';
-const state={route:'home',catalog:null,me:null,query:'',page:1,items:[],busy:false,serial:0};
+import * as api from './api.js?v=bank-1';
+import {$,e,money,date,duration,artwork,groups,cards,empty,keyState,toast,safeOpen} from './ui.js?v=bank-1';
+const state={route:'home',catalog:null,me:null,query:'',page:1,items:[],busy:false,serial:0,product:null,sku:null,requests:{}};
 const tg=window.Telegram?.WebApp;
 try{tg?.ready();tg?.expand();tg?.setHeaderColor('#0b1220');tg?.setBackgroundColor('#0b1220');}catch{}
 if(api.PREVIEW)$('#preview').hidden=false;
@@ -39,7 +39,7 @@ async function render(){
   (result.items.length?result.items.map(item=>keys?
    '<article class="key-card"><div class="row"><h3>'+e(item.plan.title)+'</h3><span class="tag">'+e(item.plan.platform.toUpperCase())+'</span></div><span class="status '+(['expired','disabled','removed'].includes(item.key_status)?'bad':'')+'">'+e(keyState(item))+'</span>'+
    (item.key?'<code class="key-code">'+e(item.key)+'</code><button class="secondary" data-copy="'+e(item.id)+'">Sao chép key</button>':'<p>'+e(item.key_message||'Key đang được cập nhật.')+'</p>')+'</article>':
-   '<article class="order"><div class="row"><h3>'+e(item.memo)+'</h3><span class="status '+(item.state==='expired'?'bad':'')+'">'+e(labels[item.state]||'Cần kiểm tra')+'</span></div><p class="small">'+e(date(item.created_at))+'</p><div class="data-row"><span>Sản phẩm</span><strong>'+e(item.plan.title)+'</strong></div><div class="data-row"><span>Gói</span><strong>'+e(duration(item.plan))+'</strong></div><div class="data-row"><span>Số tiền</span><strong>'+money(item.amount)+'</strong></div></article>').join(''):
+   '<article class="order"><div class="row"><h3>'+e(item.memo)+'</h3><span class="status '+(item.state==='expired'?'bad':'')+'">'+e(labels[item.state]||'Cần kiểm tra')+'</span></div><p class="small">'+e(date(item.created_at))+' · '+e(item.purchase_source_label||'Website')+'</p><div class="data-row"><span>Sản phẩm</span><strong>'+e(item.plan.title)+'</strong></div><div class="data-row"><span>Gói</span><strong>'+e(duration(item.plan))+'</strong></div><div class="data-row"><span>Số tiền</span><strong>'+money(item.amount)+'</strong></div>'+(item.state==='pending'?'<button class="primary" data-pay-order="'+e(item.id)+'">Mở thanh toán</button>':'')+'</article>').join(''):
    empty(keys?'Chưa có key':'Chưa có đơn hàng','Đã mua trên website? Liên kết một lần để xem lịch sử tại đây.'))+
    (result.total>30?'<div class="pagination"><button class="secondary" data-page="-1" '+(result.page<=1?'disabled':'')+'>← Trước</button><span>Trang '+result.page+'</span><button class="secondary" data-page="1" '+(result.page*30>=result.total?'disabled':'')+'>Tiếp →</button></div>':'');
  }catch(error){if(serial===state.serial)$('#content').innerHTML=empty('Chưa tải được',error.message);}
@@ -52,10 +52,32 @@ function chooseGroup(id){
 }
 function detail(id){
  const p=state.catalog.products.find(p=>p.id===id);if(!p)return;
+ if(state.product!==id){state.product=id;state.sku=p.plans[0]?.sku;}
  $('#product-body').innerHTML='<img class="detail-image" src="'+artwork(p)+'" alt="'+e(p.name)+'" width="1280" height="590"><div class="detail-info"><span class="tag">THÔNG TIN SẢN PHẨM</span><h2 id="product-name">'+e(p.name)+'</h2>'+
- p.plans.map(x=>'<div class="plan-row"><span>'+duration(x)+'<small class="small"><br>'+e(x.platform.toUpperCase())+' · '+x.max_devices+' thiết bị</small></span><strong>'+money(x.price)+'</strong></div>').join('')+
- '<p class="detail-note">Giá hiển thị là giá trên website. Thanh toán trong Telegram chưa mở.</p></div>';
+ p.plans.map(x=>'<button class="plan-row plan-option" data-plan="'+e(x.sku)+'" aria-pressed="'+(x.sku===state.sku)+'"><span>'+duration(x)+'<small class="small"><br>'+e(x.platform.toUpperCase())+' · '+x.max_devices+' thiết bị</small></span><strong>'+money(x.price)+'</strong></button>').join('')+
+ '<button class="primary checkout-button" data-buy '+(!state.catalog.sales_enabled?'disabled':'')+'>Chuyển khoản ngân hàng</button><p class="detail-note">Thanh toán trên website. Sau khi nhận tiền, key tự lưu vào tài khoản Telegram của bạn.</p></div>';
  if(!$('#product-dialog').open)$('#product-dialog').showModal();
+}
+async function openCheckout(orderId){
+ if(api.PREVIEW)return toast('Bản xem trước: không tạo đơn hoặc thanh toán thật.');
+ if(state.busy)return;state.busy=true;
+ const button=document.querySelector(orderId?'[data-pay-order="'+orderId+'"]':'[data-buy]');
+ if(button){button.disabled=true;button.textContent='Đang mở thanh toán…';}
+ try{
+  let value;
+  if(orderId)value=await api.resumeCheckout(orderId);
+  else{
+   const plan=state.catalog.products.find(p=>p.id===state.product)?.plans.find(p=>p.sku===state.sku);
+   if(!plan)throw Error('Chọn lại gói muốn mua.');
+   state.requests[plan.sku]??=crypto.randomUUID();
+   value=await api.checkout(plan.sku,state.requests[plan.sku],plan.price);
+  }
+  const url=new URL(value.checkout_url);
+  if(url.origin!=='https://nt3105.io.vn'||url.pathname!=='/miniapp/pay.html'||!/^#[a-f0-9]{64}$/.test(url.hash))throw Error('Link thanh toán không hợp lệ.');
+  if(!orderId&&state.sku)delete state.requests[state.sku];
+  $('#product-dialog').close();safeOpen(url.href);nav('orders');
+ }catch(error){toast(error.message);}
+ finally{state.busy=false;if(button){button.disabled=false;button.textContent=orderId?'Mở thanh toán':'Chuyển khoản ngân hàng';}}
 }
 async function pair(){
  if(!state.me)return toast('Mở Mini App từ bot Telegram để liên kết.');
@@ -70,6 +92,9 @@ document.addEventListener('click',async event=>{
  if(event.target.closest('[data-pair]'))return pair();
  const group=event.target.closest('[data-group]');if(group)return chooseGroup(group.dataset.group);
  const product=event.target.closest('[data-product]');if(product)return detail(product.dataset.product);
+ const plan=event.target.closest('[data-plan]');if(plan){state.sku=plan.dataset.plan;return detail(state.product);}
+ if(event.target.closest('[data-buy]'))return openCheckout();
+ const pay=event.target.closest('[data-pay-order]');if(pay)return openCheckout(pay.dataset.payOrder);
  if(event.target.closest('button[data-theme]'))return theme();
  if(event.target.closest('[data-support]'))return safeOpen('https://t.me/neverdierrr',true);
  if(event.target.closest('[data-close]')){if(tg?.initData)tg.close();else toast('Bản xem trước đang mở trên trình duyệt.');return;}
