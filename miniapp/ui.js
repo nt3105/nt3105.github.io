@@ -11,7 +11,7 @@ export function groups(products){
  }
  return [...result.values()];
 }
-export function cards(items){return items.map(g=>'<button class="game-row" data-group="'+e(g.id)+'"><img class="game-thumb" src="'+artwork(g.products.find(p=>!/android/i.test(p.id))||g.products[0])+'" alt="" width="62" height="62"><span class="game-info"><strong class="game-name">'+e(g.name)+'</strong><small>'+g.products.length+' lựa chọn · '+e([...new Set(g.products.flatMap(p=>p.plans.map(x=>x.platform==='android'?'Android':'iOS')))].join(' / '))+'</small></span><span class="choose">Chọn →</span></button>').join('');}
+export function cards(items){return items.map(g=>'<button class="game-row" data-group="'+e(g.id)+'"><img class="game-thumb" src="'+(g.id==='zsm'?'./assets/zingspeed-icon.jpg':artwork(g.products[0]))+'" alt="" width="62" height="62"><span class="game-info"><strong class="game-name">'+e(g.name)+'</strong><small>'+g.products.length+' lựa chọn · '+e([...new Set(g.products.flatMap(p=>p.plans.map(x=>x.platform==='android'?'Android':'iOS')))].join(' / '))+'</small></span><span class="choose">Chọn →</span></button>').join('');}
 export function empty(title,text){return '<div class="empty"><h2>'+e(title)+'</h2><p>'+e(text)+'</p><button class="primary" data-pair>Liên kết lịch sử web</button></div>';}
 export function keyState(item){
  if(item.key_status==='disabled')return 'Đã khóa';

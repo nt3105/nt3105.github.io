@@ -1,4 +1,4 @@
-import {e,money,duration,keyState,toast} from './ui.js?v=bank-1';
+import {e,money,duration,keyState,toast} from './ui.js?v=bank-2';
 const main=document.querySelector('#payment'),connection=document.querySelector('#connection');
 const base=['localhost','127.0.0.1'].includes(location.hostname)?location.origin:'https://key.nt3105.io.vn';
 let code=location.hash.slice(1),order=null,busy=false,timer=null;

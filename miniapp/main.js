@@ -1,5 +1,5 @@
-import * as api from './api.js?v=bank-1';
-import {$,e,money,date,duration,artwork,groups,cards,empty,keyState,toast,safeOpen} from './ui.js?v=bank-1';
+import * as api from './api.js?v=bank-2';
+import {$,e,money,date,duration,artwork,groups,cards,empty,keyState,toast,safeOpen} from './ui.js?v=bank-2';
 const state={route:'home',catalog:null,me:null,query:'',page:1,items:[],busy:false,serial:0,product:null,sku:null,requests:{}};
 const tg=window.Telegram?.WebApp;
 try{tg?.ready();tg?.expand();tg?.setHeaderColor('#0b1220');tg?.setBackgroundColor('#0b1220');}catch{}
@@ -22,7 +22,11 @@ function renderList(){
 function home(){
  $('#content').innerHTML='<div class="section-head"><div><h1>Cửa hàng</h1><p class="small">Chọn game để xem các gói hiện có.</p></div><span class="tag">NTJR</span></div><div class="toolbar"><input id="search" type="search" aria-label="Tìm sản phẩm" placeholder="Tìm trò chơi…" value="'+e(state.query)+'"><button class="secondary" data-refresh>Làm mới</button></div><div id="game-list" class="products"></div><p class="helper">Đơn hàng và key được lưu theo tài khoản Telegram của bạn.</p>';
  renderList();$('#search').addEventListener('input',event=>{state.query=event.target.value;renderList()});
+ const downloads=(state.catalog.downloads||[]).filter(d=>d.enabled!==false&&downloadUrl(d));
+ if(downloads.length)$('#content').insertAdjacentHTML('beforeend','<section class="download-panel"><h2>Tải game</h2><div class="download-buttons">'+downloads.map(d=>'<button class="secondary" data-download="'+e(d.product_id)+'"><strong>'+downloadName(d.product_id)+'</strong><span>'+e(d.title)+'</span></button>').join('')+'</div></section>');
 }
+function downloadUrl(item){try{const u=new URL(item.url);return u.protocol==='https:'&&!u.username&&!u.password?u.href:'';}catch{return '';}}
+function downloadName(id){const p=state.catalog.products.find(p=>p.id===id);return p?.plans.every(x=>x.platform==='android')||/android|adr/i.test(id)?'Tải APK':'Tải IPA';}
 function profile(){
  const u=state.me.user;
  $('#content').innerHTML='<h1>Tài khoản</h1><p class="profile-id">'+e(u.username?'@'+u.username:u.first_name)+' · ID: '+u.id+'</p><section class="panel"><p class="panel-label">ĐÃ LƯU THEO TELEGRAM</p><div class="data-row"><span>Đơn hàng</span><strong>'+state.me.orders_total+'</strong></div><div class="data-row"><span>Key đã mua</span><strong>'+state.me.keys_total+'</strong></div><div class="data-row"><span>Lịch sử web đã liên kết</span><strong>'+state.me.linked_histories+'</strong></div><div class="actions"><button class="primary" data-pair>Liên kết website</button><button class="secondary" data-route="orders">Xem đơn</button></div><p class="helper">Dùng cùng tài khoản Telegram để xem lại đơn và key trên thiết bị khác.</p></section><section class="panel"><h2>Tùy chọn</h2><div class="actions"><button class="secondary" data-theme>Đổi sáng / tối</button><button class="secondary" data-support>Liên hệ hỗ trợ</button><button class="secondary" data-close>Đóng Mini App</button></div></section>';
@@ -55,7 +59,7 @@ function detail(id){
  if(state.product!==id){state.product=id;state.sku=p.plans[0]?.sku;}
  $('#product-body').innerHTML='<img class="detail-image" src="'+artwork(p)+'" alt="'+e(p.name)+'" width="1280" height="590"><div class="detail-info"><span class="tag">THÔNG TIN SẢN PHẨM</span><h2 id="product-name">'+e(p.name)+'</h2>'+
  p.plans.map(x=>'<button class="plan-row plan-option" data-plan="'+e(x.sku)+'" aria-pressed="'+(x.sku===state.sku)+'"><span>'+duration(x)+'<small class="small"><br>'+e(x.platform.toUpperCase())+' · '+x.max_devices+' thiết bị</small></span><strong>'+money(x.price)+'</strong></button>').join('')+
- '<button class="primary checkout-button" data-buy '+(!state.catalog.sales_enabled?'disabled':'')+'>Chuyển khoản ngân hàng</button><p class="detail-note">Thanh toán trên website. Sau khi nhận tiền, key tự lưu vào tài khoản Telegram của bạn.</p></div>';
+ '<button class="primary checkout-button" data-buy '+(!state.catalog.sales_enabled?'disabled':'')+'>Chuyển khoản ngân hàng</button><p class="detail-note">Thanh toán trên website. Sau khi nhận tiền, key tự lưu vào tài khoản Telegram của bạn.</p>'+((state.catalog.downloads||[]).some(d=>d.product_id===id&&d.enabled!==false&&downloadUrl(d))?'<button class="secondary checkout-button" data-download="'+e(id)+'">'+downloadName(id)+'</button>':'')+'</div>';
  if(!$('#product-dialog').open)$('#product-dialog').showModal();
 }
 async function openCheckout(orderId){
@@ -92,6 +96,7 @@ document.addEventListener('click',async event=>{
  if(event.target.closest('[data-pair]'))return pair();
  const group=event.target.closest('[data-group]');if(group)return chooseGroup(group.dataset.group);
  const product=event.target.closest('[data-product]');if(product)return detail(product.dataset.product);
+ const download=event.target.closest('[data-download]');if(download){const item=(state.catalog.downloads||[]).find(d=>d.product_id===download.dataset.download&&d.enabled!==false);if(item&&downloadUrl(item))safeOpen(downloadUrl(item));return;}
  const plan=event.target.closest('[data-plan]');if(plan){state.sku=plan.dataset.plan;return detail(state.product);}
  if(event.target.closest('[data-buy]'))return openCheckout();
  const pay=event.target.closest('[data-pay-order]');if(pay)return openCheckout(pay.dataset.payOrder);
