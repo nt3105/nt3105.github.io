@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://telegram.org; style-src 'self'; img-src 'self' https://nt3105.io.vn data:; connect-src 'self' https://key.nt3105.io.vn; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>NTJR · Cửa hàng Telegram</title>
+<link rel="icon" href="./assets/mark.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=compact-2">
+<script src="https://telegram.org/js/telegram-web-app.js"></script><script type="module" src="./main.js?v=compact-2"></script>
+</head><body>
+<div id="preview" class="preview" role="status" hidden>BẢN XEM TRƯỚC · Đơn và key là dữ liệu minh họa</div>
+<div class="app">
+<header class="account-bar"><button id="account-open" data-route="profile" class="account-button"><span id="avatar" class="avatar" aria-hidden="true">N</span><span class="account-lines"><strong id="account-name">NTJR</strong><span id="account-id">Cửa hàng Telegram</span></span></button><button id="theme" class="icon-button" aria-label="Đổi sáng tối">◐</button></header>
+<div id="notice" role="status" class="notice" hidden></div>
+<main id="content" tabindex="-1"><p class="loading">Đang kết nối cửa hàng…</p></main>
+<nav class="bottom" aria-label="Điều hướng">
+<button data-route="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3zM9 20v-8h6v8"/></svg><span>Trang chủ</span></button>
+<button data-route="keys"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-5-5 3-3m-1 5 3-3"/></svg><span>Key</span></button>
+<button data-route="orders"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></svg><span>Đơn hàng</span></button>
+<button data-route="profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3"/></svg><span>Tài khoản</span></button>
+</nav></div>
+<dialog id="product-dialog" aria-labelledby="product-name"><button id="close-product" class="close icon-button" aria-label="Đóng chi tiết">×</button><div id="product-body"></div></dialog>
+<div id="toast" role="status" hidden></div>
+</body></html>
